@@ -17,6 +17,7 @@ tags:
 - puzzle
 - vector
 - operator
+excerpt: 'How to solve this... 2 ? 1 ? 6 ? 6 ? 200 ? 50 = 416.56'
 ---
 
 
