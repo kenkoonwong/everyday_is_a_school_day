@@ -105,6 +105,9 @@ menu:
       title: Contributors
       url: /contributors/
       weight: 3
+    - name: R-blogger
+      title: R-blogger
+      url: https://www.r-bloggers.com/
   header:
     - name: About
       title: About Blogophonic
