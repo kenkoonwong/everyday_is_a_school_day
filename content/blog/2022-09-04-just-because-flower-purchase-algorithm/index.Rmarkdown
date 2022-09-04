@@ -33,13 +33,13 @@ Randomness can be difficult to simulate because we are biased. Not that thinking
 ![](featured.jpg)
 
 ## Thought Process:
-1. How often do you want to buy flowers for just because occasion? 
-2. Set up randomness to that frequency of purchase
-3. Scrape the flower website 
-  3.1 Get all flower URLs
-  3.2 Randomly select one kind of flower link
-4. Email you with one-click URL 
-5. Set a daily script run
+1. [How often do you want to buy flowers for just because occasion?](#1-how-often-do-you-want-to-buy-flowers-for-just-because-occasion) 
+2. [Set up randomness to that frequency of purchase](#2-set-up-randomness-to-that-frequency-of-purchase)
+3. [Scrape the flower website](#3-scrape-the-flower-website) 
+    1. Get all flower URLs
+    2. Randomly select one kind of flower link
+4. [Email you with one-click URL](#4-email-you-with-one-click-url) 
+5. [Set a daily script run](#5-set-a-daily-script-run)
 
 ## 1. How often do you want to buy flowers for just because occasion?
 Ok, say for example, you want to buy flowers on average every 2 weeks. So that is `52 / 2 = 26`. Let's also assume that we may occasionally buy flowers for other special occasions such as Valentine's day, Birthday, Anniversary etc. 
