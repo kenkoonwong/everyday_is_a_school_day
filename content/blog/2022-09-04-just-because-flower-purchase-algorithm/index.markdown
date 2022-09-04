@@ -186,7 +186,7 @@ crontab -e # comment 5.1
 
 <br> 
 
-# Phewww... That's a lot of codes
+# Phewww... That's a lot of code
 <p align="center">
   <img width="300" height="500" src="https://media.giphy.com/media/v65rDtklV9l6g/giphy-downsized-large.gif">
 </p>
