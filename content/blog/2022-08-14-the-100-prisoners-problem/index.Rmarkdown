@@ -1,7 +1,7 @@
 ---
 title: The 100 Prisoners Problem
 author: Ken Koon Wong
-date: '2022-09-03'
+date: '2022-08-14'
 slug: the-100-prisoners-problem
 categories: 
 - R
@@ -37,12 +37,12 @@ click on the image to link to awesome Veritasium video
 
 ## **Let's try to simulate this**
 ## 1. Set up an empty dataframe
-
-```r
+```{r warning=FALSE, message=FALSE}
 library(tidyverse)
 
 total_n <- 1000
 df <- tibble(trial=as.numeric(),prob=as.numeric())
+
 ```
 - load `tidyverse`
 - set `total_n` of trial to run
@@ -54,8 +54,8 @@ df <- tibble(trial=as.numeric(),prob=as.numeric())
 
 
 ## 2. Set up for loop of trials
+```{r eval=FALSE}
 
-```r
 for (i in c(1:total_n)) {
 
 true <- 0 # count how prisoner got right per trial  
@@ -148,8 +148,7 @@ Essentially, the code above will take *some time* about to run, you should then 
 
 ## 3. Let's take a look at the `df` dataframe
 
-
-```r
+```{r message=FALSE, warning=FALSE}
 load(file = "df_prisoner_prob.Rda")
 
 # calculating median and 95% Confidence interval
@@ -170,9 +169,8 @@ df %>%
     "text", label = med,
     x = 0.3, y = 5, size = 5, colour = "black"
   )
-```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+```
 
 Pretty cool, eh!
 

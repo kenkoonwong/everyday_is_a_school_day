@@ -1,0 +1,67 @@
+---
+title: 'Math Puzzle #1'
+author: Ken Koon Wong
+date: '2022-09-03'
+slug: 'math-puzzle-1'
+categories: 
+- R
+- simulation
+- math
+- puzzle
+- vector
+- operator
+tags: 
+- R
+- simulation
+- math
+- puzzle
+- vector
+- operator
+---
+
+
+# 2 ? 1 ? 6 ? 6 ? 200 ? 50 = 416.56
+### Let `?` be an operator of `+`,`-`,`*`,`/`,`^` that are replaceable (can be used more than once)
+
+## How would you solve this math puzzle?
+One could potentially work out the math manually, but how would you solve this math problem using `R`?
+
+## 1. Set operators as a vector
+
+```r
+operators <- c("+","-","*","/","^")
+```
+
+## 2. Set for loop + monte carlo simulation to fit the equation
+
+```r
+for (i in c(1:1000000)) {
+  # monte carlo/random sampling of the operator vectors with replacement
+  new_op <- sample(operators, 5, replace=T)
+  
+  # parse the numbers and operators into an expression
+  expression <- parse(text = paste0("2",new_op[1],"1",new_op[2],"6",
+                                    new_op[3],"6",new_op[4],"200",
+                                    new_op[5],"50"))
+  
+  # evaluate the expression, apparently you cannot just 
+  # paste operator and expect R to run it like normal
+  sum <- eval(expression) 
+  
+  # Set condition, if sum is 416.56 then HOT DIGGITY DOG!
+  if (sum==416.56) {
+    
+    # print the answer
+    print(paste0("found it, the combinations are: ",expression))
+    break
+  }  
+}
+```
+
+```
+## [1] "found it, the combinations are: 2^1 * 6^6/200 - 50"
+```
+
+## Conclusion/Lesson learnt
+- Use `parse` and `eval` for operators
+- simulation is awesome !!! Solved this problem in seconds!
