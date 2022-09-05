@@ -173,7 +173,7 @@ Tips: you need to set up [Google App Password](https://support.google.com/accoun
 crontab -e # comment 5.1
 
 # add this to the script
-15 9 * * * sudo Rcript /path/to/your/Rscript # comment 5.2
+15 9 * * * sudo Rscript /path/to/your/Rscript # comment 5.2
 
 ```
 
