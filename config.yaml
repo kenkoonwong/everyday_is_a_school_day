@@ -154,3 +154,4 @@ privacy:
   youtube:
     disable: no
     privacyEnhanced: yes
+rssLimit: 10
