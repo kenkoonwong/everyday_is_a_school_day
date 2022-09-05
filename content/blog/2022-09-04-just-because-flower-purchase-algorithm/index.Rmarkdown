@@ -5,6 +5,7 @@ date: '2022-09-04'
 slug: 'flower-algo'
 categories: 
 - R
+- r
 - just because
 - monte carlo
 - web scraping
@@ -15,6 +16,8 @@ categories:
 - selenium
 - chromedriver
 tags:
+- R
+- r
 - just because
 - monte carlo
 - web scraping

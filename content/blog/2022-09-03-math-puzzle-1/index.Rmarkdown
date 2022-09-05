@@ -5,6 +5,7 @@ date: '2022-09-03'
 slug: 'math-puzzle-1'
 categories: 
 - R
+- r
 - simulation
 - math
 - puzzle
@@ -12,6 +13,7 @@ categories:
 - operator
 tags: 
 - R
+- r
 - simulation
 - math
 - puzzle
