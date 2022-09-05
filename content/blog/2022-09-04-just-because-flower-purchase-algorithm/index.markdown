@@ -5,6 +5,7 @@ date: '2022-09-04'
 slug: 'flower-algo'
 categories: 
 - R
+- r
 - just because
 - monte carlo
 - web scraping
@@ -15,6 +16,8 @@ categories:
 - selenium
 - chromedriver
 tags:
+- R
+- r
 - just because
 - monte carlo
 - web scraping
@@ -30,7 +33,7 @@ excerpt: Just Because in a true sense :D
 # Just Because == Randomness
 Randomness can be difficult to simulate because we are biased. Not that thinking of buying your spouse 😍 flowers is a bad thing. What if you can preserve that idea and actualization by coding that! But how?
 
-![](featured.jpg)
+![](featured-flower.jpg)
 
 ## Thought Process:
 1. [How often do you want to buy flowers for just because occasion?](#1-how-often-do-you-want-to-buy-flowers-for-just-because-occasion) 

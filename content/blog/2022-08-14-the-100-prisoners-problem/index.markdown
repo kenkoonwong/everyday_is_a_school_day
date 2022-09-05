@@ -5,10 +5,12 @@ date: '2022-08-14'
 slug: the-100-prisoners-problem
 categories: 
 - R
+- r
 - puzzle
 - simulation
 tags: 
 - R
+- r
 - puzzle
 - simulation
 ---
