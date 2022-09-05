@@ -80,6 +80,7 @@ params:
   socialInHeader: no
   textFontFamily: sans-serif
   theme: sky
+  ShowFullTextinRSS: true
   # twitter: apreshill
   utterances:
     issue_term: pathname
