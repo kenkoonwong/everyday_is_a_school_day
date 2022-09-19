@@ -58,9 +58,9 @@ params:
     # - icon: instagram
     #   icon_pack: fab
     #   url: https://www.instagram.com/explore/tags/apero/
-    # - icon: twitter
-    #   icon_pack: fab
-    #   url: https://twitter.com/hashtag/apéro
+    - icon: twitter
+      icon_pack: fab
+      url: https://twitter.com/kenkoonwong/
     # - icon: impactstory
     #   icon_pack: ai
     #   url: https://impactstory.org/u/0000-0002-8082-1890
