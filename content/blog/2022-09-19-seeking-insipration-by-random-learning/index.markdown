@@ -1,5 +1,5 @@
 ---
-title: Seeking Insipration from Random Learning
+title: Seeking Inspiration from Random Learning
 author: Ken Koon Wong
 date: '2022-09-19'
 slug: 'random-learning'
@@ -8,11 +8,13 @@ categories:
 - r
 - random learning
 - DT
+- list.files
 tags: 
 - R
 - r
 - random learning
 - DT
+- list.files
 excerpt: I didn't want to read the textbook in sequence. Hence, I figured that if I read a paragraph a day in a random chapter, I might be able to benefit from random learning!
 ---
 ![](featured.jpg)
