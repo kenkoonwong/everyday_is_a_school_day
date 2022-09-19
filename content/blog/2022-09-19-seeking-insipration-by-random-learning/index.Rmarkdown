@@ -7,16 +7,27 @@ categories:
 - R
 - r
 - random learning
-
+- DT
+- list.files
 tags: 
 - R
 - r
 - random learning
+- DT
+- list.files
+excerpt: I didn't want to read the textbook in sequence. Hence, I figured that if I read a paragraph a day in a random chapter, I might be able to benefit from random learning!
 ---
 ![](featured.jpg)
 
 # Inspiration
 This was inspired by wanting to read a textbook [Mandell, Douglas, and Bennett's Principles and Practice of Infectious Diseases](https://www.amazon.com/Bennetts-Principles-Practice-Infectious-Diseases/dp/0323482554). But, I didn't want to read the textbook in sequence. Hence, I figured that if I read a paragraph a day in a random chapter, I might be able to benefit from random learning!  This is also great for idea generation for some of our mysterious cases when we are still building differential diagnoses. But, how do we do that? 
+
+
+<p align="center">
+  <img width="300" height="400" src="mandell.png">
+</p>
+
+<br>
 
 # Thought process
 - 2 different workstations (personal and work)
@@ -24,6 +35,8 @@ This was inspired by wanting to read a textbook [Mandell, Douglas, and Bennett's
 - Get all the pdf files of the textbook in my directory
 - Randomly select 1 pdf
 - Use `DT` to project the link to browser to read the pdf file
+
+<br>
 
 ## 2 different workstations (personal and work)
 ```{r, eval=FALSE}
@@ -53,14 +66,20 @@ if (home) {
 file <- list.files(paste0(path))
 ```
 
-![](file.png)
+<p align="center">
+  <img src="file.png">
+</p>
+ 
 
 ## Randomly select 1 pdf
 ```{r,eval=FALSE}
 ran <- sample(file,1)
 ```
 
-![](random.png)
+<p align="center">
+  <img src="random.png">
+</p>
+
 ## Use `DT` to project the link to browser to read the pdf file
 ```{r, eval=FALSE}
 library(tidyverse)
@@ -76,10 +95,11 @@ datatable(data, escape=F)
 
 Have to make sure that the `html` code `<a target=_blank href=file:///` and </a> sandwiches the `pathurl` and `ran` which is the actual file name
 
-Then you can `right-click` on it and then click `Open link in browser` to open onto default PDF reader
+
 <br>
 ![](rightclick.png)
-
+Then you can `right-click` on it and then click `Open link in browser` to open onto default PDF reader
+<br>
 
 # Conclusion/Lessons Learnt:
 - Everyday random learning is fantastic! Sometimes it inspires me to think a bit differently when I approach a case
