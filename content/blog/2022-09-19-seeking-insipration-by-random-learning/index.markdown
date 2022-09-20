@@ -101,6 +101,7 @@ Have to make sure that the `html` code `<a target=_blank href=file:///` and </a>
 
 
 <br>
+
 ![](rightclick.png)
 Then you can `right-click` on it and then click `Open link in browser` to open onto default PDF reader
 <br>
