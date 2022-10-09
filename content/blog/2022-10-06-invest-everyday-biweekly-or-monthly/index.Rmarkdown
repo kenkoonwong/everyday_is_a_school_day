@@ -19,7 +19,7 @@ tags:
 - dollar cost average
 - index fund
 - dividend
-excerpt: Which strategy is the most optimal for dollary cost averaging? Let's play with data!
+excerpt: Which strategy is the most optimal for dollar cost averaging? Let's play with data!
 ---
 
 > `Biweekly` did great overall, Better at TIPS, short-term bond, real estate, international; `Monthly` is second best with 3 out of 8. Good at small, mid, large caps
