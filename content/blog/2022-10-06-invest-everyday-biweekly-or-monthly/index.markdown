@@ -48,8 +48,16 @@ I am not a financial adviser. Everything that I shared here were purely out of c
 - [Conclusion/Lessons Learnt](#conclusionlessons-learnt)
     
   
+#### Load R Packages 
+
+```r
+library(tidyverse)
+library(tidyquant)
+library(kableExtra)
+```
  
 
+ 
  
 ## Let's Look at FXAIX
 
@@ -67,7 +75,7 @@ tq_get("FXAIX", from = from, to = to) %>%
   ggtitle("Fidelity S&P 500 closing prices")
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" />
 
 The visual does give us an idea that past performance is not indicative of future results. Look at the peaks and troughs, it sure looks like it has a life of its own. 
 
@@ -176,7 +184,7 @@ df %>%
   theme_bw() 
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" />
 
 
 Interesting! Biweekly seems to be ahead. Is it the same for all tickers?
@@ -202,7 +210,7 @@ df %>%
   facet_wrap(.~ticker,scales = "free") 
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" />
 
 
 
@@ -233,7 +241,7 @@ df %>%
   theme(axis.text.x = element_text(size = 4,angle = 45, hjust = 1)) 
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="1920" style="display: block; margin: auto;" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="1920" style="display: block; margin: auto;" />
 
 [click here for bigger view](index_files/figure-html/unnamed-chunk-10-1.png)
 

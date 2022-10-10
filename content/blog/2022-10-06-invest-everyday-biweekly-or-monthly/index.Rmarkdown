@@ -48,14 +48,18 @@ I am not a financial adviser. Everything that I shared here were purely out of c
 - [Conclusion/Lessons Learnt](#conclusionlessons-learnt)
     
   
- 
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+#### Load R Packages 
+```{r,message=FALSE,warning=FALSE}
 library(tidyverse)
 library(tidyquant)
 library(kableExtra)
 
+```
+ 
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
 load("100122.rda")
 ```
+ 
  
 ## Let's Look at FXAIX
 ```{r, warning=FALSE,message=FALSE}
