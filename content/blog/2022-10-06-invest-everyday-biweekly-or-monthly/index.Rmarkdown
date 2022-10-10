@@ -22,7 +22,7 @@ tags:
 excerpt: Which strategy is the most optimal for dollar cost averaging? Let's play with data!
 ---
 
-> `Biweekly` did great overall, Better at TIPS, short-term bond, real estate, international; `Monthly` is second best with 3 out of 8. Good at small, mid, large caps
+> `Biweekly` did great overall, Better at TIPS, short-term bond, real estate, international; `Monthly` is second best. Good at small, mid, large caps
 
 <p align="center">
   <img width="400" height="300" src="featured.jpg">
