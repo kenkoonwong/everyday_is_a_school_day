@@ -35,10 +35,10 @@ If you want to look at the specific tweets, I have created a shiny app that help
 - [Tweet counts by days](#tweet-counts-by-days) 
 - [Top 50 Twitter Users Tweet Counts](#top-50-twitter-users-tweet-counts)
 - [Tweets separated by dates](#tweets-separated-by-dates)
-- [Word cloud separated by dates](#Word-cloud-separated-by-dates)
+- [Word cloud separated by dates](#word-cloud-separated-by-dates)
 - [Looking at tweetiest period](#looking-at-tweetiest-period)
-- [IDweek 2022 Tweets Shiny App](#IDweek-2022-Tweets-Shiny-App)
-- [Conclusion/Lessons learnt](#Lessons-Learnt/Conclusion)
+- [IDweek 2022 Tweets Shiny App](#idweek-2022-tweets-shiny-app)
+- [Conclusion/Lessons learnt](#lessons-learntconclusion)
   
  
 
@@ -154,6 +154,6 @@ I will be performing a further analysis to assess factors that contribute to Ret
 
 ## Lessons Learnt/Conclusion
 - I learnt a lot from the tweets! Thank you all who contributed!
-- `wordcloud2` package makes better word count 
+- `wordcloud2` package makes better word cloud
 - `rtweet` is fantastic at pulling tweets but needs some work on `search_30days` function
 
