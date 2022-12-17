@@ -37,6 +37,7 @@ If you want to look at the specific tweets, I have created a shiny app that help
 - [Tweets separated by dates](#tweets-separated-by-dates)
 - [Word cloud separated by dates](#Word-cloud-separated-by-dates)
 - [Looking at tweetiest period](#looking-at-tweetiest-period)
+- [IDweek 2022 Tweets Shiny App](#IDweek-2022-Tweets-Shiny-App)
 - [Conclusion/Lessons learnt](#Lessons-Learnt/Conclusion)
   
  
@@ -130,7 +131,7 @@ These numbers, in my opinion, make sense. Most people tweet about the conference
 
 
 
-# IDweek 2022 Tweets Shiny App
+## IDweek 2022 Tweets Shiny App
 Here is the website to the Shiny App. [https://kenkoonwong.shinyapps.io/idweek22/](https://kenkoonwong.shinyapps.io/idweek22/))
 
 Example of searching keyword `hiv` on the top right corner
@@ -141,7 +142,7 @@ You can also use Twitter to search for these keywords. For example, type in `#id
 ### Future blogs
 I will be performing a further analysis to assess factors that contribute to Retweets and favorite. Stay tuned!
 
-# Limitations
+## Limitations
 - Might have missed some tweets
 - Did not include RTs
 - Assumption that tweet information accurately reflects the content of the conference
@@ -151,7 +152,7 @@ I will be performing a further analysis to assess factors that contribute to Ret
 ## Things for the future
 - I think we should have a social media infrastructure to place synopsis of each conference 
 
-# Lessons Learnt/Conclusion
+## Lessons Learnt/Conclusion
 - I learnt a lot from the tweets! Thank you all who contributed!
 - `wordcloud2` package makes better word count 
 - `rtweet` is fantastic at pulling tweets but needs some work on `search_30days` function
