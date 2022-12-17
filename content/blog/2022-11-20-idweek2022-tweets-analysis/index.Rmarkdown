@@ -1,0 +1,388 @@
+---
+title: 'IDWeek2022: Tweets Analysis'
+author: Ken Koon Wong
+date: '2022-12-17'
+slug: 'idweek2022'
+categories: 
+- idweek2022
+- idweek22
+- tweets
+- twitter
+- learning
+tags: 
+- idweek2022
+- idweek22
+- tweets
+- twitter
+- learning
+excerpt: 'Thanks to #IDweek2022 Tweets! They warmed our hearts, kept us informed, and made us feel like we (those who could not attend) were part of it!'
+---
+
+> I am surprised that the peak tweets are on the 2nd day of the conference, Thursday, instead of Friday. The top tweets each day appeared to be from different users. 
+
+![](wc_full_feature.jpg)
+Wordcloud of all the `#IDweek2022` and `#IDweek22` tweets
+
+IDWeek is a great conference to learn, share, and network with other providers who are interested and specialized in Infectious diseases. Even when you cannot attend the conference in person, the virtual presence and support are so helpful! In the Twitterverse, participants have tweeted so much useful information about the conferences they followed, which helped me know what is a hot topic in the meetings and which video seminar I should view to boost ID knowledge. 
+
+If you want to look at the specific tweets, I have created a shiny app that helps me to glance through essential topics. Here is the [link](https://kenkoonwong.shinyapps.io/idweek22/)
+
+### Disclaimer:
+- These are actual tweets and not retweets
+- There may be some tweets that are missing
+
+# Thought Process:
+- [Tweet counts by days](#tweet-counts-by-days) 
+- [Top 50 Twitter Users Tweet Counts](#top-50-twitter-users-tweet-counts)
+- [Tweets separated by dates](#tweets-separated-by-dates)
+- [Word cloud separated by dates](#Word-cloud-separated-by-dates)
+- [Looking at tweetiest period](#looking-at-tweetiest-period)
+- [Conclusion/Lessons learnt](#Lessons-Learnt/Conclusion)
+  
+ 
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(rtweet)
+library(lubridate)
+library(ggpubr)
+library(tidytext)
+library(wordcloud)
+library(wordcloud2)
+library(png)
+
+
+load(file = "idweek2.rda")
+
+fullid_name <- users_data(id) %>% select(screen_name)
+fullid2_name <- users_data(id2) %>% select(screen_name)
+
+# adding retweets and favorite
+interest <- c("retweet_count","favorite_count")
+
+interest <- 
+full <- id %>%
+  select(created_at, id_str, full_text, all_of(interest)) %>%
+  add_column(fullid_name) %>%
+  add_row(id2 %>%
+              select(created_at, id_str, full_text, interest) %>%
+              add_column(fullid2_name)) %>%
+  mutate(url = paste0("https://twitter.com/",screen_name,"/status/",id_str)) %>%
+  filter(created_at <= mdy("10/24/22"))
+
+id_data <- users_data(id) %>%
+  select(screen_name, followers_count, friends_count, verified) %>%
+  full_join(users_data(id2) %>%
+              select(screen_name, followers_count, friends_count, verified)) %>%
+  distinct(screen_name, .keep_all = T)
+
+```
+
+
+```{r, eval = FALSE, message=FALSE, warning=FALSE, include=FALSE}
+## looking at wordcloud
+wc <- 
+full %>% 
+  select(full_text) %>%
+  pivot_longer(cols = "full_text", names_to = "title", values_to = "word") %>%
+  unnest_tokens(word, word) %>%
+  filter(!str_detect(word, "^id$|idtwitter|idweek2022|idweek22|http|t\\.co|amp|^[[:digit:]]{1,2}$|idweek|^2022$")) %>%
+  anti_join(stop_words) %>%
+  count(word)
+  
+# wc_full <- wordcloud(words = wc$word, freq = wc$n, random.order = FALSE, colors = brewer.pal(8,"Dark2"))
+
+wc_full <- wordcloud2(wc, size=1.6, color='random-dark')
+
+```
+
+
+
+## Tweet counts by days 
+```{r, echo=F,fig.dim=c(10,10), fig.align='center'}
+
+full %>%
+  mutate(date = date(created_at) %>% as.factor()) %>%
+  ggplot(.,aes(x=created_at, fill=date)) +
+  geom_histogram(color="black",alpha=0.5,bins = 70) +
+  scale_x_datetime(date_breaks = "3 hours", date_labels = "%m/%d  %H %M") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position =  "none",
+        axis.text.y = element_text(size = 10)) +
+  ggtitle("IDWeek2022 Tweet counts by 3 hour interval", subtitle = "Days separated in different color")
+```
+
+10/19 (Thursday) and 10/20 (Friday) had the most tweets! Distribution is quite normal per day. Tweets are the highest as the day warms up, and downtrends as the day wrap.
+
+Interestingly, day three would be as high as day 2, but it isn't. Quite interesting. A high tweet count does not infer significant participation or is associated with the number of attendance. I would love to have concrete attendance data and try to correlate it with it. Well, maybe next time. 
+
+<br>
+
+## Top 50 Twitter Users Tweet Counts
+```{r, echo=F,fig.dim=c(10,15), fig.align='center'}
+full %>%
+  mutate(date = date(created_at) %>% as.factor()) %>%
+  group_by(screen_name) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  distinct() %>% 
+  slice(1:50) %>%
+  ggplot(.,aes(x=reorder(screen_name,count),y=count)) +
+  geom_col(fill = "blue",alpha=0.5, col="black") +
+  geom_text(aes(x=screen_name,y=count+5,label=count)) +
+  coord_flip() +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.y = element_text(size = 15)) +
+  xlab("#Twitter Screen Name") 
+  # ggtitle("Top 50 Tweets @ #IDweek2022")
+```
+
+Holycow! `LordAlirezaF`, `SAIRABT`, and `IDWeek2022` leading the total tweets during the conference!
+
+Can you find your name here? If you can, I thank you for creating a virtual IDweek presence for those who couldn't attend the conference in person!
+
+## Tweets separated by dates 
+```{r, echo=F,warning=F,message=F,fig.dim=c(15,17), fig.align='center'}
+tcdf <- full %>%
+  mutate(date = date(created_at)) %>%
+  group_by(screen_name,date) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  distinct() 
+
+# write function
+tplot <- function(date, color) {  
+
+  # adjusting n() from bar  
+n <- tcdf %>%
+  filter(date == mdy(!!date)) %>%
+  pull(count) %>%
+  pluck(1)
+
+# n <- tcdf %>%
+#   filter(date == mdy("10/20/22")) %>%
+#   pull(count) %>% 
+#   pluck(1)
+
+
+  if (n >21) {
+    x <- 5
+  } 
+  if (n >=18 & n <=21) {
+    x <- 1
+  } 
+  if (n <18) { 
+    x <- 0.4 
+    }
+    
+tcdf %>%
+  filter(date == mdy(!!date)) %>% 
+  ungroup() %>%
+  slice(1:20) %>% 
+  ggplot(.,aes(x=reorder(screen_name,count),y=count)) +
+  geom_col(fill = color,alpha=0.5, col="black") +
+  geom_text(aes(x=screen_name,y=count+x,label=count)) +
+  coord_flip() +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.y = element_text(size = 14)) +
+  xlab("#Twitter Screen Name") +
+  ggtitle(paste0("Date of Tweets: ",date,x))
+}
+
+day1 <- tplot("10/18/22","yellow")
+day2 <- tplot("10/19/22","green")
+day3 <- tplot("10/20/22","#42f5e9")
+day4 <- tplot("10/21/22","blue")
+day5 <- tplot("10/22/22","purple")
+day6 <- tplot("10/23/22","pink")
+
+ggarrange(day1,day2,day3,day4,day5,day6)
+
+```
+
+Pretty plots! Let's dive deeper!
+
+## Word cloud separated by dates
+```{r,message=F,echo=F,warning=F}
+
+wc_date <- function(date, n) {
+full %>% 
+  mutate(date = date(created_at)) %>%
+  filter(date == mdy(!!date)) %>%
+  select(full_text) %>%
+  pivot_longer(cols = "full_text", names_to = "title", values_to = "word") %>%
+  unnest_tokens(word, word) %>%
+  filter(!str_detect(word, "^id$|idtwitter|idweek2022|idweek22|http|t\\.co|amp|^[[:digit:]]{1,2}$|idweek|^2022$")) %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+    filter(n >= n)
+}
+
+
+```
+
+### 10-18-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1018.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day1, onep)
+```
+
+Pre-conference day, where workshops and board reviews happen. You see related terms such as `fellows`,`learn` etc. You also see the enthusiasm that people are flocking back to in-person conferences! It is an inspiring time for those fellows who could not attend ID week in person during the pandemic. I see great energy; a good start!
+
+### 10-19-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1019.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day2, onep)
+```
+
+Day one of IDweek 2022. May the excitement begin!  
+
+Lots of `dr`, I would assume, lots of physician references in the tweets. It also looks like people are interested in tweeting `HIV` related topics. Not surprisingly, our new IDSA president, Dr. Carlos del Rio's twitter handle has been mentioned many times by other users! Congratulations!  
+
+
+### 10-20-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1020.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day3, onep)
+```
+
+Day two of IDweek 2022.   
+
+Lots of multi-drug resistant topics with keywords such as `antibiotics`, `acinetobacter`, `fungal`,`amr` (antimicrobial resistance). Interestingly, this is the most tweeted day of the conference! Thanks `LordAlirezaF` for the succinct tweets of what is interesting on that day! Take a look at some example!  
+
+![](lordalireza.jpg)
+IDweek2022 Tweet Shiny App: filtered by LordAlirezaF [Click here to view all](https://kenkoonwong.shinyapps.io/idweek22/)
+
+If you look closely, you see a username called `friendlycovid19`. This account uses pictures of people without masks and tweets about how ID doctors are not masked during the conference. Lol. It is funny and annoying at the same time. 
+
+In our upcoming analysis, we will look at both including and excluding `friendlycovid19`
+
+### 10-21-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1021.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day4, onep)
+```
+
+Day three of IDweek 2022.  
+
+Interesting day. I see keywords such as `data`, `diagnostics` as more prominent. Statistics, data science, and informatics are hot topics for the day, which is fantastic! 
+
+Other prominent keywords are `equity` which IDSA is doing a great job in DEI; and `fleming`, which I assume has to do with The Mold that Changed The World musical play.
+ 
+
+### 10-22-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1022.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day5, onep)
+```
+
+Day 4 of IDWeek 2022  
+
+Tweets are slowing down. We're all in awe as reflected by the high frequency keyword of `amazing`!
+
+### 10-23-22
+```{r, echo=F, message=F,warning=F,fig.dim=c(10,6)}
+one <- readPNG("1023.png")
+
+onep <- ggplot() + 
+  background_image(one) +
+  theme(plot.margin = margin(t=3, r=0.5, b=3, l=0.5, unit = "cm"))
+
+ggarrange(day6, onep)
+```
+
+Day 5 of IDweek 2022  
+
+It's a wrap!
+
+
+## looking at tweetiest period
+```{r,echo=F,message=F,warning=F, fig.dim=c(10,5)}
+full_ana <- 
+full %>%
+  mutate(
+    hms = hms::as_hms(created_at),
+    period = case_when(
+    hms >= hms("07:00:00") & hms <= hms("11:59:59") ~ "morning",
+    hms >= hms("12:00:00") & hms <= hms("12:59:59") ~ "lunch",
+    hms >= hms("13:00:00") & hms <= hms("16:59:59") ~ "afternoon",
+    # hms >= hms("17:00:00") & hms <= hms("19:59:59") ~ "dinner",
+    # hms >= hms("20:00:00") & hms <= hms("21:59:59") ~ "evening",
+    hms >= hms("17:00:00") & hms <= hms("21:59:59") ~ "evening",
+    # hms >= hms("22:00:00") & hms <= hms("03:59:59") ~ "owl_time",
+    hms >= hms("4:00:00") & hms <= hms("6:59:59") ~ "5_am_club",
+    TRUE ~ "owl_time"
+  ),
+  date = date(created_at)) 
+
+full_ana %>%
+  count(period) %>%
+  arrange(desc(n)) %>%
+  ggplot(.,aes(x=reorder(period,n),y=n)) +
+  geom_col(color = "black",alpha = 0.7) +
+  geom_text(aes(y=n+30, label=n)) +
+  theme_minimal() +
+  coord_flip() +
+  ggtitle("Tweets separated by period", subtitle = "morning (7a-12p), lunch (12-1p), afternoon (1-5p), evening (5-10p), owl_time (10p-4a), 5_am_club (4-7a)") +
+  xlab("period")
+  
+
+```
+
+These numbers, in my opinion, make sense. Most people tweet about the conference during morning and afternoon time. Another interesting thing is there are people who tweet during owl time and early morning (I called it 5 am club)! Very dedicated indeed!
+
+
+
+# IDweek 2022 Tweets Shiny App
+Here is the website to the Shiny App. [https://kenkoonwong.shinyapps.io/idweek22/](https://kenkoonwong.shinyapps.io/idweek22/))
+
+Example of searching keyword `hiv` on the top right corner
+![](shiny_hiv.jpg)
+
+You can also use Twitter to search for these keywords. For example, type in `#idweek2022` and `hiv`, should I think return the same tweets. But I thought it is easier to read the short snippets of tweets through Shiny App than Twitter. I also added a little filter myself called `relevant` to filter out the relevant topics to me (set to 1, not so relevant set to 0) for easy browsing. 
+
+### Future blogs
+I will be performing a further analysis to assess factors that contribute to Retweets and favorite. Stay tuned!
+
+# Limitations
+- Might have missed some tweets
+- Did not include RTs
+- Assumption that tweet information accurately reflects the content of the conference
+- Tweet of the same day did not mean conference occurred on that day
+
+
+## Things for the future
+- I think we should have a social media infrastructure to place synopsis of each conference 
+
+# Lessons Learnt/Conclusion
+- I learnt a lot from the tweets! Thank you all who contributed!
+- `wordcloud2` package makes better word count 
+- `rtweet` is fantastic at pulling tweets but needs some work on `search_30days` function
+
