@@ -24,12 +24,15 @@ It was a privilege for me that CLOSLER invited me to write an article about Tai 
 
 Below are a few pictures of my family and me having fun taking photos while doing Tai chi. Too bad we were not able to format the photos to match the root aesthetic of the website. Nevertheless, here they are!
 
-![](1.jpg)
+<img src="1.jpg" width="300" height="400"/> <img src="2.jpg" width="300" height="400"/> 
 
-![](2.jpg)
+<img src="3.jpg" width="300" height="400"/> <img src="4.jpg" width="300" height="400"/> 
 
-![](3.jpg)
+I think any style of Tai Chi should be fine, if you just want to try it. However, if you are serious about learning Tai chi, I would recommend [Practical Method Tai Chi](https://www.youtube.com/watch?v=Wdd-iFMSrkY&list=PLsoVu0nrHAs-rKjpcrhFco0kYJ0HstywF). I like the teaching methodology and its practicality. 
 
-![](4.jpg)
+Give it a go! 
+
+
+
 
 
