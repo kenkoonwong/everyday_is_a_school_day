@@ -16,7 +16,7 @@ excerpt: 'As we age, our bodies go through changes that can impact our ability t
 
 >My father told me, “Invest in yourself now for ease when you’re older.” I knew what he meant at the time but didn’t appreciate it until a few years later ... Since then, I’ve incorporated Tai chi into my daily routine and promoted this exercise to my older patients. 
 
-It was a privilege for CLOSLER to invite me to write an article about Tai Chi and how that influences my patient care.
+It was a privilege for me that CLOSLER invited me to write an article about Tai Chi and how that influences my patient care.
 
 [Click here](https://closler.org/lifelong-learning-in-clinical-excellence/mindful-movement) for a complete article.
 
