@@ -17,10 +17,11 @@ show_button_links: false
 show_post_date: true
 show_post_thumbnail: true
 sidebar:
-  author: Masaaki Imai
-  description: "One must standardize,\n
-    and thus stabilize the process, \nbefore 
-    continuous improvement can be made \n"
+  author: Winston S. Churchill
+  description: "Success is not final;\n 
+  failure is not fatal:\n
+  It is the courage to continue\n
+  that counts."
   show_sidebar_adunit: true
   text_link_label: Subscribe via RSS
   text_link_url: /index.xml
