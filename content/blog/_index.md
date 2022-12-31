@@ -18,10 +18,7 @@ show_post_date: true
 show_post_thumbnail: true
 sidebar:
   author: Winston S. Churchill
-  description: "Success is not final;\n 
-  failure is not fatal:\n
-  It is the courage to continue\n
-  that counts."
+  description: "Success is not final; \nfailure is not fatal: \nIt is the courage to continue\nthat counts."
   show_sidebar_adunit: true
   text_link_label: Subscribe via RSS
   text_link_url: /index.xml
