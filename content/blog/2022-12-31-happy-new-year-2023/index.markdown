@@ -31,7 +31,14 @@ excerpt: 'My 2023 New Year Resolutions. Writing it down to make it more accounta
 - Technology
   - Learn how to make an iOS application
 - Health & Wellness
-  - Lose 15 lbs through more activities
+  - Lose 15 lbs through more activities & portion control
+- Communication
+  - Establish "Coaching" questions
+  - Use these words  (e.g., "really") less to enhance neutrality
+  - Find out staff's favorite food, color, activities and write it down
+- Leadership
+  - Encourage creativity, team-approachness to solving problems
+  
 
 
 
