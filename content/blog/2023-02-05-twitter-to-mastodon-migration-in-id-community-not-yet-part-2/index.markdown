@@ -18,7 +18,7 @@ excerpt: "How are the tweets and twoots doing? Let's explore!"
 
 ![](feature.png)
 
-Wow, it seems like my prediction still holds true. My prior was set at 80% that we will not see migration. The Twitter community in #IDTwitter does not appear to have made a significant migration to #IDMastodon.   
+Wow, it seems like my prediction still holds true. [My prior was set at 80% that we will not see migration](https://www.kenkoonwong.com/blog/idtwoots/). The Twitter community in #IDTwitter does not appear to have made a significant migration to #IDMastodon.   
 
 The analysis of the #IDTwitter model using a Generalized Additive Model (GAM) with a degree of freedom of 6 indicates a high level of variance. This is likely due to the large number of tweets that are posted on a daily basis, causing fluctuations in the data. For example, we can see a yo-yo-like pattern in the data, which is probably prompted by the influx of tweets during the Aspergillosis week and the CROI 2023 conference.    
 
