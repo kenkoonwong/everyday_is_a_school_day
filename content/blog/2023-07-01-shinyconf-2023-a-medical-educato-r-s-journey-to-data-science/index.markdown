@@ -9,12 +9,16 @@ categories:
 - shiny
 - shinyconf
 - appsilon
+- medical education
+- recruitment
 tags: 
 - R
 - r
 - shiny
 - shinyconf
 - appsilon
+- medical education
+- recruitment
 excerpt: I had the opportunity to share our journey to data science in medical education 
 ---
 >Special thanks are due to Dr. Amit Diwakar, Dr. Jeffrey Solomon, and Jennifer Hayes for their contributions in making this project a resounding success and continuously striving for improvement.
