@@ -1,5 +1,5 @@
 ---
-title: 'ESICM Datathon 2023: Mechanical Power'
+title: 'My Reflection On ESICM Dathon 2023'
 author: Ken Koon Wong
 date: '2023-07-16'
 slug: datathon23
