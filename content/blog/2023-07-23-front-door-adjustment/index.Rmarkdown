@@ -1,0 +1,201 @@
+---
+title: Front-door Adjustment
+author: Ken Koon Wong
+date: '2023-07-23'
+slug: "frontdoor"
+categories: 
+- causality
+- r
+- R
+- front-door adjustment
+- doCalculus
+tags: 
+- causality
+- r
+- R
+- front-door adjustment
+- doCalculus
+excerpt: "Front-door adjustment: a superhero method for handling unobserved confounding by using mediators (if present) to estimate causal effects accurately"
+---
+
+> Front-door adjustment: a superhero method for handling unobserved confounding by using mediators (if present) to estimate causal effects accurately. 
+
+![](feature.jpg)
+
+## Let's DAG an estimand! 
+
+```{r, warning=F}
+library(dagitty)
+
+dag <- dagitty('dag {
+bb="0,0,1,1"
+U [pos="0.402,0.320"]
+X [exposure,pos="0.176,0.539"]
+Y [outcome,pos="0.614,0.539"]
+Z [pos="0.409,0.539"]
+U -> X
+U -> Y
+X -> Z
+Z -> Y
+}
+')
+
+plot(dag)
+```
+
+You can easily draw a DAG on [dagitty](https://www.dagitty.net/dags.html#) and then copy and paste the code and slot it in the `dag { code }` and voila!  
+
+`X` is our treatment variable.     
+`Y` is our outcome variable.   
+`U` is confounder that is not measured.     
+`Z` is our mediator.     
+
+## Assume We Know The Truth
+```{r, message=F, warning=F}
+library(tidyverse)
+library(DT)
+
+# pseudorandomization
+set.seed(1)
+
+# Set sample 
+n <- 1000
+
+# Set noise of each nodes
+ux <- rnorm(n)
+uy <- rnorm(n)
+uz <- rnorm(n)
+uu <- rnorm(n)
+
+# Set each nodes' equation
+u <- uu
+x <- 0.4*u + ux 
+z <- 0.6*x + uz
+y <- -0.5*z + uy + 0.6*u 
+
+# Create a table
+df <- tibble(x=x,y=y,z=z,u=u)
+
+# For easier viewing on blog
+datatable(df)
+```
+
+The reason to assign `uu, uy, uz, uu` is basically to introduce some randomness to the equation.  Then, the magic is when we write out the equations for `u, x, z, y`. This is what we meant by "knowing the truth". We know exactly what coefficients for equations. For example, How much `z` would increase if there is an increase of 1 unit of `x`? The answer would be `0.6`, as that is the coefficient we had set. We also know the exact `u` variable values are as well, but we'll assume that we don't and we'll check if `front-door adjustment` can help us.
+
+<br>
+
+## The Right Model ✅
+In order for us to know what a wrong model is, we have to know what the right model is first. Since we know `u`, let's model it and find the correct coefficient of `x`, holding `u` constant.    
+
+![](adjustu.png)
+
+As you can see the screenshot above, if we have the luxury to adjust for `u`, then we have essentially d-seperated `x` and `y` and we can estimate their coefficient. Let's put in into linear regression model.
+
+
+```{r, message=F,warning=F}
+correct_model <- lm(y~x+u,df)
+summary(correct_model)
+```
+
+Looking at the coefficient for `x`, the correct estimate is `r correct_model$coefficients[['x']]`
+
+<br>
+
+## The Wrong Model ❌
+Now, let's look at the wrong model. Let's say naively, we want to fit just `y ~ x`. What would happen?
+
+```{r, message=F,warning=F}
+model_no_front <- lm(y~x,df)
+summary(model_no_front)
+```
+
+Did you notice that the `x` coefficient is `r model_no_front$coefficients[['x']]` ? 
+
+Let's look at another wrong model, let's control for Z and see what that shows?
+```{r, message=F,warning=F}
+model <- lm(y~z+x,df)
+summary(model)
+```
+
+Wait, what? Now `x` is `r model$coefficients[['x']]` ??? The correct coefficient is `r correct_model$coefficients[['x']]` as we previously had calculated. What is going on here? 🤪
+
+Here is a screenshot of wrongly adjusting for `z`
+![](adjustz.png)
+
+<br>
+
+## What do we do? 🤷‍♂️
+### In Comes The Front-door Adjustment! If we're lucky... 🍀
+Let's look at the equation to calculate for front-door adjustment. It is divided into 2 steps
+
+#### 1. Estimate Z and do(X)
+> The game of doCalculus is to how to get rid of the `do`
+
+$p(Z|do(X)) = \sum p(Z|X)$.   
+Why is the above estimate true? Let's go back to the DAG and change outcome to `z`
+
+<br>
+
+![](z-dox.png)
+Did you notice that there is no need to adjust anything at all because there is a collider on `y` ? Can't see it? Here you go: `z -> y <- u -> x`. Sometimes writing the equation out really helps.  
+
+```{r, message=F,warning=F}
+#  1. Estimate Z and do(X)
+model2 <- lm(z~x,df)
+summary(model2)
+```
+
+`x` coefficient is `r model2$coefficients[["x"]]`. 
+
+#### 2. Estimate Y and do(Z)
+$p(Y|do(Z)) = \sum p(Y|Z,X).p(X)$. 
+Why is the above estimate true? Let's go back to the DAG and change outcome to `y` and exposure to `z`
+
+<br>
+
+![](y-doz.png)
+Did you notice that we need to adjust for one node that we actually have data on to achieve d-separation? Can't see it? Here you go: `y <- u -> x -> z`. What is it? `x` !!! The treatment itself, how uncanny !!!
+
+Let's check out this model
+```{r, message=F,warning=F}
+model <- lm(y~z+x,df)
+summary(model)
+```
+
+`z` coefficient is `r model$coefficients[["z"]]`. 
+
+<br>
+
+#### 3. Put it together - x coefficient * z coefficient
+The true `x` coefficient in relation to `y` is essentially the multiplication of the above estimates! 
+
+$p(Y|do(X)) = p(Y|do(Z)).p(Z|do(X)) = \sum p(Y|Z,X').p(X').\sum p(Z|X)$ 
+
+Let's see if this is true with our codes and data
+```{r, message=F,warning=F}
+#correct estimated coefficient
+model$coefficients[["z"]]*model2$coefficients[["x"]]
+```
+
+Our estimate `x` coefficient is `r model$coefficients[["z"]]*model2$coefficients[["x"]]`. Whereas our true `x` coefficient is `r correct_model$coefficients[['x']]`. About `r model$coefficients[["z"]]*model2$coefficients[["x"]]-correct_model$coefficients[['x']]` difference. Not too shabby at all !!! Notice that we did not need `u` data at all to estimate this. Awesomeness!!!
+
+![](win.jpg)
+
+Yes, it's not going to be exactly what the true estimate is but it's close enough! You can mess around the `n` by increasing it and you will then get closer to the true estimate. Also depends on your `set.seed`, the true coefficient will be different too, give seed `123` a try.
+
+<br>
+
+### Lessons learnt
+- Front-door analysis is another great tool when unobserved confounder is a problem
+- Learnt how to estimate front-door formula from scratch is very helpful in understanding how the whole thing works
+- To estimate whether a method is beneficial we can simulate equations and data and test the theory
+- there are other packages such as doWhy which will calculate all these for you without a hassle in deriving your own formula
+
+
+<br>
+
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
