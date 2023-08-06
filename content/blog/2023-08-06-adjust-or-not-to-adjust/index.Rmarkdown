@@ -1,0 +1,204 @@
+---
+title: What Happens If Our Model Adjustment Includes A Collider?
+author: Ken Koon Wong
+date: '2023-08-06'
+slug: collider_adjustment
+categories: 
+- r
+- R
+- collider
+- v structure
+- adjust
+- adjustment
+- dag
+- causality
+tags: 
+- r
+- R
+- collider
+- v structure
+- adjust
+- adjustment
+- dag
+- causality
+excerpt: "Beware of what we adjust. As we have demonstrated, adjusting for a collider variable can lead to a false estimate in your analysis. If a collider is included in your model, relying solely on AIC/BIC for model selection may provide misleading results and give you a false sense of achievement."
+---
+
+> Beware of what we adjust. As we have demonstrated, adjusting for a collider variable can lead to a false estimate in your analysis. If a collider is included in your model, relying solely on AIC/BIC for model selection may provide misleading results and give you a false sense of achievement.
+
+<br>
+
+![](feature.jpg)
+
+
+### Let's DAG out The True Causal Model
+```{r, warning=F, message=F}
+# Loading libraries
+library(ipw)
+library(tidyverse)
+library(dagitty)
+library(DT)
+
+# Creating the actual/known DAG
+dag2 <- dagitty('dag {
+bb="0,0,1,1"
+W [adjusted,pos="0.422,0.723"]
+X [exposure,pos="0.234,0.502"]
+Y [outcome,pos="0.486,0.498"]
+Z [pos="0.232,0.264"]
+collider [pos="0.181,0.767"]
+W -> X
+W -> Y
+X -> Y
+X -> collider
+Y -> collider
+Z -> W
+Z -> X
+}
+')
+
+plot(dag2)
+```
+
+X: Treatment/Exposure variable/node.   
+Y: Outcome variable/node.   
+Z: Something... not sure what this is called 🤣.    
+W: Confounder.    
+collider: Collider, V-structure.     
+
+<br>
+
+Let's find out what is our minimal adjustment for total effect
+```{r, message=F}
+adjust <- adjustmentSets(dag2)
+adjust
+```
+
+Perfect! We only need to adjust `r adjust`. Now we know which node is correct to adjust, let's simulate data!
+
+```{r, message=F}
+set.seed(1)
+
+# set number of observations
+n <- 100
+z <- rnorm(n)
+w <- 0.6*z + rnorm(n)
+x <- 0.5*z + 0.2*w + rnorm(n)
+y <- 0.5*x + 0.4*w  
+collider <- -0.4*x + -0.4*y  
+
+# turning y and x into binary/categorical
+x1=ifelse(x>mean(x),1,0)
+y1=ifelse(y>mean(y),1,0)
+
+# create a dataframe for the simulated data
+df <- tibble(z=z,w=w,y=y1,x=x1, collider=collider)
+
+datatable(df)
+```
+
+The reason we converted `x` and `y` into binary variables was to replicate a question that is often encountered in our research. In many cases, both the treatment and outcome are binary. Hence, the transformation. However, it is possible to keep the variables as they are and use linear regression instead of logistic regression, which I'll be using shortly. Additionally, I used the `mean` to binarize both variables into `1` or `0` because they were approximately normally distributed, and I wanted to balance them. You can experiment with different threshold values if needed.
+
+<br>
+
+### Simple Model (y ~ x)
+```{r, message=F}
+model_c <- glm(y~x, data=df)
+summary(model_c)
+```
+
+Note that our true `x` `coefficient` is `0.5`. Our current naive model shows `r model_c$coefficients[["x"]]`
+
+### Correct Model (y ~ x + w) ✅
+```{r,message=F}
+model_cz <- glm(y~x + w, data=df)
+summary(model_cz) 
+```
+
+Wow, even the correct model models `x` coefficient of `r model_cz$coefficients[["x"]]`. Not bad with an `n` of `r n`
+
+### Alright, What About Everything Including Collider (y ~ x + z + w + collider) ❌
+```{r, message=F}
+model_czwall <- glm(y~x + z + w + collider, data=df)
+summary(model_czwall)  
+```
+
+😱 `x` is now `r model_czwall$coefficients[["x"]]`. Not good! 
+
+### Let's Visualize All Models
+```{r, message=F}
+load("df_model.rda")
+
+df_model |>
+  mutate(color = case_when(
+    str_detect(formula, "collider") ~ 1,
+    TRUE ~ 0
+  )) |>
+  ggplot(aes(x=formula,y=estimate,ymin=lower,ymax=upper)) +
+  geom_point(aes(color=as.factor(color))) +
+  geom_linerange(aes(color=as.factor(color))) +
+  scale_color_manual(values = c("grey","red")) +
+  coord_flip() +
+  geom_hline(yintercept = 0.5) +
+  theme_minimal() +
+  theme(legend.position = "none") 
+```
+
+The red lines represent models with colliders adjusted. It's important to observe that none of these models contain the true value within their 95% confidence intervals. Adjusting for colliders can lead to biased estimates, particularly when the colliders directly affect both the treatment and outcome variables. Careful consideration should be given to the inclusion of colliders in the analysis to avoid potential distortions in the results."
+
+<br>
+
+### Let's check IPW
+```{r, message=F}
+ipw <- ipwpoint(
+  exposure = x,
+  family = "binomial",
+  link = "logit",
+  denominator = ~ w,
+  data = as.data.frame(df))
+
+model_cipw <- glm(y ~ x, data = df |> mutate(ipw=ipw$ipw.weights), weights = ipw)
+summary(model_cipw)
+```
+
+`x` is now `r model_cipw$coefficients[["x"]]`. Quite similar to before. What if we just try a collider?
+
+```{r}
+ipw <- ipwpoint(
+  exposure = x,
+  family = "binomial",
+  link = "logit",
+  denominator = ~ collider,
+  data = as.data.frame(df))
+
+model_cipw2 <- glm(y ~ x, data = df |> mutate(ipw=ipw$ipw.weights), weights = ipw)
+summary(model_cipw2)
+```
+
+Youza! `x` is now `r model_cipw2$coefficients[["x"]]` with `collider`. NOT GOOD !!! 
+
+Some clinical examples of adjusting for colliders that lead to d-connection include situations where the treatment and outcome have a common cause that is also adjusted for, such as when the outcome is mortality and the collider is the recurrence of a medical condition. In this scenario, adjusting for the common cause (recurrence of the condition) could lead to d-connection because both the treatment and mortality can directly affect the recurrence of the medical condition (where recurrence would likely decrease when mortality occurs)."
+
+<br>
+
+### What If We Just Use Stepwise Regression?
+```{r,message=F}
+datatable(df_model |> select(formula,aic,bic), 
+          options = list(order = list(list(2,"asc"))))
+```
+
+Wow, when sorted in ascending order, the first 2 lowest AIC values are associated with models that include colliders! This is surprising! It highlights the importance of caution when using stepwise regression or automated model selection techniques, especially if you are uncertain about the underlying causal model. Blindly relying on these methods without understanding the causal relationships can lead to misleading results.
+
+<br>
+
+### Lessons learnt
+- Having a well-defined Causal Estimand is crucial! It requires careful consideration of the clinical context and the specific question you want to address.
+- Blindly adjusting for all available variables can be dangerous, as it may lead to spurious correlations. Selecting variables to adjust for should be guided by domain knowledge and causal reasoning.
+- If you're interested in accessing the code for all of the models [click here](simulated_collider_model.R)
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
