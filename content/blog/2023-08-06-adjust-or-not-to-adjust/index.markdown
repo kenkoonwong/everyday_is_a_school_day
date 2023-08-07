@@ -331,6 +331,12 @@ Wow, when sorted in ascending order, lower BIC values are associated with models
 
 <br>
 
+#### Acknowledgement ❤️
+
+Thanks Alec Wong for pointing out the error! Initially when I discretized `x` and `y`, it would have disconnected the relationship from the true causal model. Always learning from this guy! Next project would be to figure out the logistic regression portion of it. Until next time!
+
+<br>
+
 ### Lessons learnt
 
 - Having a well-defined Causal Estimand is crucial! It requires careful consideration of the clinical context and the specific question you want to address.
