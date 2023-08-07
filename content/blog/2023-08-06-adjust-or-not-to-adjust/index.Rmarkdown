@@ -80,30 +80,24 @@ Perfect! We only need to adjust `r adjust`. Now we know which node is correct to
 set.seed(1)
 
 # set number of observations
-n <- 100
+n <- 1000
 z <- rnorm(n)
 w <- 0.6*z + rnorm(n)
 x <- 0.5*z + 0.2*w + rnorm(n)
-y <- 0.5*x + 0.4*w  
-collider <- -0.4*x + -0.4*y  
-
-# turning y and x into binary/categorical
-x1=ifelse(x>mean(x),1,0)
-y1=ifelse(y>mean(y),1,0)
+y <- 0.5*x + 0.4*w + rnorm(n) 
+collider <- -0.4*x + -0.4*y + rnorm(n) 
 
 # create a dataframe for the simulated data
-df <- tibble(z=z,w=w,y=y1,x=x1, collider=collider)
+df <- tibble(z=z,w=w,y=y,x=x, collider=collider)
 
 datatable(df)
 ```
-
-The reason we converted `x` and `y` into binary variables was to replicate a question that is often encountered in our research. In many cases, both the treatment and outcome are binary. Hence, the transformation. However, it is possible to keep the variables as they are and use linear regression instead of logistic regression, which I'll be using shortly. Additionally, I used the `mean` to binarize both variables into `1` or `0` because they were approximately normally distributed, and I wanted to balance them. You can experiment with different threshold values if needed.
 
 <br>
 
 ### Simple Model (y ~ x)
 ```{r, message=F}
-model_c <- glm(y~x, data=df)
+model_c <- lm(y~x, data=df)
 summary(model_c)
 ```
 
@@ -111,15 +105,15 @@ Note that our true `x` `coefficient` is `0.5`. Our current naive model shows `r 
 
 ### Correct Model (y ~ x + w) ✅
 ```{r,message=F}
-model_cz <- glm(y~x + w, data=df)
+model_cz <- lm(y~x + w, data=df)
 summary(model_cz) 
 ```
 
-Wow, even the correct model models `x` coefficient of `r model_cz$coefficients[["x"]]`. Not bad with an `n` of `r n`
+Not bad ! `x` coefficient is `r model_cz$coefficients[["x"]]`
 
 ### Alright, What About Everything Including Collider (y ~ x + z + w + collider) ❌
 ```{r, message=F}
-model_czwall <- glm(y~x + z + w + collider, data=df)
+model_czwall <- lm(y~x + w + collider, data=df)
 summary(model_czwall)  
 ```
 
@@ -152,8 +146,8 @@ The red lines represent models with colliders adjusted. It's important to observ
 ```{r, message=F}
 ipw <- ipwpoint(
   exposure = x,
-  family = "binomial",
-  link = "logit",
+  family = "gaussian",
+  numerator = ~ 1,
   denominator = ~ w,
   data = as.data.frame(df))
 
@@ -161,14 +155,14 @@ model_cipw <- glm(y ~ x, data = df |> mutate(ipw=ipw$ipw.weights), weights = ipw
 summary(model_cipw)
 ```
 
-`x` is now `r model_cipw$coefficients[["x"]]`. Quite similar to before. What if we just try a collider?
+`x` is now `r model_cipw$coefficients[["x"]]`. Quite similar to before. What if we just try adding everything including  collider?
 
 ```{r}
 ipw <- ipwpoint(
   exposure = x,
-  family = "binomial",
-  link = "logit",
-  denominator = ~ collider,
+  family = "gaussian",
+  numerator = ~ 1,
+  denominator = ~ z + w + collider,
   data = as.data.frame(df))
 
 model_cipw2 <- glm(y ~ x, data = df |> mutate(ipw=ipw$ipw.weights), weights = ipw)
@@ -183,11 +177,11 @@ Some clinical examples of adjusting for colliders that lead to d-connection incl
 
 ### What If We Just Use Stepwise Regression?
 ```{r,message=F}
-datatable(df_model |> select(formula,aic,bic), 
+datatable(df_model |> select(formula,bic), 
           options = list(order = list(list(2,"asc"))))
 ```
 
-Wow, when sorted in ascending order, the first 2 lowest AIC values are associated with models that include colliders! This is surprising! It highlights the importance of caution when using stepwise regression or automated model selection techniques, especially if you are uncertain about the underlying causal model. Blindly relying on these methods without understanding the causal relationships can lead to misleading results.
+Wow, when sorted in ascending order, lower BIC values are associated with models that include colliders! This is surprising! It highlights the importance of caution when using stepwise regression or automated model selection techniques, especially if you are uncertain about the underlying causal model. Blindly relying on these methods without understanding the causal relationships can lead to misleading results.
 
 <br>
 
