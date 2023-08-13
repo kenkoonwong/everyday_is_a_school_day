@@ -132,7 +132,7 @@ for (i in to) {
 }
 
 # save the new data
-write_csv(df, file = paste0(path,"data.csv"))
+write_csv(df, path = "data.csv")
 ```
 
 The email looks like this    
