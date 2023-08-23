@@ -37,7 +37,7 @@ excerpt: 'Simulating a binary dataset, coupled with an understanding of the logi
 ![](feature.jpg)
 <br>
 
-A few weeks ago, with the guidance of *Alec Wong* and a new acquaintance, *Jose Luis Cañadas*, I wrote a blog post about model adjustment involving a collider. Initially, I intended to utilize binary data. However, Alec astutely observed inaccuracies in both my simulations and models, steering me in the correct direction. This revision seeks to address those inaccuracies for the sake of completeness. Every day is truly a learning experience! I’m deeply grateful to both Alec and Jose for their invaluable insights, which have enriched my understanding of the captivating world of Statistics.
+A few weeks ago, with the guidance of **Alec Wong** and a new acquaintance, **Jose Luis Cañadas**, I wrote a blog post about model adjustment involving a collider. Initially, I intended to utilize binary data. However, Alec astutely observed inaccuracies in both my simulations and models, steering me in the correct direction. This revision seeks to address those inaccuracies for the sake of completeness. Every day is truly a learning experience! I’m deeply grateful to both Alec and Jose for their invaluable insights, which have enriched my understanding of the captivating world of Statistics.
 
 ## Objectives
 
@@ -361,7 +361,7 @@ Putting them all together, our first model `z+w` and `all binary z+w` models acc
 
 ### Acknowledgement
 
-- Thanks again Alec and Jose!
+- Thanks again **Alec** and **Jose**!
 
 <br>
 
