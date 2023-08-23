@@ -1,0 +1,206 @@
+---
+title: 'Unraveling the Effects: Collider Adjustments in Logistic Regression'
+author: Ken Koon Wong
+date: '2023-08-22'
+slug: collider-lr
+categories: 
+- r
+- R
+- collider
+- logistic regression
+- simulation
+- plogis
+tags: 
+- r
+- R
+- collider
+- logistic regression
+- simulation
+- plogis
+exerpt: 'Simulating a binary dataset, coupled with an understanding of the logit link and the linear formula, is truly fascinating! However, we must exercise caution regarding our adjustments, as they can potentially divert us from the true findings. I advocate for transparency in Directed Acyclic Graphs (DAGs) and emphasize the sequence: causal model -> estimator -> estimand.' 
+---
+
+> Simulating a binary dataset, coupled with an understanding of the logit link and the linear formula, is truly fascinating! However, we must exercise caution regarding our adjustments, as they can potentially divert us from the true findings. I advocate for transparency in Directed Acyclic Graphs (DAGs) and emphasize the sequence: causal model -> estimator -> estimand.   
+
+<br>
+
+![](feature.jpg)
+<br>
+
+A few weeks ago, with the guidance of *Alec Wong* and a new acquaintance, *Jose Luis Cañadas*, I wrote a blog post about model adjustment involving a collider. Initially, I intended to utilize binary data. However, Alec astutely observed inaccuracies in both my simulations and models, steering me in the correct direction. This revision seeks to address those inaccuracies for the sake of completeness. Every day is truly a learning experience! I'm deeply grateful to both Alec and Jose for their invaluable insights, which have enriched my understanding of the captivating world of Statistics.    
+
+## Objectives 
+- [Simulate data featuring binary exposures/treatments, covariates (including a collider), and outcomes.](#simulation)
+- [Employ logistic regression to determine the accurate exposure/treatment coefficient.](#adjusting-for-w-and-z-only-)
+- [Turning all nodes binary](#full-on-binary-dataset) 
+
+<br>
+
+## Simulation
+```{r,message=F,warning=F}
+library(tidyverse)
+library(DT)
+library(broom)
+
+{
+set.seed(1)
+n <- 1000
+w <- rnorm(n)
+z <- rnorm(n)
+s <- rnorm(n)
+x <- rbinom(n,1,plogis(-0.5+0.2*w+0.2*z))
+y <- rbinom(n,1,plogis(-2+2*x+0.2*w+0.2*z+0.2*s))
+collider <-  -5 + -5*x+ -0.2*s + rnorm(n,0,0.5)
+
+
+# not including unobserved_conf
+df <- tibble(w=w,z=z,x=x,y=y,collider=collider,s=s)
+}
+
+datatable(df)
+```
+
+<br>
+
+### DAG
+![](dag.png)
+
+Nodes:
+- `w`, `s`, and `z` are confounders. Though, note that `s` is unobserved
+- `x` is exposure/treatment
+- `y` is outcome
+- `collider` is collider.   
+
+It looks like the minimal adjustment would be just `w` and `z`. 
+
+<br>
+
+### Adjusting for `w` and `z` only ✅
+```{r}
+model <- glm(y~x+w+z,data=df,family="binomial")
+
+summary(model)
+```
+
+The true intercept is `-2` and our model has `r model$coefficients[["(Intercept)"]]`.    
+The true `coefficient` of `x` is `2` and our model has `r model$coefficients[["x"]]`.   
+Not too bad. Adjusting the minimal nodes did the trick. Note that we didn't even have to adjust for `s`. Pretty cool! 😎
+
+<br>
+
+### Adjusting for `w`, `z`, and `collider` ❌
+```{r}
+model_col <- glm(y~x+w+z+collider,data=df,family="binomial")
+summary(model_col)
+```
+
+The true intercept is `-2` and our 2nd model has `r model_col$coefficients[["(Intercept)"]]`.    
+The true `coefficient` of `x` is `2` and our 2nd model has `r model_col$coefficients[["x"]]`. 
+Not very good. 🤣 Maybe the 95% confidence interval might include the true estimate. Let's check it out.   
+
+```{r}
+confint(model_col)
+```
+
+Barely. Technically, the `coefficient` shouldn't really be interpreted as anything meaningful since the 95% CI contains `0` which means the estimate could decrease or increase the log odds of `y`. Yup, not helpful 😆
+
+<br>
+
+### What if We Adjust ALL, If `s` is Observed?
+```{r}
+model_all <- glm(y~x+w+z+collider+s,data=df,family="binomial")
+summary(model_all)
+```
+
+The true intercept is `-2` and our model has `r model_all$coefficients[["(Intercept)"]]`.    
+The true `coefficient` of `x` is `2` and our model has `r model_all$coefficients[["x"]]`.    
+OK, maybe the `x` coefficient got a little better but statistics indicates it crosses zero. Still not good enough. 😱
+
+<br>
+
+### Full On Binary Dataset
+```{r}
+{
+set.seed(2)
+n <- 1000
+w <- rbinom(n,1,0.5)
+z <- rbinom(n,1,0.5)
+s <- rbinom(n,1,0.5)
+x <- rbinom(n,1,plogis(-0.5+0.2*w+0.2*z))
+y <- rbinom(n,1,plogis(-2+2*x+0.2*w+0.2*z+0.2*s))
+collider <-  -5 + -5*x+ -0.2*s + rnorm(n,0,0.5)
+
+
+# not including unobserved_conf
+df <- tibble(w=w,z=z,x=x,y=y,collider=collider,s=s)
+}
+
+model_bin <- glm(y ~ x + z + w, data=df, family = "binomial")
+summary(model_bin)
+```
+
+The true intercept is `-2` and our 2nd model has `r model_bin$coefficients[["(Intercept)"]]`.    
+The true `coefficient` of `x` is `2` and our 2nd model has `r model_bin$coefficients[["x"]]`. 
+Notice that estimates aren't as precise as the previous dataset where `w` and `z` were continuous variables. I found that small tweaks of parental/ancestral nodes with binary data and the `x` and `y` intercepts would change the estimates dramatically. Very intersting!
+
+<br>
+
+### Let's Test Out With `collider`
+```{r}
+model_bin_col <- glm(y~x+w+z+collider,data=df,family="binomial")
+summary(model_bin_col)
+```
+
+The true intercept is `-2` and our 2nd model has `r model_bin$coefficients[["(Intercept)"]]`.    
+The true `coefficient` of `x` is `2` and our 2nd model has `r model_bin$coefficients[["x"]]`.
+Wow, increase in intercept and decrease in `x` coefficient. Not good!
+
+### Comparison of all models 📊
+```{r}
+df_model <- model |> 
+  tidy() |> 
+  mutate(model = "z + w") |>
+  relocate("model") |>
+  add_row(model_col |>
+            tidy() |>
+            mutate(model = "z + w + collider")) |>
+  add_row(model_all |>
+            tidy() |>
+            mutate(model = "z + w + collider + s")) |>
+  add_row(model_bin |>
+            tidy() |>
+            mutate(model = "all binary: z + w")) |>
+  add_row(model_bin_col |>
+            tidy() |>
+            mutate(model = "all binary: z + w + collider")) 
+
+df_model |>
+  ggplot(aes(x=term,y=estimate,ymin=estimate-std.error,ymax=estimate+std.error)) +
+  geom_point() +
+  geom_linerange() +
+  geom_hline(aes(yintercept = -2),color="red", alpha = 0.5) +
+  geom_hline(aes(yintercept = 2),color="blue", alpha = 0.5) +
+  facet_wrap(.~model) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 1, angle = 45))
+
+```
+
+Putting them all together, our first model `z+w` and `all binary z+w` models accurately estimated `x` coefficient and its intercept. Hurray!
+
+<br>
+
+### Lessons learnt
+- `inverse logit function` (`plogis`) is used to convert the linear equation to probability
+- adjusting for `collider` is still not a good thing. Now maybe Jose may use Full-Luxury Bayesian Stats to work this miracle again, looking forward!
+
+### Acknowledgement
+- Thanks again Alec and Jose! 
+
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
