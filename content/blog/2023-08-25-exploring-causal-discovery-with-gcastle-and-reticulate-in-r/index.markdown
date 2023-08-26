@@ -165,7 +165,6 @@ hm <- function(x,title,dag_true=F) {
   pivot_longer(cols = colname_g, names_to = "Var1", values_to = "Freq") |>
   mutate(Var1 = case_when(
     str_detect(Var1, "V") ~ str_extract(Var1,"[1-9]")))  |>
-  # mutate(Var1 = fct_relevel(c("A","B","C","D","E")))
   ggplot(aes(x=Var1,y=Var2)) +
   geom_tile(aes(fill=Freq), color = "black", alpha=0.5) +
   scale_fill_gradient(low = "white", high = color) +
@@ -566,10 +565,10 @@ priori$matrix
 ## [5,]   -1   -1   -1   -1    0
 ```
 
-The naive prior knowledge looks like this. 👆
-`-1` means can be modified
-`0` means do not assign and don't modify
-`1` means assigned and don't modify
+The naive prior knowledge looks like this. 👆.   
+`-1` means can be modified.   
+`0` means do not assign and don't modify.    
+`1` means assigned and don't modify.   
 
 
 ```r
