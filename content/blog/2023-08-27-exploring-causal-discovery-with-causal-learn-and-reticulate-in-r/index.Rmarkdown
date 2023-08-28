@@ -28,10 +28,13 @@ excerpt: The PyWhy Causal-learn Discord community is fantastic! The package docu
 
 > The PyWhy Causal-learn Discord community is fantastic! The package documentation is equally impressive, making experiential learning both fun and informative. Truly, it's another exceptional tool for causal discovery at our fingertips! ❤️
 
+<br>
 
 <p align="center">
 <img src="feature.png" alt="image" width="50%" height="auto">
 </p>
+
+<br>
 
 It's time to delve into [PyWhy's Causal-learn](https://causal-learn.readthedocs.io/en/latest/)! his brief blog post leverages the framework from a previous blog to navigate through DAGs using `causal-learn` rather than `gCastle`. If you're keen on a more in-depth exploration of the PC algorithm, be sure to check out the [previous blog](https://www.kenkoonwong.com/blog/gcastle/). 
 
@@ -308,7 +311,11 @@ gp_g <- hm(gp_mat, "GRaSP")
 ggarrange(dag_g,pc_g,fci_g,ges_g,exact_g,lingam_g,gin_g,gp_g)
 ```
 
-![](combo_g2.png)
+<p align="center">
+<img src="dag2.png" alt="image" width="80%" height="auto">
+</p> 
+
+![](combo_g2.png).   
 
 `GES`, `Exact`, and `GRaSP` won the race again! 
 
