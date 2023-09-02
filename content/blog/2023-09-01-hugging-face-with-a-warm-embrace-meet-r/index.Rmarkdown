@@ -1,0 +1,260 @@
+---
+title: "Hugging Face \U0001F917, with a warm embrace, meet R️ ❤️ "
+author: Ken Koon Wong
+date: '2023-09-01'
+slug: huggingface
+categories: 
+- r
+- R
+- hugging face
+- bert
+- finbert
+- transformers
+- reticulate
+tags: 
+- r
+- R
+- hugging face
+- bert
+- finbert
+- transformers
+- reticulate
+excerpt: I'm delighted that R users can have access to the incredible Hugging Face pre-trained models. In this demonstration, we provide a straightforward example of how to utilize them for sentiment analysis using GPT-generated synthetic data from evaluation comments. Let's go!
+---
+
+> I'm delighted that R users can have access to the incredible Hugging Face pre-trained models. In this demonstration, we provide a straightforward example of how to utilize them for sentiment analysis using GPT-generated synthetic data from evaluation comments. Let's go!
+
+## Interesting Problem 😎
+What if you're faced with a list of survey comments that you need to sift through? Apart from reading them one by one, is there a method that could potentially introduce a new perspective and expedite this process? Are there any models available for performing sentiment analysis?    
+
+## Objectives:
+- [Brief Intro to Transfomers Python Module & Hugging Face]
+- [Installing Transformers and Loading Module]
+- [Load Reuter Dataset]
+- [Load Pre-trained Model & Predict]
+  - BERT vs FinBERT
+- [Predict GPT4 generated comments 🤖](#predict-gpt4-generated-comments-)
+- [Acknowledgement]
+- [Lessons learnt]
+
+## Brief Intro to Transfomers Python Module & Hugging Face
+
+#### `Transformers`
+
+<p align="center">
+<img src="transformers.jpg" alt="image" width="50%" height="auto">
+</p>
+
+
+In comes `Transformers`, which provides APIs and tools to easily download and train state-of-the-art pretrained models. Using pretrained models can reduce your compute costs, carbon footprint, and save you the time and resources required to train a model from scratch. These models support common tasks in different modalities, such as: NLP, computer vision, audio, and multimodal. `Transformers` support framework interoperability between PyTorch, TensorFlow, and JAX. Pretty cool, right!? But wait, this is a python 🐍 API! No fear, as before, we've demonstrated how `R` is able to use `python` modules with ease. Let's code! 
+
+<p align="center">
+<img src="feature.png" alt="image" width="50%" height="auto">
+</p>
+
+#### About Hugging Face 🤗 
+[Hugging Face](https://huggingface.co/) is a technology company specializing in natural language processing (NLP) and machine learning, best known for its [Transformers](https://huggingface.co/docs/transformers/index) library, an open-source collection of pre-trained models and tools that simplify the use of advanced NLP techniques. Established in 2016, the company has become a significant contributor to the field of AI, democratizing access to state-of-the-art models like BERT, GPT-2, and many others. Their platform allows developers, researchers, and businesses to easily implement complex NLP tasks such as sentiment analysis, text summarization, and machine translation. With a robust community of users contributing to its ecosystem, Hugging Face has become a go-to resource for those looking to harness the power of machine learning for language-based tasks.
+
+## Installing Transformers and Loading Module
+```{r, message=F, warning=F}
+library(reticulate)
+library(tidyverse)
+library(DT)
+
+# install transformers
+# py_install("transformers", pip = T) # remember to uncomment and do this first
+
+# load transformers module 
+transformer <- import("transformers")
+autotoken <- transformer$AutoTokenizer
+autoModelClass <- transformer$AutoModelForSequenceClassification
+```
+
+The above code when loading `transformers` resemble the below in `python`
+
+```{python, eval=F}
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+```
+
+## Load Reuter Dataset
+```{r, message=F, warning=F}
+# load data
+df <- read_csv("reuters_headlines2.csv") |>
+  head(10)
+
+# extract the headlines section
+df_list <- df |>
+  pull(Headlines)
+```
+
+## Load Pre-trained Model & Predict 
+
+![](hf_trend.png)
+When you go to Hugging Face Model section, click on text classification and then sort by most likes. The above is a snapshot of that. Through wisdom of crowd, I think the top liked pre-trained models might be good ones to try out! Let's give them a try!
+
+#### Load model
+```{r, message=F, warning=F}
+tokenizer <- autotoken$from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+model <- autoModelClass$from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+```
+
+
+#### Let's look at what the model predicts
+```{r}
+model$config$id2label
+```
+
+Ahh, ok. For `distilbert-base-uncased-finetuned-sst-2-english`, the output would be `negative` which is `0` or `positive` which is `1`.    
+
+#### Let's feed our data onto `tokinzer` and see what is in it?
+```{r}
+inputs <- tokenizer(df_list, padding=TRUE, truncation=TRUE, return_tensors='pt') # pt stands for pytorch
+
+inputs$data
+```
+
+Interesting! `input_ids` are the numerical representations of the tokens in your input sequence(s). The first value 101 is the special token [CLS], which is often used as a sequence classifier in models like BERT. `attention_mask` tensor indicates which positions in the input sequence should be attended to and which should not (usually padding positions). A `1` means the position should be used in the attention mechanism, while a `0` usually signifies padding or another value to be ignored.
+
+Now let's dive into the tokenization of the data
+
+```{r, eval=F}
+df_list[1:5]
+
+input$data[[1]][0:4] # notice that python begins with 0
+```
+
+![](df_input.png)
+Above is a snapshot of my console that showed the actual words and the tokens. It looks like token `2000` is `to`. Note that the tokens begin with `101` and end with `102`.    
+
+In transformer models like BERT, certain special tokens are often used to help the model understand the task it should perform. These special tokens are represented by special IDs. The 101 and 102 tokens are such special tokens, and they have particular meanings:
+
+`101` represents the `[CLS] (classification)` token. This is usually the first token in a sequence and is used for classification tasks. For tasks like sequence classification, the hidden state corresponding to this token is used as the aggregate sequence representation for classification.
+
+`102` represents the `[SEP] (separator)` token. This token is used to separate different segments in a sequence. For instance, if you're inputting two sentences into BERT for a task like question-answering or natural language inference, the [SEP] token helps the model distinguish between the two sentences.    
+
+As practice, what tokens are `U.S.`? Hover [here](## "U is 1057, . is 1012, S is 1055 , . is 1012") for answer.
+
+#### Let's Check The Prediction
+```{r}
+## reticulate does not have ** function to pass the params
+outputs <- model(inputs$input_ids, attention_mask=inputs$attention_mask)
+
+outputs
+```
+
+Ahh, these are in `logits`. Also, noted that we cannot do `model(**inputs)` like in python, we'd have to pass in individual parameters.    
+
+#### Load `torch` and change to probability
+```{r,message=F,warnins=F}
+torch <- import("torch")
+predictions <- torch$nn$functional$softmax(outputs$logits, dim=1L)
+
+predictions
+```
+
+Yes! There're in probabilities now. But how do we turn these tensors into `tibble` ?
+
+```{r}
+# turn tensor to list
+pred_table <- predictions$tolist()
+
+# map list into dataframe
+table <- map_dfr(pred_table, ~ tibble(positive = .[2], negative = .[1]))
+
+datatable(table)
+```
+
+Awesome! Looks like at least the coding worked. Let's combine the comments and the scores to check.
+
+```{r}
+df |>
+  head(10) |>
+  select(Headlines) |>
+  add_column(table) |>
+  datatable()
+```
+
+wow, most news are quite negative. 🤣 Not sure if `distilbert-base-uncased-finetuned-sst-2-english` is the best pre-trained model for these data. 
+
+#### Let's check out `ProsusAI/finbert`
+```{r}
+tokenizer <- autotoken$from_pretrained("ProsusAI/finbert")
+model <- autoModelClass$from_pretrained("ProsusAI/finbert")
+inputs <- tokenizer(df_list, padding=TRUE, truncation=TRUE, return_tensors='pt')
+outputs <- model(inputs$input_ids, attention_mask=inputs$attention_mask)
+predictions <- torch$nn$functional$softmax(outputs$logits, dim=1L)
+pred_table <- predictions$tolist()
+table <- map_dfr(pred_table, ~ tibble(positive = .[1], negative = .[2], neutral = .[3]))
+
+df |>
+  select(Headlines) |>
+  add_column(table) |>
+  datatable()
+```
+
+I like the additional option of `neutral`. This might actually be very helpful for our actual problem in evaluation comments.
+
+## Predict GPT4 generated comments 🤖
+#### First, Generate Data
+![](gpt.png)
+
+#### Second, Use `finBERT` for Sentiment Analysis 
+```{r,message=F,warning=F}
+eval_df <- read_csv("eval_comment.csv") |> 
+  pull(comment)
+
+inputs <- tokenizer(eval_df, padding=TRUE, truncation=TRUE, return_tensors='pt')
+outputs <- model(inputs$input_ids, attention_mask=inputs$attention_mask)
+predictions <- torch$nn$functional$softmax(outputs$logits, dim=1L)
+pred_table <- predictions$tolist()
+table <- map_dfr(pred_table, ~ tibble(positive = .[1], negative = .[2], neutral = .[3]))
+
+df_final <- tibble(comment = eval_df) |>
+  add_column(table) |>
+  select(-negative) |>
+  mutate(positive = positive + neutral) |>
+  select(-neutral)
+
+datatable(df_final)
+```
+
+Wow, not bad! If we put a threshold of `0.9` or more to screen out negative comments we might do pretty good!     
+
+#### Third, `datatable` with `backgroundColor` conditions for Aesthetics 📊
+```{r}
+datatable(df_final, options = list(columnDefs = list(list(visible = FALSE, targets = 2)))) |>
+  formatStyle(columns = "comment",
+              backgroundColor = styleInterval(cuts =
+                c(0.5, 0.95), values =
+                c('#FF000033', '#FFA50033', '#0000FF33')
+              ),
+                valueColumns = "positive")
+```
+
+Notice that I had to set a threshold of `0.95` to ensure all negative comments are captured. Meaning, only comments with sentiment of more than `0.95` will have blue background. If anything between `0.5` and `0.95` it would be yellow. Anything less than `0.5` will be red.    
+
+<p align="center">
+<img src="yes.jpg" alt="image" width="50%" height="auto">
+</p>
+
+We're done !!! Now we know how to access `Hugging Face` pre-trained model through `transformers`! This opens up another realm of awesomeness! 
+
+## Acknowledgement
+- This [Colab](https://colab.research.google.com/drive/1jEHhU5_x4oQkelW3p__fY2y0m3-z7Y5P?usp=sharing) link really had helped me to modify some of the codes to make it work in `R`
+- Thanks to my brother Ken S'ng, who inspired me to explore hugging face with his previous python script
+- Thanks to chatGPT for generating synthetic evaluation data! 
+- Of course, last but not least, the wonderful open-source community of Hugging Face! 🤗
+
+
+## Lessons learnt
+- Markdown hover text can be achieved through `[](## "")`
+- Changing alpha of hex code can be achieved through chatGPT prompt.
+- There are tons of great pre-trained models in Hugging Face, can't wait to explore further!
+
+<br>
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)

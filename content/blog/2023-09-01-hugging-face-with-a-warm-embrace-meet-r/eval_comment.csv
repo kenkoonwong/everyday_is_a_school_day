@@ -1,0 +1,41 @@
+comment,sentiment
+"This employee consistently meets deadlines and always delivers high-quality work.",Positive
+"The employee often comes in late and seems disengaged during team meetings.",Negative
+"She is an excellent communicator and facilitates team discussions well.",Positive
+"He rarely contributes to brainstorming sessions and seems uninterested in collective goals.",Negative
+"She has been instrumental in completing the project on time.",Positive
+"Lacks the initiative to independently solve problems, often waiting for instructions.",Negative
+"This employee is a natural leader and always takes responsibility for his tasks.",Positive
+"He tends to miss deadlines and disregards the quality of his deliverables.",Negative
+"She consistently goes above and beyond, even completing tasks that are not her responsibility.",Positive
+"He struggles with effective communication, often leaving team members confused.",Negative
+"Always punctual and shows high dedication towards her work.",Positive
+"This employee's lack of organizational skills has negatively impacted the team's performance.",Negative
+"She has strong technical skills that have greatly benefited the team.",Positive
+"He often speaks over others in meetings and disregards their ideas.",Negative
+"This employee is highly skilled and a great asset to the team.",Positive
+"He is resistant to adopting new methodologies and technologies.",Negative
+"She is proactive in identifying and solving problems.",Positive
+"Fails to maintain a positive work attitude and impacts team morale.",Negative
+"He has the ability to simplify complex problems and find effective solutions.",Positive
+"This employee tends to gossip, creating a toxic environment.",Negative
+"She shows a high level of commitment and follows through on her tasks.",Positive
+"His work is often filled with errors that require correction.",Negative
+"This employee is a fantastic mentor and helps junior staff grow.",Positive
+"He takes criticism poorly and is unresponsive to feedback.",Negative
+"She consistently contributes innovative ideas during team meetings.",Positive
+"He frequently distracts others, impacting productivity.",Negative
+"This employee has significantly improved in the past year.",Positive
+"She does not adhere to company policies and procedures.",Negative
+"He is excellent in managing his time and resources.",Positive
+"The employee has been late in submitting monthly reports repeatedly.",Negative
+"She effectively balances individual tasks with group responsibilities.",Positive
+"He tends to rush through his tasks, compromising on quality.",Negative
+"This employee exhibits strong problem-solving skills and a can-do attitude.",Positive
+"Fails to keep up with set targets and responsibilities.",Negative
+"She has a pleasant personality and gets along well with colleagues.",Positive
+"This employee is often absent, affecting the workflow of the team.",Negative
+"He is diligent and meticulous, paying attention to every detail.",Positive
+"She ignores constructive criticism and is resistant to change.",Negative
+"This employee has a high level of technical expertise that has boosted our productivity.",Positive
+"He lacks the ability to effectively manage stress, impacting his work quality.",Negative
