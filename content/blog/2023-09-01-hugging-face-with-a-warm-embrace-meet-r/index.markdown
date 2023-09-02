@@ -379,7 +379,7 @@ We’re done !!! Now we know how to access `Hugging Face` pre-trained model thro
 ## Acknowledgement
 
 - This [Colab](https://colab.research.google.com/drive/1jEHhU5_x4oQkelW3p__fY2y0m3-z7Y5P?usp=sharing) link really had helped me to modify some of the codes to make it work in `R`
-- Thanks to my brother Ken S’ng, who inspired me to explore hugging face with his previous python script
+- Thanks to my brother [Ken S’ng](https://www.linkedin.com/in/ken-sng-wong/), who inspired me to explore hugging face with his previous python script
 - Thanks to chatGPT for generating synthetic evaluation data!
 - Of course, last but not least, the wonderful open-source community of Hugging Face! 🤗
 
