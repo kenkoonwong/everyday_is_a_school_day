@@ -1,9 +1,9 @@
 ---
 title: "Hugging Face \U0001F917, with a warm embrace, meet R️ ❤️ "
-author: Ken Koon Wong
-date: '2023-09-01'
+author: "Ken Koon Wong"
+date: "2023-09-01"
 slug: huggingface
-categories: 
+categories:
 - r
 - R
 - hugging face
@@ -11,7 +11,7 @@ categories:
 - finbert
 - transformers
 - reticulate
-tags: 
+tags:
 - r
 - R
 - hugging face
@@ -19,7 +19,10 @@ tags:
 - finbert
 - transformers
 - reticulate
-excerpt: I'm delighted that R users can have access to the incredible Hugging Face pre-trained models. In this demonstration, we provide a straightforward example of how to utilize them for sentiment analysis using GPT-generated synthetic data from evaluation comments. Let's go!
+excerpt: "I'm delighted that R users can have access to the incredible Hugging Face
+  pre-trained models. In this demonstration, we provide a straightforward example
+  of how to utilize them for sentiment analysis using GPT-generated synthetic data
+  from evaluation comments. Let's go!"
 ---
 
 > I'm delighted that R users can have access to the incredible Hugging Face pre-trained models. In this demonstration, we provide a straightforward example of how to utilize them for sentiment analysis using GPT-generated synthetic data from evaluation comments. Let's go!
