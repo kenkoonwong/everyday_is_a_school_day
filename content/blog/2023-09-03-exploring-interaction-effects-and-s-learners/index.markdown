@@ -26,7 +26,7 @@ excerpt: "Interactions adentures through simulations and gradient boosting trees
 > Interactions adentures through simulations and gradient boosting trees using the S-learner approach. I hadn't realized that lightGBM and XGBoost could reveal interaction terms without explicit specification. Quite intriguing!
 
 ![](interaction.png)
-picture resembles `interaction`
+picture resembles `interaction` 🤣
 
 ## Objectives:
 - [What is interaction?](#what-is-interaction)
