@@ -19,11 +19,11 @@ tags:
 - s learner
 - boost tree
 - lightgbm
-excerpt: "Interactions adentures through simulations and gradient boosting trees using the S-learner approach. I hadn't realized that lightGBM and XGBoost could reveal interaction terms without explicit specification. Quite intriguing!"
+excerpt: "Interaction adventures through simulations and gradient boosting trees using the S-learner approach. I hadn't realized that lightGBM and XGBoost could reveal interaction terms without explicit specification. Quite intriguing!"
 
 ---
 
-> Interactions adentures through simulations and gradient boosting trees using the S-learner approach. I hadn't realized that lightGBM and XGBoost could reveal interaction terms without explicit specification. Quite intriguing!
+> Interaction adventures through simulations and gradient boosting trees using the S-learner approach. I hadn't realized that lightGBM and XGBoost could reveal interaction terms without explicit specification. Quite intriguing!
 
 ![](feature.png)
 picture resembles `interaction` 🤣
