@@ -17,6 +17,7 @@ tags:
 - cmdstanr
 - bayesian
 - beginner
+excerpt: There is a lot to learn about Bayesian statistics, but it's fun, exciting, and flexible! I thoroughly enjoyed the beginning of this journey. There will be learning curves, but there are so many great people and resources out there to help us get closer to understanding the Bayesian way. 
 ---
 
 > There is a lot to learn about Bayesian statistics, but it's fun, exciting, and flexible! I thoroughly enjoyed the beginning of this journey. There will be learning curves, but there are so many great people and resources out there to help us get closer to understanding the Bayesian way. 
