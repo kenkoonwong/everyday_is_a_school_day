@@ -396,7 +396,7 @@ Again, THANK YOU ALEC !!!
 - Learnt how to do logistic regression using cmdstanr
 - Declaration of data type is important in Stan to get accurate estimates
 - Stan has changed y[n] to array[n] y
-- Learnt from Alec that rnorm(n,equation,1) is the same as equation + rnorm(n,0,1)
+- Learnt from Alec that rnorm(n, mu, sigma) == mu + rnorm(n, 0, sigma)
 - Stan Manual is a good reference to go to
 
 
