@@ -418,9 +418,15 @@ Similarly, we often refer to positive predictive and negative predictive values 
   
 <br>
 
+## Things To Learn Next:
+- Explore full-luxury bayes explored by Jose on previous post with Stan, especially with unobserved parameters. Oh it's going to be interstingly slow... in terms of computating time
+- Learn hierarchical / mixed effect modelling in Stan
+- Learn about Gaussian Process in Stan
+
 ## Lessons Learnt:
 - We do not need separate Stan file to use cmdstan, can pass through with `write_stan_file`
 - We can combine all Stan Code without separating them
+- We don't necessarily need Stan for the above exercise, plain old R will do. 
 - Probability theory is not intuitive, it is a learnt skill that requires practice, using simulation will help one understand it better
 
 <br>
