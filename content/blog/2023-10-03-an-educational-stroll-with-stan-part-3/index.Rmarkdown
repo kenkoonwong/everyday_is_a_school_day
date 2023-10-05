@@ -17,7 +17,7 @@ tags:
 - cmdstanr
 - bayesian
 - beginner
-excerpt: "Diving into this, we're exploring how using numbers to express our certainty, especially with medical results, can help sharpen our estimated 'posterior value' and offer a solid base for learning and discussions. We often talk about specifics like sensitivity without the nitty-gritty math, but crafting our own priors and using a dash of Bayes and visuals can really spotlight how our initial guesses shift. Sure, learning this takes patience, but once it clicks, it’s a game-changer – continuous learning for the win!"
+excerpt: "Diving into this, we're exploring how using numbers to express our certainty/uncertainty, especially with medical results, can help sharpen our estimated 'posterior value' and offer a solid base for learning and discussions. We often talk about specifics like sensitivity without the nitty-gritty math, but crafting our own priors and using a dash of Bayes and visuals can really spotlight how our initial guesses shift. Sure, learning this takes patience, but once it clicks, it’s a game-changer – continuous learning for the win!"
 ---
 
 > Diving into this, we're exploring how using numbers to express our certainty, especially with medical results, can help sharpen our estimated 'posterior value' and offer a solid base for learning and discussions. We often talk about specifics like sensitivity without the nitty-gritty math, but crafting our own priors and using a dash of Bayes and visuals can really spotlight how our initial guesses shift. Sure, learning this takes patience, but once it clicks, it’s a game-changer – continuous learning for the win!
@@ -402,7 +402,7 @@ generated quantities {
 '
 ```
 
-And it will do the exact same thing.
+And it should do the exact same thing. Of course, his code looks so much more elegant than mine! 🤣
 
 ## Final Thought:
 The purpose of showcasing this is to illustrate that if we can quantify our certainty and uncertainty, given a test value or an exam that has sensitivity and specificity derived from medical literature, we can calculate the estimated posterior value along with its distribution. While it might be mentally overwhelming to do this for all cases and values (including history, exam, and diagnostics), speaking in numerical terms when we believe we've reached a certain gestalt or posterior value provides a concrete basis for discussion and learning.    
