@@ -1,0 +1,261 @@
+<blockquote>
+
+</blockquote>
+<p><img src="feature.png" /></p>
+<p>Previously, we familiarized ourselves to simple <a href="https://www.kenkoonwong.com/blog/cmdstan1/">linear</a> and <a href="https://www.kenkoonwong.com/blog/cmdstan2/">logistic regression</a> models using <code>cmdstanr</code>. Today, we’re going to explore a bit more practicality of bayes’ theorem in clinical setting.</p>
+<div id="disclaimer" class="section level4" number="0.0.0.1">
+<h4><span class="header-section-number">0.0.0.1</span> Disclaimer:</h4>
+<p><em>This is not medical advice, nor is it a definitive method for application. This tool, like any other, is utilized to understand the prior, likelihood, and posterior. Everything conducted here is simulated, utilizing assumed sensitivity and specificity values, which can be derived from medical literature.</em></p>
+</div>
+<div id="prior-is-not-as-easy-as-we-think" class="section level2" number="0.1">
+<h2><span class="header-section-number">0.1</span> Prior Is Not As Easy As We Think</h2>
+<p>Quantifying clinical intuition or judgment is no easy task. Our minds typically gravitate towards binary outcomes: it either is, or it is not. Unfortunately, Bayes’ Theorem does not operate in this manner. It necessitates a distribution and the probability of a condition. When we suspect or NOT suspect a clinical condition, we should strive to estimate it with a range and distribution, for example, a condition is about 50% with an sd of ~20%. This will give a range of possible values</p>
+<div id="a-quick-recap-of-bayes-theorem" class="section level4" number="0.1.0.1">
+<h4><span class="header-section-number">0.1.0.1</span> A Quick Recap of Bayes’ Theorem</h4>
+<p><span class="math display">\[\begin{equation}
+p(\text{disease+}|\text{test+}) = \frac{p(\text{test+}|\text{disease+}) \cdot p(\text{disease+})}{p(\text{test+})}
+\end{equation}\]</span></p>
+<p>The equation above is positive predictive value, meaning what is the probability of having a condition given a test positive. <code>p(disease+)</code> is essentially our prior, our clinical gestalt (perhaps from history, physical exam, certain data).</p>
+<p>Today, we’ll attempt to explore this clinical applicability and open our eyes to probability theory.</p>
+</div>
+</div>
+<div id="objectives" class="section level2" number="0.2">
+<h2><span class="header-section-number">0.2</span> Objectives</h2>
+<ul>
+<li><a href="#load-library--simulate-simple-data">Load Library &amp; Simulate Sensitivity / Specificity Data</a></li>
+<li><a href="#logistic-regression-via-stan">Stan Model For Estimating Sens/Spec</a></li>
+<li><a href="#visualize-the-beautiful-convergence">Clinical Prior Using Beta-Binomial Distribution</a></li>
+<li><a href="#how-to-predict-future-data-">How To Predict Future Data ?</a></li>
+<li><a href="#acknowledgementfun-fact">Acknowledgement/Fun Fact</a></li>
+<li><a href="#lessons-learnt">Lessons Learnt</a></li>
+</ul>
+</div>
+<div id="load-library-simulate-sensitivity-specificity-data" class="section level2" number="0.3">
+<h2><span class="header-section-number">0.3</span> Load Library &amp; Simulate Sensitivity / Specificity Data</h2>
+<p>Let’s assume that we have a set of data set that we can estimate the sensitivity and specificity of a test. Let’s hypothetically call this test <code>prokalcitony</code> 🤣. Given a hypothetical medical literature, the estimated sensitivity is 98% (95%CI 95-100) and specificity of 90% (95%CI 85-92) if threshold is set at &lt; 0.05.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cmdstanr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bayesplot)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># assuming prokalcitony has sens of 98% (95%CI 95-100) and spec of 90% (95%CI 85-92)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>sens_spec_calc <span class="ot">&lt;-</span> <span class="cf">function</span>(point,ci,num) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  point_ci_diff <span class="ot">&lt;-</span> <span class="fu">abs</span>(point<span class="sc">-</span>ci)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  std <span class="ot">&lt;-</span> point_ci_diff<span class="sc">/</span><span class="fl">1.96</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> point</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  var <span class="ot">&lt;-</span> std<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">&lt;-</span> ((<span class="dv">1</span> <span class="sc">-</span> mu) <span class="sc">/</span> var <span class="sc">-</span> <span class="dv">1</span> <span class="sc">/</span> mu) <span class="sc">*</span> mu <span class="sc">^</span> <span class="dv">2</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> alpha <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">/</span> mu <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  return_vector <span class="ot">&lt;-</span> <span class="fu">rbeta</span>(num,alpha,beta)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(return_vector)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">#simulated data, assuming we have data to run thru stan and mcmc</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>pos_disease <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n<span class="sc">/</span><span class="dv">2</span>,<span class="dv">1</span>,<span class="fu">sens_spec_calc</span>(<span class="at">point=</span><span class="fl">0.98</span>,<span class="at">ci=</span><span class="fl">0.95</span>, <span class="at">num=</span>n)) </span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>neg_disease <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n<span class="sc">/</span><span class="dv">2</span>,<span class="dv">1</span>,<span class="fu">sens_spec_calc</span>(<span class="at">point=</span><span class="fl">0.9</span>,<span class="at">ci =</span> <span class="fl">0.85</span>,<span class="at">num=</span>n)) </span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>neg_disease <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(neg_disease<span class="sc">==</span><span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">N=</span>n, <span class="at">disease=</span><span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,n<span class="sc">/</span><span class="dv">2</span>),<span class="fu">rep</span>(<span class="dv">0</span>,n<span class="sc">/</span><span class="dv">2</span>)), <span class="at">test=</span><span class="fu">c</span>(pos_disease,neg_disease))</span></code></pre></div>
+<p>Let’s explore the code above. The function of <code>sens_spec_calc</code> essentially creates a beta-binomial distribution just so we’re not tied to one point estimate, but rather a distribution. Hypothetically, let’s say we do have this dataset (simulated), we can then estimate the sensitivity and specificity. Then use it to assess how our prior changes given a test result.</p>
+</div>
+<div id="stan-model-for-estimating-sensspec" class="section level2" number="0.4">
+<h2><span class="header-section-number">0.4</span> Stan Model For Estimating Sens/Spec</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#stan model for estimating sens and spec of simulated data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>diagnostic_stan <span class="ot">&lt;-</span> <span class="st">&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int N;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] int test;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] int disease;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0,upper=1&gt; sensitivity;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0,upper=1&gt; specificity;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="st">  //prior</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="st">  sensitivity ~ uniform(0,100);</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="st">  specificity ~ uniform(0,100);</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="st">  // Likelihood</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="st">  for (i in 1:N) {</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="st">    if (disease[i] == 1) {</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="st">      test[i] ~ bernoulli(sensitivity);</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="st">    } else {</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="st">      test[i] ~ bernoulli(1-specificity);</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="st">    }</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="st">  }</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># running it without stan file</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(<span class="fu">write_stan_file</span>(diagnostic_stan))</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> mod<span class="sc">$</span><span class="fu">sample</span>(<span class="at">data=</span>df, <span class="at">seed =</span> <span class="dv">123</span>, <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">parallel_chains =</span> <span class="dv">4</span>, <span class="at">iter_warmup =</span> <span class="dv">1000</span>, <span class="at">iter_sampling =</span> <span class="dv">2000</span>, <span class="at">show_messages =</span> F)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co">#fit$summary()</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">#mcmc_trace(fit$draws())</span></span></code></pre></div>
+<p><img src="sens.png" />
+<img src="mcmc.png" /></p>
+<p>Nice! The sen and spec estimates and its 95% CI are very similar to how we set them. Let’s extract the sens and spec chains and use them to our advantage to estimate our ppv / npv.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># extracting all sens of all 4 chains (excluding warm up)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sens <span class="ot">&lt;-</span> fit<span class="sc">$</span><span class="fu">draws</span>(<span class="at">variables =</span> <span class="st">&quot;sensitivity&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(sens, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))</span></code></pre></div>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># extracting all spec of all 4 chains (excluding warm up)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>spec <span class="ot">&lt;-</span> fit<span class="sc">$</span><span class="fu">draws</span>(<span class="at">variables =</span> <span class="st">&quot;specificity&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>()</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(spec, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))</span></code></pre></div>
+<p><img src="index_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+</div>
+<div id="clinical-prior-using-beta-binomial-distribution" class="section level2" number="0.5">
+<h2><span class="header-section-number">0.5</span> Clinical Prior Using Beta-Binomial Distribution</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># write a function to set our clinical prior using beta-binomial</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>prior_beta <span class="ot">&lt;-</span> <span class="cf">function</span>(mu,std) { </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  var <span class="ot">&lt;-</span> std<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">&lt;-</span> ((<span class="dv">1</span> <span class="sc">-</span> mu) <span class="sc">/</span> var <span class="sc">-</span> <span class="dv">1</span> <span class="sc">/</span> mu) <span class="sc">*</span> mu <span class="sc">^</span> <span class="dv">2</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> alpha <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">/</span> mu <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">alpha=</span>alpha,<span class="at">beta=</span>beta))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># assuming we have 30% suspicion that the person has disease with an sd of 10%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">prior_beta</span>(<span class="fl">0.3</span>,<span class="fl">0.1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>prior <span class="ot">&lt;-</span> <span class="fu">rbeta</span>(<span class="fu">length</span>(sens),<span class="at">shape1 =</span> pb<span class="sc">$</span>alpha, <span class="at">shape2 =</span> pb<span class="sc">$</span>beta)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(prior, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))</span></code></pre></div>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Quantifying our prior, as previously discussed, poses a significant challenge. The difficulty arises in translating a binary thought process into a distribution. Within epidemiology, we encounter metrics like incidence and prevalence, which are essentially point estimates, thereby facilitating the assignment of a number to our prior more straightforwardly. Cultivating the skill to quantify uncertainty necessitates practice and a comfort with embracing ranges and unpredictability. Several distributions are available to assist in this, such as the familiar binomial distribution, and others that offer more flexibility like the beta-binomial distribution. The latter provides alpha and beta parameters which assist in shaping the desired distribution, as demonstrated in the previous example. To simplify matters, we can devise a function that utilizes <code>mean</code> and <code>sd</code> to convert alpha and beta for us.</p>
+<p>In the above example, we simulated a beta-binomial distribution with a mean of 30% and a standard deviation of 10%. You can essentially experiment with these values to practice shaping the ranges of your clinical gestalt or prior. Observe that the range is bounded between 0 and 1. Additionally, the distribution appears to be wider than the sensitivity and specificity in previous plots. We are essentially asserting that we suspect there is a mean 30% probability of the patient having the disease, with a standard deviation of 10%, ranging from 0 to 60%. This also indicates that, while we are not entirely certain, we harbor less suspicion that the patient has the disease. The threshold is arbitrary, but we’ll set &gt;55% as a benchmark</p>
+</div>
+<div id="write-our-ppvnpv-formula-in-stan" class="section level2" number="0.6">
+<h2><span class="header-section-number">0.6</span> Write Our PPV/NPV formula in Stan</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#diag pred model</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>diag_pred <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int N;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] real sens;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] real spec;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] real prior;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="st">generated quantities {</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] real ppv;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="st">  array[N] real npv;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="st">  for (i in 1:N) {</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="st">    ppv[i] = sens[i]*prior[i] / ((sens[i]*prior[i])+((1-prior[i])*(1-spec[i])));</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="st">    npv[i] = ((1-prior[i])*spec[i]) / (((1-prior[i])*spec[i])+(prior[i]*(1-sens[i])));</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="st">  }</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>mod2 <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(<span class="fu">write_stan_file</span>(diag_pred))</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co"># set our clinical prior</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>df_prior <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">N=</span><span class="fu">length</span>(sens),<span class="at">sens=</span>sens,<span class="at">spec=</span>spec,<span class="at">prior=</span>prior)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co"># fit fixed_param</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> mod2<span class="sc">$</span><span class="fu">sample</span>(<span class="at">data =</span> df_prior, <span class="at">chains =</span> <span class="dv">1</span>, <span class="at">iter_sampling =</span> <span class="dv">1</span>, <span class="at">fixed_param =</span> T, <span class="at">show_messages=</span>F)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co"># extract all ppv and npv</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>df_param <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(fit2<span class="sc">$</span><span class="fu">summary</span>()) </span></code></pre></div>
+<p>Let’s break down what the code means. To calculate the positive predictive value (aka p(disease+|test+)) (refer to the formula at the beginning of the blog), we need to examine p(test+|disease+), also known as sensitivity, multiplied by the prior, and then divide by p(test+), or the total positive test results. This latter is calculated as [sensitivity * prior + (1-specificity) * (1-prior)].</p>
+<p><img src="ppv.png" />
+We essentially aim to calculate the areas to the right, marginalizing on the positive test, which can also be interpreted as the probability of a disease given a positive test. To calculate the area, you need to multiply the length and width. Here, our length is sensitivity and 1 − specificity, while our width is prior and 1 − prior.</p>
+<p>Let’s take a look at Negative Predictive Value, aka probability of NOT having disease given test negative.
+<img src="npv.png" />
+As you can see, the concept is the same as PPV, except we are now interested in the NOT disease state when the test is negative. Later, at the end of the article, you’ll see that it makes more sense to estimate the probability of disease given a negative result. This is not only more intuitive but also more relatable than NPV itself.</p>
+<p>Let’s take a look at our first 10 summary of generated quantities.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_param <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">10</span>)</span></code></pre></div>
+<pre><code>##    variable     mean   median sd mad       q5      q95 rhat ess_bulk ess_tail
+## 1    ppv[1] 0.761350 0.761350 NA   0 0.761350 0.761350   NA       NA       NA
+## 2    ppv[2] 0.717160 0.717160 NA   0 0.717160 0.717160   NA       NA       NA
+## 3    ppv[3] 0.810141 0.810141 NA   0 0.810141 0.810141   NA       NA       NA
+## 4    ppv[4] 0.631920 0.631920 NA   0 0.631920 0.631920   NA       NA       NA
+## 5    ppv[5] 0.791641 0.791641 NA   0 0.791641 0.791641   NA       NA       NA
+## 6    ppv[6] 0.792706 0.792706 NA   0 0.792706 0.792706   NA       NA       NA
+## 7    ppv[7] 0.868056 0.868056 NA   0 0.868056 0.868056   NA       NA       NA
+## 8    ppv[8] 0.745761 0.745761 NA   0 0.745761 0.745761   NA       NA       NA
+## 9    ppv[9] 0.742902 0.742902 NA   0 0.742902 0.742902   NA       NA       NA
+## 10  ppv[10] 0.798960 0.798960 NA   0 0.798960 0.798960   NA       NA       NA</code></pre>
+<p>Notice how our mean, median, 5%, and 95% all have the same value? That is because every row (e.g., PPV[1], PPV[2]) is an exact calculation of PPV using the distribution of sensitivity (sens), specificity (spec), and prior. Since each row will have different sens, spec, and prior values, given their distribution, we will have a different PPV. Essentially, we have over 8000 PPVs, from which we can construct a distribution. The same applies to NPV.</p>
+<div id="extract-our-ppvs" class="section level3" number="0.6.1">
+<h3><span class="header-section-number">0.6.1</span> Extract our PPVs</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ppv <span class="ot">&lt;-</span> df_param <span class="sc">|&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(variable,<span class="st">&quot;ppv&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(mean)</span></code></pre></div>
+<div id="write-a-visualization-function" class="section level4" number="0.6.1.1">
+<h4><span class="header-section-number">0.6.1.1</span> Write A Visualization Function</h4>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># visualize transformation of ppv and prior, write a function</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>visualize <span class="ot">&lt;-</span> <span class="cf">function</span>(pred_val, label1, label2) {</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">pred=</span>{{pred_val}},<span class="at">prior=</span>prior) </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># max density to label prior and value for info</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>vec_pred <span class="ot">&lt;-</span> pred_val <span class="sc">|&gt;</span> <span class="fu">density</span>() </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>vec_pred <span class="ot">&lt;-</span> vec_pred<span class="sc">$</span>y <span class="sc">|&gt;</span> <span class="fu">max</span>()</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>vec_prior <span class="ot">&lt;-</span> prior <span class="sc">|&gt;</span> <span class="fu">density</span>() </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>vec_prior <span class="ot">&lt;-</span> vec_prior<span class="sc">$</span>y <span class="sc">|&gt;</span> <span class="fu">max</span>()</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>max_vec <span class="ot">&lt;-</span> <span class="fu">max</span>(vec_pred,vec_prior)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>add <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(max_vec<span class="sc">&gt;</span><span class="dv">20</span>,<span class="dv">5</span>,<span class="fl">0.3</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>graph <span class="ot">&lt;-</span> </span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data=</span>df, <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x=</span>pred), <span class="at">color =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data=</span>df, <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x=</span>prior), <span class="at">color =</span> <span class="st">&quot;red&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;red&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">x=</span><span class="fl">0.5</span>,<span class="at">y=</span>max_vec<span class="sc">+</span>add, <span class="at">geom =</span> <span class="st">&quot;text&quot;</span>, <span class="at">label=</span><span class="fu">paste0</span>(<span class="st">&quot;Prior Median: &quot;</span>, df<span class="sc">$</span>prior <span class="sc">|&gt;</span> <span class="fu">median</span>() <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>), <span class="st">&quot; (95% CI &quot;</span>, <span class="fu">quantile</span>(df<span class="sc">$</span>prior, <span class="fl">0.025</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>), <span class="st">&quot;-&quot;</span>, <span class="fu">quantile</span>(df<span class="sc">$</span>prior, <span class="fl">0.975</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>),<span class="st">&quot;)&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">x=</span><span class="fl">0.5</span>,<span class="at">y=</span>max_vec, <span class="at">geom =</span> <span class="st">&quot;text&quot;</span>, <span class="at">label=</span><span class="fu">paste0</span>(label1, <span class="st">&quot; Median: &quot;</span>, df<span class="sc">$</span>pred <span class="sc">|&gt;</span> <span class="fu">median</span>() <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>), <span class="st">&quot; (95% CI &quot;</span>, <span class="fu">quantile</span>(df<span class="sc">$</span>pred, <span class="fl">0.025</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>), <span class="st">&quot;-&quot;</span>, <span class="fu">quantile</span>(df<span class="sc">$</span>pred, <span class="fl">0.975</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>),<span class="st">&quot;)&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="at">label =</span> <span class="fu">paste0</span>(label2,<span class="st">&quot; Predictive Value (blue), Prior (red)&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(graph)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="visualize-our-ppv-with-prior" class="section level2" number="0.7">
+<h2><span class="header-section-number">0.7</span> Visualize Our PPV with Prior</h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#visualize ppv</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">visualize</span>(ppv, <span class="st">&quot;PPV&quot;</span>, <span class="st">&quot;Positive&quot;</span>)</span></code></pre></div>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Notice how the red distribution shifts to blue when the test is positive? We had a median prior of 30%, which shifts to 78% when the test is positive. This is quite an increase. However, also observe that the 95% credible interval ranges from 54-90%, meaning we’re not entirely certain if a person has the disease, even given a positive test.</p>
+<div id="extract-our-npv" class="section level3" number="0.7.1">
+<h3><span class="header-section-number">0.7.1</span> Extract our NPV</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>npv <span class="ot">&lt;-</span> df_param <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(variable,<span class="st">&quot;npv&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(mean)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># we want to know what percentage is still with disease</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>npv <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">-</span> npv</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># visualize 1-npv</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="fu">visualize</span>(npv, <span class="st">&quot;1-NPV&quot;</span>, <span class="st">&quot;1 - Negative&quot;</span>)</span></code></pre></div>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+</div>
+</div>
+<div id="acknowledgement" class="section level2" number="0.8">
+<h2><span class="header-section-number">0.8</span> Acknowledgement:</h2>
+</div>
+<div id="lessons-learnt" class="section level2" number="0.9">
+<h2><span class="header-section-number">0.9</span> Lessons Learnt:</h2>
+<ul>
+<li>We do not need separate Stan file to use cmdstan, can pass through with <code>write_stan_file</code></li>
+<li></li>
+</ul>
+<p>If you like this article:
+- please feel free to send me a <a href="https://www.kenkoonwong.com/blog/">comment or visit my other blogs</a>
+- please feel free to follow me on <a href="https://twitter.com/kenkoonwong/">twitter</a>, <a href="https://github.com/kenkoonwong/">GitHub</a> or <a href="https://med-mastodon.com/@kenkoonwong">Mastodon</a>
+- if you would like collaborate please feel free to <a href="https://www.kenkoonwong.com/contact/">contact me</a></p>
+</div>
