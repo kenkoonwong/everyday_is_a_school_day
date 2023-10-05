@@ -22,7 +22,7 @@ excerpt: "Diving into this, we're exploring how using numbers to express our cer
 
 > Diving into this, we're exploring how using numbers to express our certainty, especially with medical results, can help sharpen our estimated 'posterior value' and offer a solid base for learning and discussions. We often talk about specifics like sensitivity without the nitty-gritty math, but crafting our own priors and using a dash of Bayes and visuals can really spotlight how our initial guesses shift. Sure, learning this takes patience, but once it clicks, it’s a game-changer – continuous learning for the win!
 
-![](feature.png)
+![](cmdstan3.png)
 
 Previously, we familiarized ourselves to simple [linear](https://www.kenkoonwong.com/blog/cmdstan1/) and [logistic regression](https://www.kenkoonwong.com/blog/cmdstan2/) models using `cmdstanr`. Today, we're going to explore a bit more practicality of bayes' theorem in clinical setting.
 
