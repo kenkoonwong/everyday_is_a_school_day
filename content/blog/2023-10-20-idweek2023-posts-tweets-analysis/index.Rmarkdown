@@ -1,0 +1,333 @@
+---
+title: '#IDWeek2023 Posts/Tweets Analysis'
+author: Ken Koon Wong
+date: '2023-10-22'
+slug: idweek2023
+categories: 
+- idweek2023
+- idweek23
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- twitter api v2
+tags: 
+- idweek2023
+- idweek23
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- twitter api v2
+excerpt: "Immersed in gratitude and inspiration at #IDWeek2023 🌐! A massive thank you to everyone who contributed - your posts were a beacon of warmth and wisdom. 🌟 Celebrating the triumphs of award recipients 🏆, your remarkable achievements propel us all forward! Enlightened by the groundbreaking insights from new trials, we are reminded to remain humble and passionate in our continuous quest for knowledge. Together, we will continue unveiling the realms of Infectious Disease, advancing with unity and purpose!" 
+---
+
+> Immersed in gratitude and inspiration at #IDWeek2023 🌐! A massive thank you to everyone who contributed - your posts were a beacon of warmth and wisdom. 🌟 Celebrating the triumphs of award recipients 🏆, your remarkable achievements propel us all forward! Enlightened by the groundbreaking insights from new trials, we are reminded to remain humble and passionate in our continuous quest for knowledge. Together, we will continue unveiling the realms of Infectious Disease, advancing with unity and purpose! 
+
+
+![](full.png)
+
+Wordcloud of all the `#IDweek2023` tweets/posts.    
+
+If you want to look at the specific tweets, I have created a shiny app that helps me to glance through essential topics. Here is the [link](https://kenkoonwong.shinyapps.io/shiny_idweek23/)
+
+
+# Thought Process:
+- [Post counts by days](#count) 
+- [Top 50 X Users Post Counts](#top50)
+- [Posts frequency separated by dates](#animate)
+- [Top 5 Liked Posts Seperated by Dates ](#like)
+- [Top 20 Bookmarked Posts](#bookmark)
+- [Top 20 Bookmarked Posts Usernames](#bookmark-user)
+- [IDtwitter vs IDxPost ?](#idtwitter)
+- [Limitations](#limit)
+- [Acknowledgement](#ack)
+- [Lessons learnt](#lesson)
+
+
+```{r,eval=F, echo=F}
+library(tidyverse)
+library(lubridate)
+
+load("idweek23_word_df.rda")
+load("idweek23_x_full.rda")
+
+
+# df4 |>
+#   mutate(created_at = created_at - hours(4)) %>%
+#   mutate(date = date(created_at)) |>
+#   filter(date == mdy("10-11-2023")) |>
+  
+df4 %>%
+  mutate(date = created_at - hours(4),
+         date = date(date) %>% as.factor()) %>% 
+  ggplot(.,aes(x=created_at, fill=date)) +
+  geom_histogram(color="black",alpha=0.5,bins = 70) +
+  scale_x_datetime(date_breaks = "3 hours", date_labels = "%m/%d  %H %M") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position =  "none",
+        axis.text.y = element_text(size = 10)) +
+  ggtitle("IDWeek2023 Post counts by 3 hour interval", subtitle = "Days separated in different color")
+  
+
+```
+
+<br>
+
+## Post counts by days {#count}
+![](posts_days.png)
+Very interesting. When compared to IDweek 2022, there is a difference in post peaks. This year it appears more bimodal (Thursday and Saturday) whereas last year it peaked on Friday. This year it also appeared that posts were more than last year, which is great! We had a total of 2627 posts this year, and last year was ~2188.    
+
+<br>
+
+## Top 50 X Users Post Counts {#top50}
+![](top50.png)
+Thanks to all who have contributed. SIDPharm, SAIRABT, LordAlirezaF, CalderwoodMD, AHRQNews, TxIDdoc, HishamZenith, ABsteward, DocWoc71, IDWeekmtg leading the top 10 posts combined. Can you find your handle here?
+
+<br>
+
+## Posts frequency separated by dates {#animate}
+
+![](anim.gif)
+Who is leading the posts is dynamic! Everyday during IDweek is different! That's ok. Thank you all again for contributing to #idweek2023. For those who are not there in person, this really makes us feel like we're there! 
+
+<br>
+
+## Top 5 Liked Posts Seperated by Dates {#like}
+#### 10-11-23
+```{r, echo=F, message=F,warning=F}
+library(tidyverse)
+library(DT)
+library(lubridate)
+library(kableExtra)
+
+load("df_merge.rda")
+
+kable_df <- 
+df_merge_filter |>
+  group_by(date) |>
+  filter(!str_detect(text,"protest")) |>
+  # filter(date == mdy("10-11-23")) |>
+  # arrange(desc(like_count)) |>
+  # head(5) |>
+  slice_max(order_by = like_count, n = 5) |>
+  select(date, username, text) 
+
+kable_df |>
+  filter(date == mdy("10-11-23")) |>
+  kbl()
+# df_merge_filter |>
+#   filter(date == mdy("10-12-23")) |>
+#   arrange(desc(like_count)) |>
+#   head(5) |>
+#   select(text) |>
+#   kable()
+
+
+```
+
+Interesting to see that outpatient paxlovid didn’t ⬇️ Covid-related hospitalization, death in unvacc’d patients with standard risk or vaccinated high-risk patient, but when looked at mITT for both seronegative (NNT=10) and positive patients (NNT=67), it did. 
+
+Also interesting to see that, in nursing homes, universal decolonization with chlorhexidine and nasal iodophor led to a significantly lower risk of transfer to a hospital due to infection than routine care. 
+
+![](101123.png)
+
+<br>
+
+#### 10-12-23
+```{r,echo=F, message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10-12-23")) |>
+  kbl()
+```
+
+Can't wait to tuck into [Society of Critical Care Medicine and the Infectious Diseases Society of America Guidelines for Evaluating New Fever in Adult Patients in the ICU](https://journals.lww.com/ccmjournal/fulltext/2023/11000/society_of_critical_care_medicine_and_the.13.aspx). ABsteward always has the latest ID article. 
+
+
+Wait a minute... IDWeek2023 has puppies 🐶 !? Cool!
+
+Thanks to GermHunter for summarizing and turn our lenses to 🔥 Clinical Trials that may change your practice. 
+1. [PALACE](https://jamanetwork.com/journals/jamainternalmedicine/article-abstract/2806976) - Open label RCT w [PEN-FAST](https://www.mdcalc.com/calc/10422/penicillin-allergy-decision-rule-pen-fast) score less than 3, direct oral penicillin challenge was noninferior compared with standard-of-care skin testing followed by oral challenge. 
+2. [Ceftobiprole vs daptomycin for Staph aureus bacteremia](https://www.nejm.org/doi/full/10.1056/NEJMoa2300220#:~:text=In%20this%20double%2Dblind%20trial,either%20MRSA%20or%20MSSA%20infection) - non-inferior.
+3. [ATTACK trial](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00184-6/fulltext) - sulbactam–durlobactam was non-inferior to colistin
+4. [Doxycycline PEP](https://www.nejm.org/doi/10.1056/NEJMoa2211934?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed) - The combined incidence of gonorrhea, chlamydia, and syphilis was lower by two thirds with doxycycline postexposure prophylaxis than with standard care
+5. [more...](https://twitter.com/GermHunterMD/status/1712530126972268604) 
+
+![](101223.png)
+
+<br>
+<br>
+
+#### 10-13-23
+```{r,echo=F, message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10-13-23")) |>
+  kbl()
+```
+
+Wow. Very interesting. Intranasal covid vaccine with strong response! 💪
+
+![](101323.png)
+<br>
+<br>
+
+#### 10-14-23
+```{r,echo=F, message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10-14-23")) |>
+  kbl()
+```
+
+<p align="center">
+  <img src="acorn.jpg" alt="image" width="10%" height="auto">
+  </p>
+
+This day is all about the [ACORN](https://jamanetwork.com/journals/jama/article-abstract/2810592)! Among hospitalized adults in this randomized clinical trial, treatment with piperacillin-tazobactam did not increase the incidence of acute kidney injury or death. Treatment with cefepime resulted in more neurological dysfunction.
+
+
+
+
+
+
+Also, nice to know that IDSA has new cUTI guideline! Thanks LordAlirezaF!
+
+
+
+![](cuti.png)
+Good to know the new definition of uncomplicated UTI (everything else both in men and women if does not have pyelo, CAUTI or febrile/bacteremic). Wait, CAUTI is complicated?
+
+![](101423.png)
+<br>
+<br>
+
+#### 10-15-23
+```{r,echo=F, message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10-15-23")) |>
+  kbl()
+```
+
+Last but not least, more studies on oral antibiotics for osteomyelitis! 
+
+![](101523.png)
+
+<br>
+<br>
+
+## Top 20 Bookmarked Posts {#bookmark}
+```{r,echo=F}
+df_merge_filter |>
+  slice_max(order_by = bookmark_count, n = 20) |>
+  select(date,username,text) |>
+  kbl()
+```
+
+Top 20 bookmarked posts were quite consistent with like counts. I won't repeat the findings here but highlight the ones not mentioned. 
+
+1. [Institutes with EPIC SlicerDicer may play a role in antibiotic prescription surveillance and more.](https://t.co/BNDLSBS10C) 
+2. [Treating ASB in kidney translant apparently does not decrease pyelo in the first 2 months.](https://twitter.com/TxIDdoc/status/1712816321975525880)
+3. More oral antibiotic talks, now this one is on [staph aureus bacteremia](https://twitter.com/SAIRABT/status/1713175195924513099)
+4. [Top papers in mycology.](https://twitter.com/GermHunterMD/status/1713163589740081286) 
+5. [PCT-guided antibiotics therapy may be associated with reduce AB use](https://twitter.com/ABsteward/status/1712887391411667374)
+6. [Linezolid/Rifampin interaction is substantial](https://academic.oup.com/jac/advance-article-abstract/doi/10.1093/jac/dkad316/7308566?login=false)
+
+<br>
+
+## Top 20 Bookmarked Posts Usernames {#bookmark-user}
+```{r,echo=F}
+df_merge_filter |>
+  slice_max(order_by = bookmark_count, n = 20) |>
+  select(date,username,text,bookmark_count) |>
+  group_by(username) |>
+  summarize(n = sum(bookmark_count)) |>
+  ggplot(aes(x=n,y=reorder(username,n),fill=username)) +
+  geom_col(color = "black") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  ylab("username") +
+  xlab("Total bookmarked")
+```
+
+Wow, looks like ABsteward is taking the lead on the most bookmarked posts, followered by JAMA_current, GermHunterMD, LordAlirezaF and more. Thank you all for keeping all of us informed! I definitely feel like I was there with all these great posts!
+
+<br>
+
+## IDtwitter vs IDxPost ? {#idtwitter}
+```{r,echo=F,warning=F,message=F}
+df_merge_filter |>
+  mutate(text = tolower(text)) |>
+  filter(str_detect(text,"idxpost|idtwitter")) |>
+  mutate(post = case_when(
+    str_detect(text, "idxpost.*idtwitter|idtwitter.*idxpost") ~ "both",
+    str_detect(text, "idxpost") & !str_detect(text, "idtwitter") ~ "idxpost",
+    str_detect(text, "idtwitter") & !str_detect(text, "idxpost") ~ "idtwitter"
+  )) |>
+  select(username,text,post) |> 
+  ggplot(aes(x=post)) +
+  geom_histogram(stat = "count") +
+  theme_minimal()
+  
+```
+
+It looks like most people are still using #IDtwitter on X! At least for those tagged with #idweek2023. It's a good representation of ID audience on X. 
+
+<p align="center">
+  <img src="idtwitter.jpeg" alt="image" width="30%" height="auto">
+  </p>
+
+<br>
+
+## Limitations {#limit}
+- Data only queried with (#Idweek2023 AND idweek)
+- Data on 10/11 may not be as accurate re: like counts etc due to delayed extraction, 
+- All data extracted on 10/18 8a hence all counts are uptodate until then
+- Some 10/11 author_id we were unable to find username
+- Not all top likes / bookmark counts mean posts are helpful, same for the converse  
+- Helpful posts may not have #idweek2023 and not be extracted (e.g. @dralicehan's posts)
+- Posts do not mean information accurate but definitely help in stimulating reading the source
+- Lots of interesting talks in ID week that may not have been shared in X
+- I found wordcloud not too helpful this year, hence I used likes and bookmark to further guide posts that were favored by X crowds.
+
+<br>
+
+## Acknowledgement {#ack}
+```{r, echo=F,warning=F}
+df_merge_filter |>
+  group_by(username) |>
+  summarize(n = n()) |>
+  slice_max(order_by = n, n = 50) |>
+  pull(username) -> names
+
+set.seed(1)
+sample_names <- sample(names, size = length(names))
+name_list <- paste0("@",sample_names)
+
+name_list_clean <- paste(name_list, collapse = " ")
+
+```
+
+Thank you `r name_list_clean` @dralicehan for keeping #idweek2023 virtual crowd on X lively! This is by no means sorted in order, it's sorted top 50 users who posted the most and then randomly sorted for acknowledgement. ❤️
+
+My apologies if your handle is not here. Everyone who have contributed, we are immensely grateful for your contribution! 🙏
+
+<br>
+
+## Lessons Learnt {#lesson}
+- finally learnt how to navigate twitter api v2 without `rtweet`, it's not too hard! 
+- learnt pagination on twitter api
+- learnt `gganimate` 
+- learnt a lot of about ID news! Thanks to the contributors!
+
+If you're interested at #IDweek2022 Tweet Analysis, please click [here](https://www.kenkoonwong.com/blog/idweek2022/), no animation back then though. 🤣
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
