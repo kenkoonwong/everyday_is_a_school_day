@@ -41,7 +41,7 @@ params:
   mainSections:
     - blog
     - project
-    # - talk
+    - talk
   math:
     renderer: katex
   navallcaps: yes
