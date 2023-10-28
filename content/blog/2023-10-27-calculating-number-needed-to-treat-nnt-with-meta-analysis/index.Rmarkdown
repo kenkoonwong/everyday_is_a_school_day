@@ -17,7 +17,7 @@ excerpt: "Here, we have demonstrated three different methods for calculating NNT
 ---
 > Here, we have demonstrated three different methods for calculating NNT with meta-analysis data. I learned a lot from this experience, and I hope you find it enjoyable and informative as well. Thank you, @wwrighID, for initiating the discussion and providing a pivotal example by using the highest weight control event proportion to back-calculate ARR and, eventually, NNT. I also want to express my gratitude to @DrToddLee for contributing a brilliant method of pooling a single proportion from the control group for further estimation. Special thanks to @MatthewBJane, the meta-analysis maestro, for guiding me toward the correct equation to calculate event proportions, with weight estimated by the random effect model. 🙏
 
-![](feature.webp)
+![](feature.png)
 
 ## Objectives:
 - [Prepare Data](#data)
