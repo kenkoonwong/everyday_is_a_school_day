@@ -41,6 +41,7 @@ title: Index
 9/10/23 [Cracking the Code: Unveiling the Hidden Language of USB HID Keyboards!](/blog/usb-hid-key-press-report).     
 9/4/23 [Exploring Interaction Effects and S-Learners](/blog/interaction-slearner).     
 9/1/23 [Hugging Face 🤗, with a warm embrace, meet R️ ❤️](/blog/huggingface)      
+8/27/23 [Exploring Causal Discovery with Causal-learn and Reticulate in R](/blog/causal-learn)
 
 
 
