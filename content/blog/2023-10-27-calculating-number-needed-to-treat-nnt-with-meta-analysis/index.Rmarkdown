@@ -1,0 +1,443 @@
+---
+title: "Approaches to Calculating Number Needed to Treat (NNT) with Meta-Analysis"
+author: Ken Koon Wong
+date: 2023-10-28
+slug: metannt
+categories: 
+- statistics
+- r
+- R
+- meta-analysis
+tags: 
+- statistics
+- r
+- R
+- meta-analysis
+excerpt: "Here, we have demonstrated three different methods for calculating NNT with meta-analysis data. I learned a lot from this experience, and I hope you find it enjoyable and informative as well. Thank you, @wwrighID, for initiating the discussion and providing a pivotal example by using the highest weight control event proportion to back-calculate ARR and, eventually, NNT. I also want to express my gratitude to @DrToddLee for contributing a brilliant method of pooling a single proportion from the control group for further estimation. Special thanks to @MatthewBJane, the meta-analysis maestro, for guiding us toward the correct equation to calculate event proportions, with weight estimated by the random effect model. 🙏"
+---
+> Here, we have demonstrated three different methods for calculating NNT with meta-analysis data. I learned a lot from this experience, and I hope you find it enjoyable and informative as well. Thank you, @wwrighID, for initiating the discussion and providing a pivotal example by using the highest weight control event proportion to back-calculate ARR and, eventually, NNT. I also want to express my gratitude to @DrToddLee for contributing a brilliant method of pooling a single proportion from the control group for further estimation. Special thanks to @MatthewBJane, the meta-analysis maestro, for guiding us toward the correct equation to calculate event proportions, with weight estimated by the random effect model. 🙏
+
+![](feature.webp)
+
+## Objectives:
+- [Prepare Data](#data)
+- [The Highest Weight Method](#highweight)
+- [Single Propotion Control Pooling Method](#single)
+- [Pooling From Full Meta-Analysis Method](#both)
+- [Comparison of All 3 Methods](#compare)
+- [Exploring Other Meta-analysis Data & Compare The 3 Methods](#other)
+- [Acknowledgement](#ack)
+- [Opportunities for improvement](#opportunity)
+- [Lessons Learnt](#learnt)
+
+## Prepare Data {#data}
+```{r, warning=F, message=F}
+library(tidyverse)
+library(meta)
+library(kableExtra)
+
+df1 <- tibble(study=c("bayliff 1999","pobble 2005","mavs 2006","dipom 2006","bbsa 2007","poise 2008"),event.c=c(0,5,21,2,0,215),n.c=c(50,48,250,459,109,4177))
+
+df2 <- tibble(study=c("bayliff 1999","pobble 2005","mavs 2006","dipom 2006","bbsa 2007","poise 2008"),event.t=c(0,3,19,3,1,152),n.t=c(49,55,246,462,110,4174))
+
+df <- df1 |>
+  full_join(df2, by = "study")
+
+df |>
+  kable()
+
+```
+
+![](https://heart.bmj.com/content/heartjnl/100/6/456/F5.large.jpg?width=800&height=600&carousel=1)
+
+<br>
+
+## The Highest Weight Method {#highweight}
+One method is find the study with the most weight and narrow 95% confidence interval and use the event proportion of control groups and back-calculate NNT using pooled hazard ratio. This was shown by `@wwrightID` who [posted](https://twitter.com/wwrighID/status/1716958193039860078) on an excellent review on how to do this. 
+
+For comparison, let's only focus on the Secure trials
+
+```{r}
+control <- 215/4177
+hr <- 0.73
+treatment <- hr * control
+absolute_risk_reduction <- treatment - control 
+NNT <- 1/abs(absolute_risk_reduction) # turn negative number to positive
+
+## NNT lower
+hr_l <- 0.61
+treatment_l <- hr_l * control
+arr_l <- treatment_l - control
+NNT_l <- ceiling(1/abs(arr_l))
+
+## NNT upper
+hr_u <- 0.88
+treatment_u <- hr_u * control
+arr_u <- treatment_u - control
+NNT_u <- ceiling(1/abs(arr_u))
+
+nnt_ci_1 <- paste0(round(NNT)," [95%CI ",NNT_l, "-",NNT_u,"]")
+```
+
+Our control event proportion is `r control`. Our calculated treatment event proportion is now `r treatment`. Our NNT with this method is `r nnt_ci_1`
+
+<br>
+
+## Single Propotion Control Pooling Method {#single}
+```{r,message=F,warning=F, results='hide'}
+metap <- metaprop(event = event.c, n = n.c, data = df1, studlab = study, method.tau = "ML")
+
+te_ran <- meta:::backtransf(metap$TE.common, sm = "PLOGIT")
+
+treatment2 <- hr * te_ran
+
+absolute_risk_reduction <- treatment2 - te_ran 
+
+NNT2 <- 1/abs(absolute_risk_reduction) # turn negative number to positive
+
+## NNT lower
+hr_l <- 0.61
+treatment_l2 <- hr_l * te_ran
+arr_l2 <- treatment_l2 - te_ran
+NNT_l2 <- ceiling(1/abs(arr_l2))
+
+## NNT upper
+hr_u <- 0.88
+treatment_u2 <- hr_u * te_ran
+arr_u2 <- treatment_u2 - te_ran
+NNT_u2 <- ceiling(1/abs(arr_u2))
+
+nnt_ci_2 <- paste0(round(NNT2)," [95%CI ",NNT_l2, "-",NNT_u2,"]")
+```
+
+
+![](metaprop.png)
+Our control event proportion is now `r te_ran`. Our calculated treatment event proportion is now `r treatment2`. Our NNT with single proportion pooling method is `r nnt_ci_2`. Take note that because Tau2 is very low, essentially means there is no heterogeneity between studies here, hence common model is used. If we had used random effect model here with tau2 of 0 and I2 of 0, our NNT became very large to 200+, give it a try!  
+
+Too bad `metaprop` does not provide weights, see discussion [here](https://stackoverflow.com/questions/75584979/issues-with-metaprop-a-function-of-meta-in-r). 
+
+But the alternative is 
+```{r,message=F,warning=F}
+metap <- metaprop(event = event.c, n = n.c, data = df1, studlab = study, method = "Inverse", method.tau = "DL")
+```
+
+![](dl.png)
+
+yes! We have weights. But wait, the proportion of event in control group in random effect model is not at all similar to the previous! I think mainly because of different method in calculating tau. Let's stick with our previous
+
+<br>
+
+## Pooling From Full Meta-Analysis Method {#both}
+```{r, message=F, warning=F, results='hide'}
+def <- metabin(event.c = event.c,n.c = n.c, event.e = event.t, n.e = n.t, studlab = study,data = df,sm="RR",level = 0.95,comb.fixed=T,comb.random=T,hakn = F)
+
+summary(def)
+```
+
+![](metabin.png)
+
+#### Can We Reproduce Same Forest Plot?
+```{r,eval=F}
+forest(def)
+```
+
+![](forest.png)
+Not too shabby! Weights did not appear to be similar but the hazard ratio looks very similar, same with the 95% CI. Notice that there is lack of heterogeneity between studies, hence the fixed and random effect models are very similar. 
+
+Let's dive into calculating NNT with our last technique. But how?
+
+```{r}
+# new dataframe with newly assigned weights
+weights <- def$w.random / sum(def$w.random)
+
+df_new <-
+  df |>
+  add_column(weights = weights) |>
+  mutate(total_weights = sum(weights),
+         log_t = log(event.t/n.t)*weights,
+         log_t = case_when(
+           is.infinite(log_t) ~ log(0.5/n.t)*weights, # Haldane-Anscombe correction
+           TRUE ~ log_t
+         )) |>
+  mutate(log_c = log(event.c/n.c)*weights,
+         log_c = case_when(
+           is.infinite(log_c) ~ log(0.5/n.c)*weights,
+           TRUE ~ log_c
+         )) |>
+  drop_na()
+
+total_weights <- sum(df_new$weights)
+
+# average event prop on treatment
+prop_t <- exp(sum(df_new$log_t) / total_weights)
+
+# average event prop control
+prop_c <- exp(sum(df_new$log_c) / total_weights)
+
+# RR random effect?
+rr <- prop_t/prop_c
+
+# arr
+absolute_risk_reduction <- prop_t - prop_c 
+
+# NNT
+NNT3 <- 1/abs(absolute_risk_reduction)
+
+# NNT lower
+var_arr <- prop_t * (1-prop_t) / sum(df_new$n.t) + prop_c * (1-prop_c) / sum(df_new$n.c)
+nnt_l3 <- ceiling(1/abs(absolute_risk_reduction - 1.96*sqrt(var_arr)))
+
+# NNT upper
+nnt_u3 <- ceiling(1/abs(absolute_risk_reduction + 1.96*sqrt(var_arr)))
+
+nnt_ci_3 <- paste0(ceiling(NNT3)," [95%CI ",nnt_l3, "-",nnt_u3,"]")
+```
+
+Our control event proportion is now `r prop_c`. Our calculated treatment event proportion is now `r prop_t`. Our NNT with single proportion pooling method is `r nnt_ci_3`. Very close to our first method! Mainly because the weights given on our random effect model highly favors `poise 2018`, it makes sens that our control event proportion should be quite similar to such! 
+
+The equation behind calculating the proportion for both treatment and control via its weight is:     
+$$\begin{gather}
+\ln(\text{prop}_t) = \sum \ln(\text{prop}_{it}) \cdot \text{weight}_{it} \\
+\text{prop}_t = e^{\sum \ln(\text{prop}_{it}) \cdot \text{weight}_{it}}
+\end{gather}$$
+
+$prop_t$: overall proportion of treatment or control group.    
+$prop_{it}$: proportion of `ith` study of treatment or control group (e.g,bbsa, poise).    
+$weight_{it}$: random effect weights of `ith` study of treatment or control group.    
+
+This [article](https://onlinelibrary.wiley.com/doi/10.1046/J.1524-4733.2002.55150.x) is really helpful in calculating RR, OR, NNT lower and upper bounds.
+
+<br>
+
+#### How To Calculate NNT Lower and Upper Bound?
+$$\begin{gather}
+\text{ARR} = \text{prop}_t - \text{prop}_c \\
+var(\text{ARR}) = \frac{\text{prop}_t \cdot (1-\text{prop}_t)}{\text{n}_t} + \frac{\text{prop}_c \cdot (1-\text{prop}_c)}{\text{n}_c} \\
+\text{ARR 95\% CI} = \text{ARR} \pm 1.96 \cdot \sqrt{\text{var}(\text{ARR})}
+\end{gather}$$
+
+ARR: Absolute Risk Reduction.   
+$var$: Variance.   
+$prop_t$: Pooled Event Proportion in Treatment Group.    
+$prop_c$: Pooled Event Proportion in Control Group.   
+CI: Confidence Interval, 95% preferred here, hence the z score of 1.96 used
+  
+<br>
+
+## Comparison of All 3 Methods {#compare}
+```{r,message=F,warning=F}
+df_compare <- tibble(method=c("highest_weight","single_prop_pool","full"),prop_control=c(control,te_ran,prop_c),prop_treatment=c(treatment,treatment2,prop_t),nnt=c(nnt_ci_1,nnt_ci_2,nnt_ci_3),tau2=rep(def$tau2,3),I2=rep(def$I,3))
+
+df_compare |>
+  kable()
+
+```
+
+```{r,echo=F,warning=F}
+
+meta_compare <- function(control,hr,hr_l,hr_u,df1,df,random=T) {
+
+control <- control
+hr <- hr
+treatment <- hr * control
+absolute_risk_reduction <- treatment - control 
+NNT <- 1/abs(absolute_risk_reduction) 
+
+## NNT lower
+hr_l <- hr_l
+treatment_l <- hr_l * control
+arr_l <- treatment_l - control
+NNT_l <- ceiling(1/abs(arr_l))
+
+## NNT upper
+hr_u <- hr_u
+treatment_u <- hr_u * control
+arr_u <- treatment_u - control
+NNT_u <- ceiling(1/abs(arr_u))
+
+nnt_ci_1 <- paste0(round(NNT)," [95%CI ",NNT_l, "-",NNT_u,"]")
+
+metap <- metaprop(event = event.c, n = n.c, data = df1, studlab = study, method.tau = "ML")
+if(random) {te_ran <- meta:::backtransf(metap$TE.random, sm = "PLOGIT")} else {te_ran <- meta:::backtransf(metap$TE.common, sm = "PLOGIT")}
+
+treatment2 <- hr * te_ran
+absolute_risk_reduction <- treatment2 - te_ran 
+NNT2 <- 1/abs(absolute_risk_reduction) # turn negative number to positive
+
+## NNT lower
+treatment_l2 <- hr_l * te_ran
+arr_l2 <- treatment_l2 - te_ran
+NNT_l2 <- ceiling(1/abs(arr_l2))
+
+## NNT upper
+treatment_u2 <- hr_u * te_ran
+arr_u2 <- treatment_u2 - te_ran
+NNT_u2 <- ceiling(1/abs(arr_u2))
+
+nnt_ci_2 <- paste0(round(NNT2)," [95%CI ",NNT_l2, "-",NNT_u2,"]")
+
+
+def <- metabin(event.c = event.c,n.c = n.c, event.e = event.t, n.e = n.t, studlab = study,data = df,sm="RR",level = 0.95,comb.fixed=T,comb.random=T,hakn = F)
+
+# new dataframe with newly assigned weights
+weights <- def$w.random / sum(def$w.random)
+
+df_new <-
+  df |>
+  add_column(weights = weights) |>
+  mutate(total_weights = sum(weights),
+         log_t = log(event.t/n.t)*weights,
+         log_t = case_when(
+           is.infinite(log_t) ~ log(0.5/n.t)*weights, # Haldane-Anscombe correction
+           TRUE ~ log_t
+         )) |>
+  mutate(log_c = log(event.c/n.c)*weights,
+         log_c = case_when(
+           is.infinite(log_c) ~ log(0.5/n.c)*weights,
+           TRUE ~ log_c
+         )) |>
+  drop_na()
+
+total_weights <- sum(df_new$weights)
+
+# average event prop on treatment
+prop_t <- exp(sum(df_new$log_t) / total_weights)
+
+# average event prop control
+prop_c <- exp(sum(df_new$log_c) / total_weights)
+
+# RR random effect?
+rr <- prop_t/prop_c
+
+# arr
+absolute_risk_reduction <- prop_t - prop_c 
+
+# NNT
+NNT3 <- 1/abs(absolute_risk_reduction)
+
+# NNT lower
+var_arr <- prop_t * (1-prop_t) / sum(df_new$n.t) + prop_c * (1-prop_c) / sum(df_new$n.c)
+nnt_l3 <- ceiling(1/abs(absolute_risk_reduction - 1.96*sqrt(var_arr)))
+
+# NNT upper
+nnt_u3 <- ceiling(1/abs(absolute_risk_reduction + 1.96*sqrt(var_arr)))
+
+nnt_ci_3 <- paste0(ceiling(NNT3)," [95%CI ",nnt_l3, "-",nnt_u3,"]")
+
+df_compare <- tibble(method=c("highest_weight","single_prop_pool","full"),prop_control=c(control,te_ran,prop_c),prop_treatment=c(treatment,treatment2,prop_t),nnt=c(nnt_ci_1,nnt_ci_2,nnt_ci_3),tau2=rep(def$tau2,3),I2=rep(def$I,3))
+
+return(df_compare)
+}
+```
+
+## Exploring Other Meta-analysis Data & Compare The 3 Methods {#other}
+
+#### Methenamine for Preventing UTI Without Renal Tract Abnormalities
+[Lee BS Cochrane Database Syst Rev 2012 Oct 17;10(10):CD003265](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7144741/)
+```{r,echo=F,warning=F,message=F}
+df1 <- tibble(study=c("furness 1975","knoff 1985","shiots 2002","tyremann 1986"),event.c=c(17,8,10,14),n.c=c(67,29,75,58))
+
+df2 <- tibble(study=c("furness 1975","knoff 1985","shiots 2002","tyremann 1986"),event.t=c(14,1,2,1),n.t=c(70,31,75,51))
+
+df <- df1 |>
+  full_join(df2, by = "study")
+
+# def <- metabin(event.c = event.c,n.c = n.c, event.e = event.t, n.e = n.t, studlab = study,data = df,sm="RR",level = 0.95,comb.fixed=T,comb.random=T,hakn = F)
+
+```
+
+![](methenamine.png)
+
+Using furness 1975 as our control given highest weight and narrow CI. 
+
+```{r,echo=F}
+meta_compare(control = 17/67, hr = 0.26, hr_l = 0.08, hr_u = 0.81, df1 = df1, df = df) |>
+  kable()
+```
+
+Not too shabby! All 3 methods are quite similar in this heterogenous, low n studies. However, full method has a more narrow 95%CI of NNT. Interesting!
+
+<br>
+
+#### Multidisciplinary Teams for the Management of Infective Endocarditis: A Systematic Review and Meta-analysis
+[Roy AS Open Forum Infect Dis. 2023 Aug 21;10(9):ofad444. doi: 10.1093/ofid/ofad444.](https://academic.oup.com/ofid/article/10/9/ofad444/7246851).    
+Short-term mortality of patients with infective endocarditis
+
+```{r,echo=F}
+df1 <- tibble(study=c("Bain 1988","López-Dupla 2006","Botelho-Nevers 2009","Chirillo 2013.1","Chirillo 2013.2","Carrasco-Chinchilla 2014","Kaura 2017","Tan 2018","Ruch 2019","EI-Dalati 2021","Van Camp 2021","Molnar 2021","Diab 2021","Sadeghpour 2021","Elad 2022"),event.c=c(24,19,22,29,20,56,17,13,64,20,20,13,105,82,16),n.c=c(70,91,173,102,38,155,101,97,316,68,68,31,409,445,94))
+
+df2 <- tibble(study=c("Bain 1988","López-Dupla 2006","Botelho-Nevers 2009","Chirillo 2013.1","Chirillo 2013.2","Carrasco-Chinchilla 2014","Kaura 2017","Tan 2018","Ruch 2019","EI-Dalati 2021","Van Camp 2021","Molnar 2021","Diab 2021","Sadeghpour 2021","Elad 2022"),event.t=c(2,4,7,25,14,12,12,18,11,4,26,4,54,26,11),n.t=c(62,29,160,190,61,72,95,80,75,56,92,23,221,200,128))
+
+df <- df1 |>
+  full_join(df2, by = "study")
+
+# def <- metabin(event.c = event.c,n.c = n.c, event.e = event.t, n.e = n.t, studlab = study,data = df,sm="RR",level = 0.95,comb.fixed=T,comb.random=T,hakn = F, method.tau = "REML")
+
+```
+
+![](endo.png)
+Using Diab 2021 as our control given highest weight (10%) through random effect. 
+
+```{r,echo=F}
+meta_compare(control = 105/409, hr = 0.6, hr_l = 0.46, hr_u = 0.77, df1 = df1, df = df) |>
+  kable()
+```
+
+All 3 methods appear to have very similar NNT, the only difference is 95% CI of NNT. 
+
+<br>
+
+#### Effect of Corticosteroids on Mortality and Clinical Cure in Community-Acquired Pneumonia: A Systematic Review, Meta-analysis, and Meta-regression of Randomized Control Trials
+[Saleem N Chest. 2023 Mar;163(3):484-497. doi: 10.1016/j.chest.2022.08.2229.](https://pubmed.ncbi.nlm.nih.gov/36087797/).    
+The effect of adjuvant corticosteroid therapy on ICU admission
+```{r,echo=F,}
+df1 <- tibble(study=c("Sniders 2010","Meiivis 2011","Ferrandez-Serrano 2011","Blum 2015","Llovd 2019","Wittermans 2021"),event.c=c(4,10,5,22,7,14),n.c=c(109,153,28,400,425,203)) 
+
+df2 <- tibble(study=c("Sniders 2010","Meiivis 2011","Ferrandez-Serrano 2011","Blum 2015","Llovd 2019","Wittermans 2021"),event.t=c(3,7,4,16,5,5),n.t=c(104,151,28,402,407,209)) 
+
+df <- df1 |>
+  full_join(df2, by = "study")
+
+def <- metabin(event.c = event.c,n.c = n.c, event.e = event.t, n.e = n.t, studlab = study,data = df,sm="RR",level = 0.95,comb.fixed=T,comb.random=T,hakn = F, method.tau = "REML")
+
+```
+
+![](cap_icu.png)
+
+Using Blum 2015 with highest weight 38.5%.
+
+```{r,echo=F}
+meta_compare(control = 22/400, hr = 0.66, hr_l = 0.45, hr_u = 0.97,df1 = df1, df = df) |>
+  kable()
+```
+
+Both highest weight and full method have similar NNT. Slightly different for single proportion, but all quite similar for estimation. NNT lower and upper bound on this example has dramatic difference when full method is compared with highest weight and single proportion. 
+
+<br>
+
+## Acknowledgement {#ack}
+Thank you, @wwrighID, for initiating the discussion and providing a pivotal example by using the highest weight control event proportion to back-calculate ARR and, eventually, NNT. I also want to express my gratitude to @DrToddLee for contributing a brilliant method of pooling a single proportion from the control group for further estimation. Special thanks to @MatthewBJane, the meta-analysis maestro, for guiding us toward the correct equation to calculate event proportions, with weight estimated by the random effect model.
+
+This discussion has been incredibly inspirational and educational! A heartfelt thank you to everyone involved for helping me answer a question that has intrigued me since 2021. 
+
+
+## Opportunity for Improvement {#opportunity}
+- I am not certain if the 95%CI equation for both highest weight and single proportion is accurate. It made sense for the highest weight to use RR lower and upper bound and back calculate, but for the single proportion the `metaprop` actually provides a 95% interval for the proportion itself, should we than use these lower and upper bound and fix RR to back calculate treatment? 🤷‍♂️ If you do, please leave a comment below
+- Tackle odds ratio next. There are some great meta-analysis studies out there with OR as estimates. Shouldn't be too hard, just need to be mindful about odds calculation and its more tedious conversion to proportion which eventually will need to calculate ARR and NNT.
+
+
+
+## Lessons learnt {#learn}
+- Learnt how to estimate NNT from all 3 methods (highest weight, single proportion pooling, full)
+  - I made an [Rscript]() of the function called `meta_compare` using all 3 methods if you're interested
+- Learnt how to calculate NNT lower and upper bound through variance of ARR
+- Learnt `\pm` is $\pm$ in latex, and add `\` in front of `%` in `\text{}`
+- Calculating pooled treatment and control group with its weight estimated by random effect model
+- Finally, this answered my question I had since 2021, how to calculate NNT with meta-analysis!
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
