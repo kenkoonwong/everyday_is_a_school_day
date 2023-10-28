@@ -40,8 +40,8 @@ params:
   image: /img/flower_herbs.jpg
   mainSections:
     - blog
-    - project
-    - talk
+    # - project
+    # - talk
   math:
     renderer: katex
   navallcaps: yes
@@ -121,9 +121,9 @@ menu:
       title: Blog
       url: /blog/
       weight: 2
-    - name: Project
-      title: Project
-      url: /project/
+    # - name: Project
+    #   title: Project
+    #   url: /project/
     # - name: Projects
     #   title: Project Portfolio
     #   url: /project/
