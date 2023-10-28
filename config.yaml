@@ -121,9 +121,9 @@ menu:
       title: Blog
       url: /blog/
       weight: 2
-    - name: Index
-      title: Index
-      url: /index/
+    # - name: Index
+    #   title: Index
+    #   url: /index/
     # - name: Projects
     #   title: Project Portfolio
     #   url: /project/
