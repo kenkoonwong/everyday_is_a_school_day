@@ -40,7 +40,7 @@ params:
   image: /img/flower_herbs.jpg
   mainSections:
     - blog
-    # - project
+    - project
     # - talk
   math:
     renderer: katex
