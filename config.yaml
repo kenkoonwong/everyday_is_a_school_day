@@ -121,10 +121,10 @@ menu:
       title: Blog
       url: /blog/
       weight: 2
-    # - name: Index
-    #   title: Index
-    #   url: /index/
-    #   weight: 3
+    - name: List
+      title: List
+      url: /list-blog/
+      weight: 3
     # - name: Index
     #   title: Index
     #   url: /index/

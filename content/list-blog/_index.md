@@ -1,8 +1,6 @@
 ---
-type: project
-layout: list
-show_title_as_headline: false
-
+title: "List of Blogs"
+layout: "single"
 ---
 
 10/28/23 [Approaches to Calculating Number Needed to Treat (NNT) with Meta-Analysis](/blog/metannt).   
