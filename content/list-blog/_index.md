@@ -1,6 +1,8 @@
 ---
 title: "List of Blogs"
 layout: "single"
+description: "List of Blogs"
+thumbnail: "" 
 ---
 
 2023-10-28 [Approaches to Calculating Number Needed to Treat (NNT) with Meta-Analysis](/blog/metannt/)     
