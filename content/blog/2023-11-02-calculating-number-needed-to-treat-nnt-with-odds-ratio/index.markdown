@@ -19,7 +19,7 @@ tags:
 - nnt
 - number needed to treat
 - meta
-excerpt: "We learned how to convert the pooled odds ratio from a random-effects model and subsequently calculate the number needed to treat (NNT) or harm (NNH). It’s important to understand that without knowing the event proportions in both the treatment and control groups, we cannot accurately estimate the absolute risk reduction for an individual study or for a meta-analysis. Fascinating indeed! Everyday is a school day! 🙌"
+excerpt: "We learned how to convert the pooled odds ratio from a random-effects model and subsequently calculate the number needed to treat (NNT) or harm (NNH). It’s important to understand that without knowing the event proportions in either the treatment or control groups, we cannot accurately estimate the absolute risk reduction for an individual study or for a meta-analysis. Fascinating indeed! Everyday is a school day! 🙌"
 ---
 
 > We learned how to convert the pooled odds ratio from a random-effects model and subsequently calculate the number needed to treat (NNT) or harm (NNH). It’s important to understand that without knowing the event proportions in both the treatment and control groups, we cannot accurately estimate the absolute risk reduction for an individual study or for a meta-analysis. Fascinating indeed! Everyday is a school day! 🙌
