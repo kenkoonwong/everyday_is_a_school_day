@@ -24,7 +24,7 @@ excerpt: "I'm now more confident in my understanding of the 95% confidence inter
   <img src="feature.jpg" alt="image" width="50%" height="auto">
   </p>
 
-I've always thought I knew what confidence interval was until I revisited the topic again. There are plenty of great resources out there that cover the same material. Nothing beats learning with trial and error with your own code and simulation. This may be a repeat of materials out in the web. 
+I always thought I knew what a confidence interval was until I revisited the topic. There are plenty of great resources out there covering the same material. However, nothing beats learning through trial and error with your own code and simulations. This may be a repetition of materials available on the web.
 
 ### Objectives:
 - [What Is Confidence Interval?](#ci)
