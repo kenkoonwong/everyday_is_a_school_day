@@ -21,7 +21,7 @@ excerpt: "I'm now more confident in my understanding of the 95% confidence inter
 > I'm now more confident in my understanding of the 95% confidence interval, but less certain about confidence intervals in general, knowing that we can't be sure if our current interval includes the true population parameter. On a brighter note, if we have the correct confidence interval, it could still encompass the true parameter even when it's not statistically significant. I find that quite refreshing
 
 <p align="center">
-  <img src="feature.jpg" alt="image" width="50%" height="auto">
+  <img src="feature.jpg" alt="image" width="60%" height="auto">
   </p>
 
 I always thought I knew what a confidence interval was until I revisited the topic. There are plenty of great resources out there covering the same material. However, nothing beats learning through trial and error with your own code and simulations. This may be a repetition of materials available on the web.
