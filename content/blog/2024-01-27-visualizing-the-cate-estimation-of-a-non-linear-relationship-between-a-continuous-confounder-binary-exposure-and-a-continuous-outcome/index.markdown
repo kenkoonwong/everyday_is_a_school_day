@@ -348,7 +348,7 @@ cate2 <- predict(model2,newdata=tibble(x=x,t=1)) - predict(model2,newdata=tibble
 
 # visualize all model cates to assess differences
 cate_all <- tibble(x=x, cate=cate,cate2=cate2) |>
-  mutate(ate3 = 2*x+5) |>
+  mutate(cate3 = 2*x+5) |>
   pivot_longer(cols = starts_with("cate"), names_to = "model", values_to = "cate") |>
   ggplot(aes(x=x,y=cate,color=model)) +
   geom_point() +
@@ -375,7 +375,7 @@ cate_all
 
 Wow, the only time when CATE is the same between linear regression and GAM model is when `x==0`. The other CATEs are different. CATE is linear regression, CATE2 is GAM.     
 
-Did you notice that the CATE2 color is a bit off? We actually sneaked in the true CATE to see how well GAM is able to calculate it. It's almost a perfect fit! 
+Did you notice that the CATE2 color is a bit off? We actually sneaked in the true CATE (`cate3`) to see how well GAM is able to calculate it. It's almost a perfect fit! 
 
 #### How Does One Estimate CATE If We Know The True Formula?
 Given this formula:    
