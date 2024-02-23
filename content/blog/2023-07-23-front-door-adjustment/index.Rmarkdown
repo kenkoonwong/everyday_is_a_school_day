@@ -183,7 +183,21 @@ Our estimate `x` coefficient is `r model$coefficients[["z"]]*model2$coefficients
 
 Yes, it's not going to be exactly what the true estimate is but it's close enough! You can mess around the `n` by increasing it and you will then get closer to the true estimate. Also depends on your `set.seed`, the true coefficient will be different too, give seed `123` a try.
 
+##### Why Coef Z * Coef X??? Addendum 2-23-24
+![](explain.png)
+Looking at the DAG above, we want to estimate the effect of X to Y. The simple equation of X -> Z and Z -> Y would be below. The question is, why are we multiplying `bx` and `bz` as shown in the above front door method? Take a look at the equations below. 
+
+\begin{gather}
+\text{Z} = \text{bx}\cdot\text{X} \\
+\text{Y} = \text{bz}\cdot\text{Z} \\
+Y = bz \cdot (bx \cdot X) \\
+Y = bz \cdot bx \cdot X
+\end{gather}
+
+Hence, to find the effect of X to Y, is basically derivative of Y with respect to X, which is `bx` (x coefficient in `model2`, the 1st front door method step) multiplies by `bz` (coefficient z in `model`, the 2nd front door method step). 
+
 <br>
+
 
 ### Lessons learnt
 - Front-door analysis is another great tool when unobserved confounder is a problem
