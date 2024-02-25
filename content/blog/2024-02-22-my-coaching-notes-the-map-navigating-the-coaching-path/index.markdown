@@ -40,6 +40,7 @@ What I have found in `Developing Coaching Skills` is that it outlines four proce
 ### Our First Path
 Our first journey will be embarking on `Effective Coaching`, where I will take notes from both `Developing Coaching Skills` and `The Coaching Habit` to create a cheat sheet I can refer to during my coaching sessions. Let's go!
 
+FYI, the framework above will evolve overtime as I take more notes. If you find this helpful, please make sure to look at the most recent `Coaching Notes` for more uptodate framework. 
 
 
 If you like this article:

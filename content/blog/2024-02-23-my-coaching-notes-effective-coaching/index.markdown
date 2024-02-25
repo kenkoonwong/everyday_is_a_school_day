@@ -1,0 +1,226 @@
+---
+title: 'My Coaching Notes: Effective Coaching'
+author: Ken Koon Wong
+date: '2024-02-23'
+slug: coach2
+categories: 
+- coaching
+- upskill
+- leadership
+- notes
+- effective coaching
+- silence
+- listening
+tags: 
+- coaching
+- upskill
+- leadership
+- notes
+- effective coaching
+- silence
+- listening
+excerpt: "Effective coaching is essential for bringing the coachee's potential to the surface. I found the 1-2-3-4 combination method to be helpful and have created a framework for myself to fall back on should I deviate from coaching questions. I plan to practice this framework iteratively and deliberately, listening for the trigger to ask a coaching question. Additionally, I found both books, 'The Coaching Habit' and 'Developing Coaching Skills', to be significantly helpful in crafting and adhering to the best practices of coaching questions."
+---
+
+> Effective coaching is essential for bringing the coachee's potential to the surface. I found the 1-2-3-4 combination method to be helpful and have created a framework for myself to fall back on should I deviate from coaching questions. I plan to practice this framework iteratively and deliberately, listening for the trigger to ask a coaching question. Additionally, I found both books, 'The Coaching Habit' and 'Developing Coaching Skills', to be significantly helpful in crafting and adhering to the best practices of coaching questions.
+
+<p align="center">
+  <img src="trainer.jpg" alt="image" width="50%" height="auto">
+</p>
+
+## Effective Coaching
+This will be our first topic. The concept focuses on communication, specifically on the types of questions and the forms we use to help our coachees discover their own answers. For master coaches, these skills likely come naturally. However, I believe I need a form of checklist or techniques to fall back on should I encounter any hurdles during conversations. One challenge I find particularly daunting is avoiding the temptation to dive into backstory mode and subsequently shift into advice mode.
+
+##### Disclaimer:
+I'm not an expert in coaching. The main reason for these blogs is for me to write out my notes, thought processes, and further refine my skills. Even if this doesn't happen, it allows me to revisit my notes years later and see if my future processes have changed or deviated from my original notes. It's going to be both fun and exciting!
+
+![](coaching_effective.png)
+
+### Objectives:
+- [Which books?](#books)
+- [Effect Coaching Framework](#framework)
+- [Summary of both books](@summary)
+- [Scenario #1](#self-query)
+- [Practice Makes Excellence](#practice)
+- [Silence Is Golden](#silence)
+- [Lessons Learnt and my plans moving forward](#lesson)
+
+<br>
+
+## Which Books? {#books}
+After reviewing both `The Coaching Habit` and `Developing Coaching Skills`, I found that they offer several options and frameworks. However, I believe some of the tools are only appropriate in certain situations. For example, `ABCDE`, `Foundation Question`, and `Lazy Question` are among these. In my opinion, some of these aren't 'coaching' questions per se, but they definitely contribute to psychological safety, reality grounding, and effective coaching. I guess, from my simplistic viewpoint, 'coaching questions' are more about sets of questions and responses designed for exploratory purposes.
+
+<br>
+ 
+## Effective Coaching Framework {#framework}
+This is the framework that I have in mind. 
+
+![](feature.png)
+First start at the `blue` box, follow the process and decision trees, and then end at the `green` box. There are probably umpteen combinations of questions one could use, but this is the algorithm that makes sense in my head. Below is a summary of the tecniques each book offers.
+
+<br>
+
+### Summary of both books {#summary}
+`Developing Coaching Skills`:    
+- `GROW` method:    
+  - `Goal` : What does the coachee want?    
+  - `Reality` : The current situation.   
+  - `Options` : Alternative course of action.   
+  - `Will` : What the coachee will do (action step).   
+
+- `ABCDE` method:    
+  - `Adversity` : a difficult situation that we encounter in our life leads to ...    
+  - `Belief` : that we form about the adversity, which in turn leads to ...    
+  - `Consequences` : certain emotional and behavioral consequences.   
+  - `Dispute` : Disputes existing beliefs and develops different beliefs.   
+  - `Effective Outlook` : Opens the door for an exchange of the existing negative interpretation with a new, more effective outlook.   
+
+`The Coaching Habits: 7 Essential Questions`:    
+- `The Kickstart Q` : What is on your mind?   
+- `The AWE Q` : "And what else?" is the quickest and easiest way to uncover and create new possibilities. Stop offering up advice with a question mark attached.   
+- `The Focus Q` : Focus on the real problem, not the *first* problem. "What is the real challenge here for you?"
+  - Three strategies to make this question work for you:
+    - Trust that you're being useful
+    - Remember that there is a place for your advice
+    - Remember the 2nd question. Combination of AWE and `real challenge` question.
+- `An Irresistable 1-2-3 Combination` : Open with "What's on your mind?" -> "is there anything else on your mind?" -> "So what's the real challenge here for you?" -> "And what ekse?" -> "Is there anything else?" -> "So, what's the real challenge here for you?"
+- `The Foundation Q` : T.E.R.A quotient. Sounds like psychological safety.     
+   - `Tribe` : "Are you with me, or are you against me?" 
+   - `Expectation` : "Do I know the future or don't I?" If what's going to happen enxt is clear, the situation feels safe. If not, it feels dangerous.
+   - `Rank` : "Are you more important than I am?" is the question the brain is asking, and if you've diminished my status, the situation feels less secure.    
+   - `Autonomy` : "Do I get a say or don't I?" 
+- `The Lazy Q` : "How can I help?", "What do you want from me?"
+- `The Strategic Q` : A yes is nothing without the no that gives it boundaries and form. "If you're saying yes to this, what are you saying no to?"    
+- `The Learning Q` : "What was most useful for you?" 
+
+I found `GROW`, `1-2-3 combinations`, and `The Learning Q` to be most aligned with 'coaching questions'. They start with an open-ended question, explore with more questions, investigate options, establish a plan, and reflect on the session. I have expanded the `1-2-3 combination` into a `1-2-3-4 combination` by including `The Learning Question` as the fourth component. I believe it's always helpful to reflect on the coaching session itself as growth for both the coach and the coachee.
+
+Meanwhile, `ABCDE` delves deeper into the situation, explores beliefs and alternate beliefs, and provides a safe space to simulate/explore alternative stories or perspectives that could lead to a more effective outlook on a situation.
+
+##### Not really "Coaching Questions", but helpful nonetheless
+Same with the other questions from The Coaching Habit. `The Foundation Q` provides a metric of "How safe a situation is?" by using the "TERA quotient". `The Lazy Q` offers a direct yet effective way of getting to the root of the request without assumption. And lastly `The Strategic Q` is a technique for communicating your 100% attention to what is priority to the organization. 
+
+<br>
+
+## Scenario #1 {#self-query}
+<p align="center">
+  <img src="scenario.jpg" alt="image" width="50%" height="auto">
+</p>
+
+This might sound silly, but I believe it's an excellent way to test out the algorithm we just built. Below is a simulated dialogue between a coach and a coachee. The coachee (also me) aims to improve their coaching skills, and the coach (me as well) will use the framework as a guide to ask questions, ideally leading to discoveries for the coachee. The goal for the coach is to adhere to questioning from start to finish.
+
+BEGIN
+
+**Coach: I hope you don't mind me taking some notes down as we talk.**      
+
+Coachee: Not at all. Thanks for taking the time for this.     
+
+**Coach: My pleasure. What is on your mind today?**     
+
+Coachee: I've been having issues with coaching questions. People kept saying it's easy but I just can't quite get it.
+
+**Coach: Tell me more.** 
+
+Coachee: Sure, there are books, there are training sessions. I just find that everything is sort of "up in the air" and people just pull out appropriate tools for certain situations. It's like natural for people. But, I don't get it. How does one just ask questions without actually knowing the problem the coachee is talking about? They said you don't need to know the backstory to coach, I find that hard to believe or comprehend.
+
+**Coach: What other issues are you having with coaching questions?**
+
+Coachee: I repeatedly hear people say "It's easy, just say 'And what else?'". But, does it even make sense sometimes to ask that question? 
+
+**Coach: And what else?**
+
+Coachee: Most coachees are intelligent people and for example in the beginning when you asked me "what is on your mind?", they would have alrady told you what the problem is upfront, and I find it hard NOT to dive into the problem itself and ask more questions about that. For example, if someone came to you and said they are having problem with their direct report, you wouldn't follow up with the response "and what else?", that's just annoying, in my opinion. You would dive into the problem itself, or at least you get tunneled into the problem itself. 
+
+**Coach: What is the challenge here for you?**
+
+Coachee: I guess I need a guide, a framework, an algorithm or some sort to maybe play out a conversation / simulation in my head, in order for me to follow along I guess?
+
+**Coach: And what else?**
+
+Coachee: Maybe practice somemore? Yes, definitely practice more. 
+
+**Coach: What is the REAL challenge here for you?**
+
+Coachee: I guess these conversations are quite dynamic, having a framwork appears to be a rigid way of coaching. One could even say it's a robotic way of coaching. But, a true conversation will never go along the path the algorithm sets out. My fear is the algorithm will break and what is the point of the framework after all?
+
+**Coach: Having a framework appears to be important to you?**
+
+Coachee: Yes! Of course! A framework is everything! It sets out a scaffolding structure and a guide. It's like something you can fall back on when you're stuck. It's reassuring. It's something I can build on as I go forth with my journey. 
+
+**Coach: What is the REAL challenge here for you then?**
+
+Coachee: I guess, wanting a framework but not having one is the challenge. You know it's like one of the encounters where you think "Won't it be great that you have this device that can do this?" and then realized that there is no such device in existence? It's just an idea, a dream, not reality. 
+
+**Coach: What are your options for making this happen?**
+
+Coachee: I guess I could make up my own framework. Hmm, that is actually not a bad idea at all! I can take these great books and come up with an algorithm!
+
+**Coach: How will you go about doing this?**
+
+Coachee: I have to find time to do it. Blog it perhaps. Write something like "Coaching Notes" and write my thought process out? I might have a draft of the algorithm the next time we meet.    
+
+**Coach: That's great! Coming up with an algorithm is definitely a way to consolidate learning. What was most useful for you in today's session?**
+
+Coachee: I've figured out that my dissatisfaction is due to the lack of a framework/algorithm of asking coaching questions and having one may actually help me to move forward and hone my skill further. At least that is how I think I learn best, everybody is different, maybe they should try asking coaching questions to find their solutions -laughed out loud-
+
+Coach: -laughed out loud-
+
+END
+
+`Note to myself`: AWE questions become more coherent and transition more smoothly when we add a few extra words to connect to the previous conversation. There were instances where saying 'And what else?' on its own almost felt inappropriate. For example, the 4th question from the coach, 'And what else?' seemed somewhat out of place or perhaps lacked context from the response. Following the algorithm, at least with this coachee 🤣, proved to be very beneficial. As a coach, there were moments I was tempted to delve deeper into a problem, but the algorithm prompted me to ask broader exploratory questions instead. The real challenge, or the core issue, often doesn't surface in the coachee's initial statements. It is in our interest to help our coachee delve deeper to uncover what the true issue might be.
+
+Below are a few words of wisdom from the books:
+
+> Ask the right questions if you're going to find the right answers. - Vanessa Redgrave
+
+> What people think of discovery is really the discovery of the question - Jonas Salk
+
+> If you're not trying to fix things, you don't need the backstory. Stick to questions starting with "What" and avoid questions starting with "why". It's no accident that six of the Seven Essential Questions are What questions
+
+<br>
+
+### Practice Makes Excellence {#practice}
+<p align="center">
+  <img src="practice.jpg" alt="image" width="50%" height="auto">
+</p>
+
+> Coaching should be a daily, informal act, not an occasional, formal "It's Coaching Time!" event.
+
+This is absolutely key to improving in any area: practice, practice, and more practice. What's fascinating is that we can't just decide to practice coaching questions more. In fact, what we need to learn is to be mindful of the `trigger` for a coaching conversation. It doesn't have to be in a formal coaching session; it could be a friend asking for advice, a colleague seeking your input, or a family member saying, "Can I ask you a question?" Of course, it's crucial to understand what the other person is truly seeking. In such instances, `the lazy question` like "How can I help?" can be instrumental in clarifying what is expected from the conversation.
+
+Moving forward, whenever I find myself slipping into advice mode, I plan to use the algorithm to steer my coaching questions and explore how I can adapt it. 🤣 Additionally, I aim to avoid asking leading questions that might prompt an advice-driven response. For instance, rather than suggesting, "Have you thought of setting a reminder?" to someone who struggles with punctuality, I'd opt for a more open-ended coaching question like "What is the challenge here for you?"
+
+From my readings, there are times when offering advice is beneficial, but it's important to always ask for permission first. For example, if addressing the issue of being late to meetings, I could preface my advice with, "I have a helpful tip, but before I share, what ideas do you have?" or "Would it be okay if I shared some strategies that have worked for me?
+
+<br>
+
+## Silence Is Golden {#silence}
+<p align="center">
+  <img src="silence.jpg" alt="image" width="50%" height="auto">
+</p>
+
+> Silence is the measure of success
+
+The phrase above really hit home. We often feel uncomfortable with silence during conversations. I believe that in coaching sessions, coaches are trained to listen, which means there could be a significant amount of silence, beneficial for the coachee. I also think we need more silence during non-coaching sessions, allowing others time to think and reflect before we impulsively offer advice. Another point is that we are not trying to 'fix' something; we are creating a space for others to grow using effective coaching questions. In both in-person and sometimes virtual conversations, it's easy to notice when someone is disengaged, making silence and deep listening crucial.
+
+> In any case, the wheel is spinning but the hamster is dead. One of the most compelling things you can do after asking a question is to genuinely listen to the answer. Stay curious, my friend.
+
+<br>
+
+## Lessons Learnt and my plans moving forward {#lesson}
+- Practice the Effective Coaching framework, monitor for feedback, iterate and improve on the framework
+- "Listen" for coaching question triggers
+- Create or get used to a variation of `AWE` questions for smoother transition.
+- Create silence, active and deep listening
+- Avoid framing questions with advice, if there is a place for advice, leave it at the end and ask for permission to share.
+- There are a lot of helpful techniques and tips, especially for emotional situations, such as the `AAA` method, I will add more in the future as I re-read and take more notes
+
+> The real secret sauce here is building a habit of curiosity. The change of behaviour that's going to serve you most powerfully is simply this: a little less advice, a little more curiosity. Find your own questions, find your own voice. And above all, build your own coaching habit. 
+
+<br>
+
+  
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
