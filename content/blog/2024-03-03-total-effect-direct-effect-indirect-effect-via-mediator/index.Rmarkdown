@@ -1,7 +1,7 @@
 ---
 title: My Simple Understanding of Total Effect = Direct Effect + Indirect Effect (via Mediator)
 author: Ken Koon Wong
-date: '2024-03-03'
+date: '2024-03-09'
 slug: totaleffect
 categories: 
 - r
