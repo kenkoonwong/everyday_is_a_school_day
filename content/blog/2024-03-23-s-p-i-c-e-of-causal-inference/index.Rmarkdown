@@ -27,10 +27,10 @@ tags:
 - exchangeabiility
 - ignorability
 - no_interference
-excerpt: "The `S`UTVA, `P`ositivity, `I`dentifiability, `C`onsistency, `E`xchangeability of Causal Inference, the essential ingredients that helps us bring out the true flavor of the causal model. Here is my understanding of each assumptions with examples and accompanied by simulation. Bon Appétit!" 
+excerpt: "The `S`UTVA, `P`ositivity, `I`dentifiability, `C`onsistency, `E`xchangeability of Causal Inference, the essential ingredients that helps us bring out the true flavor of the causal model. Here is my understanding of each assumptions (main course) with examples (side dish) and accompanied by simulation (paired with beverages). Bon Appétit!" 
 ---
 
-> The `S`UTVA, `P`ositivity, `I`dentifiability, `C`onsistency, `E`xchangeability of Causal Inference, the essential ingredients that helps us bring out the true flavor of the causal model. Here is my understanding of each assumptions with examples and accompanied by simulation. Bon Appétit! 
+> The `S`UTVA, `P`ositivity, `I`dentifiability, `C`onsistency, `E`xchangeability of Causal Inference, the essential ingredients that helps us bring out the true flavor of the causal model. Here is my understanding of each assumptions (main course) with examples (side dish) and accompanied by simulation (paired with beverages). Bon Appétit!
 
 
 ![](feature.jpg)
