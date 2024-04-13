@@ -83,7 +83,7 @@ Second, the potential outcomes for any unit are the same under the same treatmen
   <img src="sutva.png" alt="image" width="60%" height="auto">
 </p>
 
-The DAG above depicts an unblinded random assignment (50%) of treatment to `X1`. However, `X1` resides in `groups`. And for some reason, if each `group` contains more than 30% treatment, then the treatment is no longer 50% but 80%. The outcome then will be influenced by the new treatment assignment `X2` instead, which is not observed or measured in reality. And we will erroneously estimate the treatment effect of `X1`  instead. Several examples would be exercise vs no exercise or coaching vs no-coaching.
+The DAG above depicts an unblinded random assignment (50%) of treatment to `X1`. However, `X1` resides in `groups`. And for some reason, if each `group` contains more than 50% treatment, then the treatment is no longer 50% but 80%. The outcome then will be influenced by the new treatment assignment `X2` instead, which is not observed or measured in reality. And we will erroneously estimate the treatment effect of `X1`  instead. Several examples would be exercise vs no exercise or coaching vs no-coaching.
 
 In the exercise example, imagine exercises and no-exercises were assigned to certain people through the school as treatment and control group, since this is unblinded, the exercise group may share that they're going to gym more often, influencing their classmates to join them as well. When all school mates were assessed for certain outcome, say, happiness/wellness score, we estimated the treatment effect with the orginal treatment assignment group, which can also be known as total effect. However, remember only if the class contains more than 30% of exercise-prescribed students will it have mediating effect to the rest of the class, otherwise it won't. Now this is a violation of SUTVA #1. We can apply this to coaching vs no-coaching as well. Imagine if more than 30% of students in the classed were coached and produced a more positive perspective of life and future, which then spreads throughout the class. 
 
@@ -116,7 +116,7 @@ Wow, OK, let's break down the codes in a bit.
 3. Create a dataframe with both `xq` and `group` variable.    
 4. Group our groups and then calculate mean of `x1` and save it under `x1_mean`.     
 5. `x2` assignment:
-    - if `x1_mean` is > 30% and `x1` is not a 1, then randomly sample with probability of 20% for 0 and 80% for 1.     
+    - if `x1_mean` is > 50% and `x1` is not a 1, then randomly sample with probability of 20% for 0 and 80% for 1.     
     - if `x1` is already 1, then `x2` should also be 1
     - everything else, randomly sample 50-50
 6. Assign `y` with a random variable from binomial distribution of inverse logit of `2*x2`. Our coefficient of interest should be `2`.     
