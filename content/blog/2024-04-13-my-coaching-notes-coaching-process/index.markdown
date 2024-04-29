@@ -242,6 +242,9 @@ It is also interesting to note that not everyone's ideal vision is about making 
 - Believe the individual change is a process, not an event; Consider your approach to coaching as a chance to mine for gold, not dig for dirt
 - Listeni 80% Talk 20%; WAIT!
 
+Other coaching notes:
+- [My Coaching Notes: The Map - Navigating the Coaching Path](https://www.kenkoonwong.com/blog/coach1/)
+- [My Coaching Notes: Effective Coaching](https://www.kenkoonwong.com/blog/coach2/)
 
 If you like this article:
   - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
