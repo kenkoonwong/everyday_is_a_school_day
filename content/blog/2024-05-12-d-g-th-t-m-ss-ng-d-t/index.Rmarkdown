@@ -22,7 +22,13 @@ tags:
 excerpt: "MCAR, MAR, MNAR, all so confusing. But with DAG, oh so amusing! Many technical words, I don't understand, but with simulation, I am a fan! Join me in exploring missing mechanisms, learn I will with great optimism."
 ---
 
-> MCAR, MAR, MNAR, all so confusing. But with DAG, oh so amusing! Many technical words, I don't understand, but with simulation, I am a fan! Join me in exploring missing mechanisms, learn I will with great optimism.  
+> MCAR, MAR, MNAR, all so confusing.    
+But with DAG, oh so amusing!     
+Many technical words, I don't understand,      
+but with simulation, I am a fan!      
+Join me in exploring missing mechanisms,       
+learn I will with great optimism.  
+
 ### Visualizing Missing Data With DAG & Simulation
 
 ![](feature.png)    
