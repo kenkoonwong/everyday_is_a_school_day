@@ -1,0 +1,175 @@
+---
+title: 'My Coaching Notes: Essential Coaching Skills'
+author: Ken Koon Wong
+date: '2024-07-04'
+slug: coach4
+categories: 
+- coaching
+- upskill
+- leadership
+- notes
+- llm
+- claude
+- hacks
+tags: 
+- coaching
+- upskill
+- leadership
+- notes
+- llm
+- claude
+- hacks
+excerpt: Reading "Coaching Hacks" has given me a fresh perspective on essential coaching skills. 📚 I'm committed to daily practice, recognizing that improving as a coach is a lifelong journey. 🌱 It's exciting to use AI tools to reinforce these skills - a great way to blend traditional learning with new technology. 🤖💡
+---
+
+> Reading "Coaching Hacks" has given me a fresh perspective on essential coaching skills. 📚 I'm committed to daily practice, recognizing that improving as a coach is a lifelong journey. 🌱 It's exciting to use AI tools to reinforce these skills - a great way to blend traditional learning with new technology. 🤖💡
+
+
+<p align="center">
+  <img src="coaching_notes.png" alt="image" width="100%" height="auto">
+</p>
+
+As a continuation of our coaching journey this year, we will venture into "Essential Coaching Skills". Note that we've included all the other tidbits we've learnt throughout these books onto a single page to help us remember, reflect and also use these as we read and re-read through our notes. Let's dive in with what we've learnt and what we want to work on this year.
+
+# Essential Coaching Skills 
+What a joy reading this TL;DR book [Coaching Hacks: simple Strategies to Make Every Conversation More Effective](https://www.amazon.com/Coaching-Hacks-Strategies-Conversation-Effective/dp/164136372X/ref=sr_1_1?crid=1867WFXFV15R2&dib=eyJ2IjoiMSJ9.kzuIoN7IcZequRvoVDpfdmSSFqXQy9M5pbuo5W2FUTVMi2zyzYiJYqMGZEvNQOUMV6h0hpDoXwQmydYp-nmEs4FE0JNn6kAz0MzcI9efibEYojb5I85_n-x7lLs6-fUlIJWWnOzG9hInB-AvKJL0RCRmkCVvCb9hHtvj43ETHzYIwfDFSTjFzfQiyoEbMSuKevggcPP3iBWbbfPOgc-UaKyeRYqAetHm-ViljQfyq5T3e_eZM3iFjfHRGQhwM8kf27z2v9rhCU38cpBhUnYSnzvxv6noRfeejeOd8zWekRk.cCly8URCmNQKNTAF7MFQt56Wve4wrSC_uOcqlF5pa_o&dib_tag=se&keywords=coaching+hacks&qid=1720462854&sprefix=coaching+hacks%2Caps%2C98&sr=8-1). It gives 40+ tips, tricks and experience in what to do and what not to do. The quick read helps in dividing essentials skills into chunks, which also gave me an idea, using LLM with prompt engineering, to randomly generate an LLM-assisted hack to practice on a daily basis! Below is my interpretation of the categories of these hacks, just so I can organize them in my head.
+
+It is divided into Coach-centered (mindfulness, skills, patience, generosity), Coach-coachee connection (purpose, relationship), Coachee-centered (autonomy), and lastly governed by Theorem. OK, this might sound a tad exaggerated, but it is a good way to remember them. 
+
+<p align="center">
+  <img src="coaching_hacks.png" alt="image" width="100%" height="auto">
+</p>
+
+I was really curious, how many of these hacks actually fall into each category. So I did a quick count and plotted them. 
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;" />
+
+Wow, relationship, mindfulness, and skills win the race! Of course, the data science part of me is curious about the relationship between these categories and its missingness, is it MNAR? Or MAR? [Curious about Missing Mechanisms, click here](https://www.kenkoonwong.com/blog/missing/). Are they there because it's hard to learn? Or is it because it's hard to measure? Or is it because it's hard to practice? AFter writing all these questions out, essentially I thought the most plausible reason is that these are the most important skills to learn because they are not easy, but they work. Not a robust sensitive analysis, I'll give you that, but this will do.
+
+Below, I will expand a bit on each of these categories, and what I'm planning to do more in the future. **Disclaimer: These are my interpretations and might not be the same as the author's. I highly advice and recommend to get a copy of this book and read it**
+
+## Objectives
+- [Coach-centered](#coach)
+  - [Mindfulness](#mindfulness)
+  - [Skills](#skills)
+  - [Patience](#patience)
+  - [Generosity](#generosity)
+- [Coach-coachee connection](#connection)
+  - [Relationship](#relationship)
+  - [Purpose](#purpose)
+- [Coachee-centered](#coachee)
+  - [Autonomy](#autonomy)
+- [Theorem](#theorem)
+- [LLM-assisted daily practice](#practice)
+- [Limitation](#limitation)
+- [Opportunities for Improvement](#opportunities)
+- [Lessons Learnt](#learnt)
+
+## Coach-centered {#coach}
+### Mindfulness {#mindfulness}
+<p align="center">
+  <img src="mindful.png" alt="image" width="30%" height="auto">
+</p>
+
+The mindfulness category in coaching emphasizes the importance of being fully present and aware during coaching conversations. These hacks encourage me to pay close attention to coachees' words, non-verbal cues and progress, and focus on current issues and root causes rather than past events or surface-level symptoms. The hack that resonated with me was `If a question does not inspire action, ask a different one`. 
+
+The principle `You MUST coach what the client DOES say` reminds me to resist the urge to redirect conversations based on their own assumptions or priorities. Instead, coaches should focus on what the coachee explicitly brings to the session, even if it differs from what I might expect or prefer to discuss. I remember having a pre-session question I wanted to ask to maybe stimulate some discovery questions, that completely backfired. Not only it did not trigger anything productive, it ended the conversation is such an artificially prescribed question without flow. And it was a very simple question "Where do you see yourself in 5 years?". 
+
+Another concept `You typically have to SAY it before you can DO it` is what I wanted to practice more. This highlights the importance of articulation in the coaching process. This principle encourages me to watch for what's called the "Articulate Moment" - when a coachee clearly expresses a desire, goal, or realization. By giving coachee the space to verbalize their thoughts and intentions, coaches help them move from abstract ideas to concrete plans. This verbalization is often a crucial step between thinking about change and actually implementing it, making it a key focus area for mindful coaches who aim to facilitate real progress and action in their clients' lives.
+
+### Skill {#skills}
+<p align="center">
+  <img src="skill.png" alt="image" width="30%" height="auto">
+</p>
+
+The skills category in coaching encompasses a range of techniques and abilities that effective coaches cultivate to facilitate client growth and progress. These skills focus on `asking powerful questions`, `actively listening`, and `guiding conversations towards productive outcomes`. Coaches are encouraged to develop their ability to `ask short, impactful questions that require no setup or explanation`, we have covered most of these skills in the past on [effective coaching](https://www.kenkoonwong.com/blog/coach2/) and [coaching process](https://www.kenkoonwong.com/blog/coach3/). 
+
+One of the hacks that I learnt in this book and not the others that I've read are `Coach the Person. Consult the Problem. Mentor the Experience. Counsel the Fallout.` and `"Speak the Truth, but Leave the Meaning & Interpretation Alone.`. These are the 2 skills that I will attempt to be mindful of and develop this year. I sometimes do spend time explaining the interpretation, but it seems like there is no need of this. 
+
+### Patience {#patience}
+<p align="center">
+  <img src="patience.png" alt="image" width="30%" height="auto">
+</p>
+
+Interesting section where it offered reassuring statements where these skills are obtainable only if we're willing to spend time and perhaps lifelong journey in mastering it. Not sure if I will be a master at this at the end of my lifetime but it's for sure a good practice to aim for. `Time seems like a super power in coaching, whether it's for the coachee or the coach, giving it time and practice is my take away`. 
+
+### Generosity {#generosity}
+<p align="center">
+  <img src="generosity.png" alt="image" width="30%" height="auto">
+</p>
+
+Lastly, as a coach, this seems to be the big red bow on the present. Being generous, use all of your skills and experience available to help your coachee invest in conversations that fulfill their bigger purpose. Wow, that's a powerful statement. `USE EVERYTHING is the take away message`. When I'm with a coachee, pay 100% attention, energy, focus, into the relationship and discovery questions that helps channel the potential of the coachee. That is not an easy thing to do as we all have our own reactive thoughts depending on what content is being brought up during conversation. Having the coaching questions on hand, I think, will help in focusing in drawing the essense of the encounter. 
+
+## Coach-Coachee Connection {#connection}
+### Relationship {#relationship}
+<p align="center">
+  <img src="relationship.png" alt="image" width="30%" height="auto">
+</p>
+
+When it comes to the relationship aspect of coaching, it's really about creating a strong foundation with your coachee. These principles emphasize the importance of intentional conversations that evolve into meaningful connections. It's not about jumping into problem-solving mode; it's about taking the time to understand where your coachee is now and where they want to be.
+
+The key is to foster an environment of openness and trust. You want to be transparent and show a bit of vulnerability yourself - it helps build that safe space for your coachee. And here's a pro tip: the coaching relationship starts before you even begin talking. It's about being prepared and in the right mindset. Essentially, if you get the relationship piece right, everything else in coaching tends to fall into place more smoothly. It's like having a solid foundation - it makes the whole process more effective and impactful for your coachee. Like the book said, `Get the Relationship Right. Then Add Coaching Skills`.
+
+### Purpose {#purpose}
+<p align="center">
+  <img src="purpose.png" alt="image" width="30%" height="auto">
+</p>
+
+When it comes to the purpose aspect of coaching, it's all about getting your coachee moving. The big idea here is that talk is great, but action is where the magic happens. Your job as a coach is to help your coachee figure out what that first bold step looks like and then encourage them to actually take it. It's often the toughest part, right? Getting started. So, you're there to bridge that gap between thinking about change and actually making it happen. By focusing on this, you're turning your coaching sessions into launchpads for real progress. It's about making sure that when your coachee walks away, they're not just inspired, but they're actually ready to do something concrete. That's how you know you're nailing the purpose part of coaching. 
+
+## Coachee-centered {#coachee}
+### Autonomy {#autonomy}
+<p align="center">
+  <img src="autonomy.png" alt="image" width="30%" height="auto">
+</p>
+
+When it comes to autonomy in coaching, it's all about putting your coachee in the driver's seat. The big idea here is that effective coaching happens when you're working with what your coachee brings to the table, not what you think they should be talking about. It's about asking smart questions that help them connect the dots between our conversations and their bigger goals.    
+
+`Remember, you can't coach what isn't said`, so your job is to create an environment where your coachee feels comfortable opening up. Let them choose the topic and decide when they've got what they need from the session. And here's the thing: you can only go as far as your coachee is willing to go. Sometimes, that means knowing when to pause and refocus the conversation. It's a delicate balance, but when you nail it, you're tapping into the real power of coaching. Essentially, you're there to guide and support, but it's their journey, their choices, and their growth, and guess what, the credit is all theirs!
+
+## Theorem {#theorem}
+<p align="center">
+  <img src="theorem.jpg" alt="image" width="30%" height="auto">
+</p>
+
+Alright, let's talk about these coaching theorems - they're like the golden rules of the coaching game. To be transparent, I used the word `theorem` quite liberally. I do not have a proof or could guide you to a proof like a mathematical theorem, but it's an exaggerated borrowed terminology to represent its importance.     
+First up, we've got the `80/20 rule of listening`. It's pretty straightforward: spend way more time listening than talking. We're talking 80% listening, 20% talking. The goal? It is to give your coachee time and space to think, process, hear what they said and respond. 
+
+Now, the second theorem is `all about keeping your eyes on the road ahead, not the rearview mirror`. Sure, the backstory can be interesting, but it's not always helpful. Your job is to keep your coachee focused on what they can actually change - which is the future, not the past. This is certain field is called `solution based approach`, rather than problem-based approach. It's about steering the conversation towards action and possibilities, rather than getting bogged down in what's already happened. Remember, we're here to move forward, not replay old tapes. These theorems are simple, but they pack a punch in making your coaching more effective. 
+
+## LLM-assisted daily practice 🤖 {#practice}
+This is what I'm quite excited about! With all these LLMs in the market, both propietary and open-source, one can easily use these technology as a leverage to boost our professional development! How did we do this? Imagine we have all these great hacks offered by the author, yes we read it once and write some notes about it, but we need to practice! How do we practice all of these hacks? Maybe one could write it down, or go down the list in order and practice that on a daily basis, on an on demand basis. OR, we could feed an LLM these hacks to give me a random hack to practice on everyday! 
+
+That's exactly what I did. I created a csv file with the hacks, categorized it to the above categories, then my notes and have Claude 3.5 Sonnet to give me a hack for the day to practice! Even better, we can do some prompt engineering for the LLM to be as a coachee but also a coach of my coaching skill. You can set up a prompt and scenario and practice certain hacks and have LLM monitor you and give you insights! 
+
+Below is an example of using Claude 3.5 Sonnet to be both coachee for me and coach for my coaching to practice certain hacks from the book. The default setting seems to be an easy mode coaching but one can adjust that and be creative with it as well with prompt engineering. Try it out yourself! 
+
+![](claude.png)
+![](claude2.png)
+![](claude3.png)
+![](claude4.png)
+![](claude5.png)
+Wow, this is quite impressive. Not my coaching skill 🤣 but using LLM, RAG, and prompt engineering to practice these coaching hacks.
+
+## Limitation
+- The categories were my interpretation of the hacks, some may overlap with each other. But I wanted to organize these essence so that I can digest and practice. Perhaps keep it in my back pocket as well.
+- These are also my take-aways (my interpretation) of the book, there may be error involved. Please pick yourself up the book [here](https://www.amazon.com/Coaching-Hacks-Strategies-Conversation-Effective/dp/164136372X/ref=sr_1_1?crid=1867WFXFV15R2&dib=eyJ2IjoiMSJ9.kzuIoN7IcZequRvoVDpfdmSSFqXQy9M5pbuo5W2FUTVMi2zyzYiJYqMGZEvNQOUMV6h0hpDoXwQmydYp-nmEs4FE0JNn6kAz0MzcI9efibEYojb5I85_n-x7lLs6-fUlIJWWnOzG9hInB-AvKJL0RCRmkCVvCb9hHtvj43ETHzYIwfDFSTjFzfQiyoEbMSuKevggcPP3iBWbbfPOgc-UaKyeRYqAetHm-ViljQfyq5T3e_eZM3iFjfHRGQhwM8kf27z2v9rhCU38cpBhUnYSnzvxv6noRfeejeOd8zWekRk.cCly8URCmNQKNTAF7MFQt56Wve4wrSC_uOcqlF5pa_o&dib_tag=se&keywords=coaching+hacks&qid=1720462854&sprefix=coaching+hacks%2Caps%2C98&sr=8-1) and give it a spin! I foresee myself to go back several times to reference and possibly update my notes here.
+- Using LLM I think is quite help in practicing the hacks/skills, it's never the same as in-person impromptu response
+- Pardon some of my gramatical error and typo. These notes serve as a draft and start for me to refer to before my coaching sessions. If you noticed anything vastly wrong, please let me know, I'll be happy to correct it.
+
+## Opportunities for Improvement
+- Keep notes on each practice. What worked what didn’t. Read more of that hack on the book when it dididn't
+- Measure how adherent I am. How? Is there more convenient way for this?
+- Work on prompt engineering more, perhaps explore Claude API and also prompt generator
+
+## Lessons Learnt {#learnt}
+- We learnt categories that we can improve in in order to equip ourselves with essential coaching skills
+- We learnt how mindfulness, skill, and relationship are so important in coaching
+- We incorporated LLM, RAG and prompt engineering into our daily coaching hack practice
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
