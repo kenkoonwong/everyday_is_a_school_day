@@ -1,0 +1,655 @@
+---
+title: Llama, Llama, Oh Give Me A Sign. What's In The Latest IDSA Guideline?
+author: Ken Koon Wong
+date: '2024-07-21'
+slug: llm-rag
+categories: 
+- r
+- R
+- LLM
+- RAG
+- IDSA
+- AMR
+- llamcpp
+- langchain
+- prompt
+- reticulate
+tags: 
+- r
+- R
+- LLM
+- RAG
+- IDSA
+- AMR
+- llamcpp
+- langchain
+- prompt
+- reticulate
+excerpt: Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+---
+
+> Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+
+## TL;DR
+I think everyone should learn the intuition of LLM, prompt engineering, RAG, agents, etc. The concept itself and with some trial and error will provide users a renewed perspective of how these things work, how helpful and beneficial it can be for us, how it serves as a tool for learning and not a replacement. **The simplest & most straightforward way of learning is using GPT4All GUI** **LangChain's tutorial, use a Local LLM, and then give it a go!** Yes most of these are in `python` but it shouldn't prevent R user like me to use it in `R` via `reticulate`!  
+
+#### Disclaimer
+This is mainly for data science educationa purpose only. This is **NOT** a medical advice, nor is it a medical education. Some medical statements here may be inaccurate. If you find any error in this article, please feel free to educate me. 
+
+## Objectives:
+- [Motivation](#motivation)
+- [Prerequisite](#prerequisite)
+- [Code In Action - Explained](#code)
+  - [Load & Embed Document](#load)
+  - [Model](#model)
+  - [Prompt](#prompt)
+  - [Chain/Runnables](#chain)
+- [Questions to Our LLM](#questions)
+- [Opportunities For Improvement](#opportunities)
+- [Lessons Learnt](#lessons)
+
+## Motivation {#motivation}
+I have been wanting to learn LLM for a while now. My first attempt was an utter failure. Not being proficient in python, needing to install a bunch of python packages, different error lingo, were quite discouraging. That said, it's always good to try something and fail, and then pick it up again some other time and invest more time chunks into learning the individual portions of it. This is exactly what happened! I'm glad that it did and now I have a better understanding of it. 
+
+What really catalyzed this learning process was the recent AI Summit Conference. They provided a `Prompt Enigeering` beginner session and that really helped me to want to learn more about LLM. However, most LLM sessions, books, all involve paid version of API such as OpenAI GPT3.5/4o, Claude, Azure, etc, I wanted something local and does not involve paying for each token, in my case erroneous token 🤣, sent to the API and get charged for my mistakes. Then, we stumbled upon [GPT4All](https://www.nomic.ai/gpt4all). This was really something that kicked start the process of learning without requiring ANY codes! Just download it, and it has a GUI, attach local files, and then chat away, without internet! 
+
+Below is a GIF of the website and a snapshot of the GUI
+![](gpt4all.gif)
+
+We won't be going through the details of using GPT4All here, it is quite intuitive. They also have a [discord channel](https://discord.com/invite/mGZE39AS3e) if you have questions. Very nice and helpful people. I recently learnt that GPT4All does not have embedding implemented yet on the python SDK through the channel. The most straightforward way to learn how to run LLM locally is this in 3 simple ways:
+
+1. Download the app
+2. Open the app, select model to download
+3. Attach folder on LocalDoc (this can be tricky if document is too large/long, but if you use nomic.ai's embedding, which requires sign up and API key, it's very fast).
+4. Then start chat, attach the LocalDoc folder of interest, and start chatting!
+
+You will also need to change setting of `n_ctx` (tokens that can be sent) and `max_tokens` (tokens that LLM returns response) if your question is long or want longer answer. I did not tweak other things in here much, I didn't find the response was much accurate, though it's quick. Since it doesn't allow a whole lots of customization, I went to `LangChain` instead since mainstream uses this a lot and I can find more tutorial in that setting. However, this really got me started and am forever grateful I found this and its community. Another thing that the community pointed out was that if the prompt template has something like 
+
+```
+### Human:
+%1
+
+### Assistant:
+```
+
+That's not the right template, more so a placeholder and you'd have to enter the model specific prompt template for it to work, such as for Llama 3 system prompt template.
+
+```
+<|im_start|>system
+Write your system prompt here<|im_end|>
+```
+
+With LangChain, you don't need the above, most of them are done for you! More to come.
+
+## 🦜⛓️‍💥LangChain 
+The reasons I chose LangChain to learn were because of standardization of the lingo, functions, workflow etc. It reminds me a whole lot of `TidyModels`. It has a specific workflow, but incorporates all the cool engines (ML methods) into the workflow. It doesn't matter whether you're using Llama 3, WizardLM, Gemma2 etc, the workflow, functions are all the same. Also, there are lot of resources out there that uses this and that is extremely helpful for me to start. Not to mention, the documentation of LangChain is fantastic! Because this field is evolving so swiftly some of the tutorial codes are deprecated but the documentations offer the current function and points you to the right direction. Definitely enjoyed reading through it when I stumbled upoen problem. ❤️ 
+
+That said, it does not come without LOTS and LOTS of trial and error. Below I'll try to document the things I need for this to run on R. It may not be extensive, but if you are stuck in any of the steps below please let me know, I'll try to see if I can reproduce it and help you troubleshoot if I can. Here, I am using `LlamaCpp` because it is an efficient, open-source C++ implementation of Meta's LLaMA language model, designed for CPU-based inference. It allows users to run large language models on consumer-grade hardware with relatively low memory requirements, thanks to its support for various quantization levels
+
+## Prerequisite {#prerequisite}
+I assume you have python and reticulate installed, and your reticulate is pointing towards the python you use to install the following packages in python
+
+```
+pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu
+```
+
+Sorry if I missed anything. If when you run the code you noticed some error where packages not found, you can use that to troubleshoot. Let me know if I missed anything, I'll modify.
+
+## Code In Action - Explained {#code}
+### Load Packages
+```{r, eval=F}
+library(reticulate)
+library(tidyverse)
+
+# load modules
+langchain_community <- import("langchain_community")
+langchain <- import("langchain")
+langchain_core <- import("langchain_core")
+langchain_huggingface <- import("langchain_huggingface")
+
+# load functions
+### Documents
+DirectoryLoader <- langchain_community$document_loaders$directory$DirectoryLoader
+PyPDFLoader <- langchain_community$document_loaders$PyPDFLoader
+RecursiveCharacterTextSplitter <- langchain$text_splitter$RecursiveCharacterTextSplitter
+HuggingFaceEmbeddings <- langchain_huggingface$HuggingFaceEmbeddings
+
+### Embedding / Vectorstorage / Retriever
+FAISS <- langchain_community$vectorstores$FAISS
+
+### Model
+LlamaCpp <- langchain_community$llms$LlamaCpp
+CallbackManager <- langchain_core$callbacks$CallbackManager
+StreamingStdOutCallbackHandler <- langchain_core$callbacks$StreamingStdOutCallbackHandler
+
+
+### Template
+PromptTemplate <- langchain$prompts$PromptTemplate
+ChatPromptTemplate <- langchain_core$prompts$ChatPromptTemplate
+
+### Chain
+create_retrieval_chain <- langchain$chains$create_retrieval_chain
+create_stuff_documents_chain <- langchain$chains$combine_documents$create_stuff_documents_chain
+
+```
+
+This is quite self-explainatory. If you have questions, copy and paste on LLM and have it explain. Make sure to get your copy of [pdf here](https://www.idsociety.org/globalassets/idsa/practice-guidelines/amr-guidance/4.0/amr-guidance-4.0.pdf)
+
+### Load & Embed Document {#load}
+```{r, eval=F}
+loader = PyPDFLoader("amr-guidance-4.0.pdf")
+documents = loader$load()
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+docs = text_splitter$split_documents(documents)
+vectorstore = FAISS$from_documents(documents=docs, embedding=HuggingFaceEmbeddings())
+retriever = vectorstore$as_retriever()
+```
+
+Explaination:
+- Loads the contents of the PDF file named "amr-guidance-4.0.pdf".
+- Extracts the text content from the loaded PDF and stores it in the documents variable.
+- Creates a text splitter that will divide the text into chunks of approximately 1000 characters each, with an overlap of 200 characters between adjacent chunks (to maintain context).
+- Applies the splitter to the documents variable, breaking the text into smaller chunks stored in the docs variable.
+- Initializes an embedding model from the Hugging Face library. Embeddings are numerical representations of text that capture semantic meaning.
+- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store.
+- Creates a retriever object from the vectorstore. This retriever allows you to efficiently search the vector store for text chunks that are semantically similar to a given query.
+
+#### Embedding, huh?
+Embedding is a technique used in natural language processing (NLP) to represent words, sentences, or documents as numerical vectors. These vectors capture the semantic meaning of the text and can be used for various NLP tasks, such as similarity search, text classification, and language generation. In this case, we are using the Hugging Face library to generate embeddings for the text chunks extracted from the PDF document.
+
+This [tutorial](https://www.youtube.com/watch?v=2TJxpyO3ei4&t=151s) has a great description of what embedding model -> vector storage means. 
+
+#### Example of embedding vector
+```{r, eval = F}
+embedding = HuggingFaceEmbeddings()
+embedding$embed_query(text="can i use gentamicin for pseudomonas infection")
+```
+
+![](embedding_vec.png)
+
+Then this embedding vector will be compared with all of the chunk vectors using squared L2 distance (Euclidean distance):
+
+$d(a,b) = \sum(a_i-b_i)^2$
+
+
+The actual euclidean distance we need to square-root it but here FAISS has omitted it for computational efficiency. The lower the number the more similar the 2 vectors are, it works the same regardless of square-rooting or not. [More details on the proof](https://math.stackexchange.com/questions/3451864/is-correct-to-say-squared-euclidean-2-norm)
+
+#### Return the Best (lowest squared L2) Similarity
+```{r, eval=F}
+vectorstore$similarity_search_with_score(query = "can i use gentamicin for pseudomonas infection", k=as.integer(1))
+```
+
+![](embedding_similarity_k1.png)
+Now lets calculate it by hand! 
+
+```{r, eval=F}
+query_v <- embedding$embed_query(text="can i use gentamicin for pseudomonas infection") 
+page53_v <- embedding$embed_query(text=docs[[167]]$page_content) 
+sum((query_v - page53_v)^2)
+```
+
+```{r, echo=F}
+print(0.7473773)
+```
+
+YES !!! Same number, awesome!!! ✅🙌👍
+
+### Model {#model}
+```{r, eval=F}
+llm = LlamaCpp(
+  model_path="wizardlm-13b-v1.2.Q5_K_M.gguf",
+  streaming=TRUE,  
+  callback_manager=CallbackManager(handlers = list(StreamingStdOutCallbackHandler())),
+  n_ctx = as.integer(2048),
+  max_tokens = as.integer(1024),
+  temperature = 0,
+  verbose = F)
+```
+
+Explaination:
+- Initializes a LlamaCpp object from the langchain.llms module
+- select path of GGUF model (see below how to download)
+- Enables streaming output, allowing the model to generate text incrementally and send it back as it's produced, rather than waiting for the entire generation to finish. 
+- Creates a CallbackManager object, which allows you to register callbacks (functions) to be executed during the text generation process. StreamingStdOutCallbackHandler. This handler prints the generated tokens directly to the standard output (your console) as they are produced, providing a real-time view of the generation.
+- Sets the maximum context window size to 2048 tokens. The context window is the amount of text the model can "remember" and use to generate its output. 
+- Limits the maximum number of tokens in the model's output to 1024. This prevents the model from generating overly long responses.
+- Controls the "creativity" or randomness of the model's output. A temperature of 0 makes the model deterministic, always choosing the most likely next token.
+- Disables verbose logging from the LlamaCpp library. I disabled this to make it more aesthetically nice for the blog, you should set this to TRUE to see detailed output during the generation process.
+
+#### How to Download GGUF models?
+1. Go to [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&library=gguf&sort=trending), here I have pre-selected `text-generation` model and `GGUF` library for you
+2. Select a model that piqued your interest 
+3. Select "Files and versions" 
+![](huggingface.png)
+4. Select a model to download and download. If the gguf contains part 1 of 2, make sure to download both parts and select the first part when you're assigning the model.
+
+Please note that certain LLM such as Llama, Gemma etc, requires you to request permission to use their models. It is quite straightforward, read through their policy, request it by filling out information, wait for approval then you're in!
+
+### Prompt {#prompt}
+```{r eval=F}
+system_prompt = "
+    You are an expert for question-answering tasks. 
+    Use the following pieces of retrieved context to answer the question.
+    When answering, also make sure to state the reason or rationale for that answer.
+    Then question that reason or rationale critically once with a sentence.
+    Then provide an answer to the critical appraisal.
+    If you don't know the answer, say that you don't know.
+
+    {context}
+
+"
+
+prompt = ChatPromptTemplate$from_messages(
+  list(
+    tuple("system",system_prompt),
+    tuple("user",paste0("Question: ","{input}")),
+    tuple("assistant",""))
+)
+
+prompt
+```
+
+![](prompt.png)
+
+Make sure the `system prompt` goes to `SystemMessage`. I had to debug this for sometime and finally realized that the `ChatPromptTemplate$from_messages` function takes a `list of tuples` in order for it to work. Found this out by reading LangChain documentation. 🙌 To be quite honest, I really find their documentation to be very helpful for me!
+
+### Chain / Runnables ⛓️‍💥 {#chain}
+```{r, eval=F}
+question_answer_chain = create_stuff_documents_chain(llm, prompt)
+rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+```
+
+Explaination:
+- `create_stuff_documents_chain()`: This function from LangChain creates a chain specifically designed for question-answering tasks. Your model `llm` will be used to generate answers. `prompt`: A PromptTemplate that guides the LLM on how to structure its response. It sets up a chain that takes a question and some documents as input. It passes the question and documents to your LLM. The LLM uses the prompt to generate an answer based on the given information.
+- `create_retrieval_chain()`·: This function from LangChain creates a RAG chain. `retriever`: Your retriever object (e.g., the one you created from your vector store). This is responsible for fetching relevant documents based on a query. `question_answer_chain`: The chain you just created in the previous line, which will be used to generate answers from the retrieved documents.
+What this line does:
+
+Then, we are ready to ask our questions!
+
+```{r, eval=F}
+result = rag_chain$invoke(dict("input"= "What guideline are we looking at today?"))
+
+result
+```
+
+![](test_result.png) 
+The output was saved in `result` as a list. As you can see, the first output was the question, 2nd,3rd,4th were the context that our retriever found most similar to our question. Lastly we have our answer "Guidance on the Management of Antimicrobial Resistance" ❤️❤️❤️✅Though it seemed to have missed "Gram Negative" 🤣
+
+#### Create A Vector of Questions
+Let's create a vector of questions and then run pass our LLM and see what are the responses.
+
+```{r, eval=F}
+questions = c("What is the preferred treatment of CRE?",
+             "What is the preferred treatment of ESBL-E?",
+             "Can we use fosfomycin in ESBL Klebsiella?",
+             "Can we use fosfomycin in ESBL Ecoli?",
+             "What is the preferred treatment of stenotrophomonas?",
+             "What is the preferred treatment of DTR Pseudomonas?",
+             "Which organisms require two active agent when susceptibility is known?",
+             "Can we use gentamicin in pseudomonas infection?",
+             "Can we use tobramycin to treat pseudomonas infection?",
+             "Why is there carbapenemase non-producing organism?",
+             "Can we use oral antibiotics for any of these MDRO?",
+             "What is the preferred treatment of MRSA?",
+             "What is the preferred treatment of CRAB?",
+             "Can fosofmycin be used for pyelonephritis?",
+             "Is IV antibiotics better than oral antibiotics?")
+
+response = vector(mode = "character", length = length(questions))
+source = vector(mode = "character", length = length(questions))
+
+
+for (i in 1:length(questions)) {
+  cat(rep("\n",100))
+  print(paste0("Question: ", questions[i]))
+  result = rag_chain$invoke(dict("input" = questions[i]))
+  response[i] = result$answer
+  source[i] = map_chr(.x=result$context,.f=~paste(.x)) |> paste(collapse = "\n\n##########\n\n") 
+  Sys.sleep(10)
+}
+```
+
+Explaination:
+- `questions` variable contains a vector of the questions we're interested in asking
+- create `response` and `source` empty vectors
+- create a `for loop`:
+  - clear console create by creatining lots of `new lines`
+  - print the question
+  - invoke the `i-th` question
+  - save the ith response to ith response vector
+  - save the ith source to ith source vector (this will tell us where the RAG got the source from our documents), separate each source with `\n\n##########\n\n`
+  - sleep for 10s, otherwise our machine will heat up quite fast; this also will help us capture screen of the response
+
+Ready for the response? Let's go! 🏃
+
+## Questions to Our LLM {#questions} 
+Anything in baby blue highlight is LLM answer output, light green highlight is the source RAG found top 4 similarity to the question. If the `GIF` is too fast to follow, you can look at the actual output. I didn't return all sources, unless necessary to investigate. The first question will have everything outputted. 
+
+Below might be a bit clinical, please feel free to glance through the first few examples and move on if you're not interested. 
+
+### What is the preferred treatment of CRE?
+
+#### Response:
+![](cre.gif)
+
+```{r echo=F, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(htmltools)
+load(file = "llm_df_summary_13b_2.rda")
+
+format_response <- function(i,res=T) {
+bgcol <- ifelse(res==T, "#E6F3FF", "#E8F5E9")
+raw <- df_summary[[i,ifelse(res==T,"response","source")]] 
+raw2 <- str_replace_all(raw, pattern = ifelse(res==T,"\\n","\\n\\n"), "<br>") 
+
+return(HTML(paste0("<span style=\"font-style: italic; color: #000000; background-color: ",bgcol,";\">",raw2,"</span>")))
+}
+
+format_response(1, res=T)
+```
+
+
+#### Source:
+```{r, echo=F, message=F, warning=F}
+format_response(1,res=F)
+```
+
+Looking at output, it's not too shabby. I did not specify exactly what condition and it picked out non-urinary source. When I saw aminoglycoside, it sounded wrong but it did say `in certain condition`, which it can be used in UTI/pyelo according to the guideline if susceptible, which also does not make sense in the LLM output as it already states `not urinary source`. As you can see from the last `source`, it did include `cUTI/pyelo` context. 
+
+>Note to self, More fine-tuning of the `search_type` might be helpful. Maybe set `k=3` ? Let's continue to see the other responses. 
+
+<br>
+
+### What is the preferred treatment of ESBL-E?
+![](esbl.gif)
+```{r,echo=F}
+format_response(2)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(2,res=F)
+```
+
+Again, quite interesting, I did not provide the condition of treatment and it picked the broadest / most severe condition, and correctly de-esccalate to oral antibiotics if susceptible. It also mentioned about the piptazo susceptible ESBL and questioned itself. 
+
+<br>
+
+### Can we use fosfomycin in ESBL Klebsiella?
+![](kleb.gif)
+```{r,echo=F}
+format_response(3)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(3,res=F)
+```
+
+This is also quite interesting. It correctly stated that fosfomycin cannot be used for ESBL klebsiella but for some reason, it started off with, one can use it for ESBL Ecoli, even though the question did not ask that. Generally, the statements provided here seem accurate to me by glancing through. 
+
+>Note to self, i think `k=3` might be the magic number, as the last context does not answer the question either. The problem too is there are 2 `klebsiella` words in the articles and they're not related to the treatment, it did use `k. pneumoniae`. So maybe if I switch the wording, it might be different. 
+
+![](kleb_correct.png)
+Yes!!! ❤️
+
+<br>
+
+### Can we use fosfomycin in ESBL Ecoli?
+![](ecoli.gif)
+```{r,echo=F}
+format_response(4)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(4,res=F)
+```
+
+lol it looks like it's the same context as ESBL Klebsiella, I guess E coli and Klebsiella terminology did not change a whole of the squared L2 distance? 
+
+>Note to self, I may need to monitor terminology / abbreviation used in the article in order for retriever to retrieve the right context.
+
+<br>
+
+### What is the preferred treatment of stenotrophomonas?
+![](steno.gif)
+
+```{r,echo=F}
+format_response(5)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(5,res=F)
+```
+
+This is also an interesting one, while the answer is not wrong, this is not similar to the executive summary of the guideline. See snapshot below.
+
+![](idsa_steno.png)
+
+Let's look at the context, they are ALL references! I think the problem here is most of the important context use `S. maltophilia` than `stenotrophomonas` itself.
+
+> Note to self, remove references!!! Maybe also build a short to long form for organism? Let's try `S. maltophilia` and see if we can a different result.
+
+![](steno_correct.png)
+Wow !!! ❤️Looks like you just gotta use the right words!What if I include both?
+
+![](steno_correct2.png)
+
+Actually, when I tried it with references removed, it worked just fine with `stenotrophomonas`. 
+
+<br>
+
+> Note to self, include both abbreviations to increase accuracy! Or remove references, ?or both.
+
+
+### What is the preferred treatment of DTR Pseudomonas?
+![](psa.gif)
+```{r,echo=F}
+format_response(6)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(6,res=F)
+```
+
+Not bad at all. Both statements accurate, correct antibiotics, correct statement regarding no need for double active agents. 
+
+<br>
+
+### Which organisms require two active agent when susceptibility is known?
+![](combo.gif)
+```{r,echo=F}
+format_response(7)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(7,res=F)
+```
+
+Accurate statement, looks like we do need 2 active agents for CRAB. But it missed stenotrophomonas. Let's try to rephrase.
+
+![](combo_correct.png)
+No luck! 🤷‍♂️
+
+<br>
+
+### Can we use gentamicin in pseudomonas infection?
+![](gent.gif)
+```{r,echo=F}
+format_response(8)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(8,res=F)
+```
+
+As you can see here the response got cut off? Maybe it went over the `max_tokens`. But the output seemed to be quite confusing, one stated Pseudomonas, the other stated CRE in the same paragraph. IF you look at the source the most similar vector contained the correct answer but because we had split it using `overlap`, it included the last CRE text and beginning of Pseudomonas text.
+
+> Note to self, play with overlap, reduce or set to 0? Typical practice is 10-20% of the token chunk size. 
+
+
+### Can we use tobramycin to treat pseudomonas infection?
+![](tobra.gif)
+```{r,echo=F}
+format_response(9)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(9,res=F)
+```
+
+Not too shabby. Though the `yes` response was a bit optimistic in my view. According to the guideline, it's used as a last resort when other beta-lactams are not susceptible. It did say that later on though.
+
+
+### Why is there carbapenemase non-producing organism?
+![](carbapenemase.gif)
+```{r,echo=F}
+format_response(10)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(10,res=F)
+```
+
+Not too shabby. I was intending to ask for CRE but in this setting, the LLM accurately answered the question by including CR-PsA. Wow, this is not a bad way of refining our questions to be more concise and precise. 
+
+Let's see if I only indicate CRE whether it will give a different answer. 
+
+### Can we use oral antibiotics for any of these MDRO?
+![](oral_cre.gif)
+```{r,echo=F}
+format_response(11)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(11,res=F)
+```
+
+This question is mainly to test the LLM to see if it understand what `MDRO` is and it did. And able to provide a generic statement that if oral antibiotic is susceptible, it can be switched. 
+
+<br>
+
+### What is the preferred treatment of MRSA?
+![](mrsa.gif)
+```{r,echo=F}
+format_response(12)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(12,res=F)
+```
+
+LOL ~! This is a test. There was no MRSA in the guideline, I just wanted to see what the response is. It's not good. It did provide some possible antibiotics that work, but included ones that we know will not work. I suspect the answers came from trained data. Let's explore the content to see how can I prevent this in the future.
+
+![](mrsa_correct.png)
+
+> Interestingly, I think after I remove references, this answer came up... I didn't even have to adjust `score_threshold` 🙌
+
+<br>
+
+```{r}
+
+```
+
+
+### What is the preferred treatment of CRAB?
+![](crab.gif)
+```{r,echo=F}
+format_response(13)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(13,res=F)
+```
+
+Not bad. Interesting thing that guideline recommends 2 active agents. 
+
+<br>
+
+### Can fosofmycin be used for pyelonephritis?
+![](fos_pyelo.gif)
+```{r,echo=F}
+format_response(14)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(14,res=F)
+```
+
+So, we know that the first sentence is not true, even though it gave a reason for low renal parenchyma concentration. I suspect this is due to "possible" wordings use by the guideline. 
+
+![](fos_iv.png)
+
+I believe by including that 4th k with these context, LLM thinks that it may be ok, but the context is on switching from IV to oral.
+
+>Note to self, k=3 please!
+
+### Is IV antibiotics better than oral antibiotics?
+![](oral_v_iv.gif)
+```{r,echo=F}
+format_response(15)
+```
+
+<br>
+
+```{r,echo=F}
+format_response(15,res=F)
+```
+
+Output got cut off, also context included a bunch of references. Let's give it another go without references.
+
+![](oral_v_iv.png)
+
+Not too shabby!!! 
+
+> Note to self, remove references!!!
+
+
+## Opportunities for Improvement {#opportunities}
+Wow, that was a lot! But it was fun and educational! I can absolutely see the potential of RAG LLM, knowing the intricacy of it, to produce a tool to enhance knowledge. Here are a few things I will attempt to incorporate and learn moving forward:
+
+- Learn to use LangSmith to check the details of the machine
+- Learn LangGraph to create a workflow 
+- Use agents to help with better RAG
+- Need to figure out how to work llama3 prompt template. I may have to use `Template` instead and pass on the actual llama3 provided template
+- Try different embedding models, apparently HuggingFace has a leaderboard on [this](https://huggingface.co/spaces/mteb/leaderboard)
+- Try LangSmith Hub Prompt [here](https://smith.langchain.com/hub?ref=blog.langchain.dev)
+- Design the script to point directly to website for most updated guideline since this is a living document
+- Going to give Mandell NLP a redesign! We'll see if it will work. [Here is my previous ngram work](http://localhost:4321/blog/mandell/)
+
+## Lessons Learnt {#lessons}
+- Learnt reticulate: dict, tuples, list, etc. [Here is a primer](https://rstudio.github.io/reticulate/articles/python_primer.html), coupled with LangChain documentation it will tell me which argument takes what object
+- LangChain Documentation is actually really good !!! Even for a beginner like me
+- It is good to know both R and Python! The more I think about this, the more it makes sense to try Positron, though I did everything here on Rstudio without issues
+
+<br>
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
