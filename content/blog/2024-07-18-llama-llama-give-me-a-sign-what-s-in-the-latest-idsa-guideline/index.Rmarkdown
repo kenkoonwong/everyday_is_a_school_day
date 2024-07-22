@@ -25,10 +25,10 @@ tags:
 - langchain
 - prompt
 - reticulate
-excerpt: Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+excerpt: Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio! Not only we can read IDSA Guidelines, we can use LLM to assist us with retrieving information! 
 ---
 
-> Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+> Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio! Not only we can read IDSA Guidelines, we can use LLM to assist us with retrieving information! 
 
 ## TL;DR
 I think everyone should learn the intuition of LLM, prompt engineering, RAG, agents, etc. The concept itself and with some trial and error will provide users a renewed perspective of how these things work, how helpful and beneficial it can be for us, how it serves as a tool for learning and not a replacement. **The simplest & most straightforward way of learning is using GPT4All GUI** **LangChain's tutorial, use a Local LLM, and then give it a go!** Yes most of these are in `python` but it shouldn't prevent R user like me to use it in `R` via `reticulate`!  
@@ -39,14 +39,15 @@ This is mainly for data science educationa purpose only. This is **NOT** a medic
 ## Objectives:
 - [Motivation](#motivation)
 - [Prerequisite](#prerequisite)
-- [Code In Action - Explained](#code)
-  - [Load & Embed Document](#load)
+- [Code In Action - Explained](#code-in-action---explained)
+  - [Load & Embed Document](#load-packages)
   - [Model](#model)
   - [Prompt](#prompt)
-  - [Chain/Runnables](#chain)
-- [Questions to Our LLM](#questions)
-- [Opportunities For Improvement](#opportunities)
-- [Lessons Learnt](#lessons)
+  - [Chain/Runnables](#chain-or-runnables-)
+- [Questions to Our LLM](#questions-to-our-llm)
+- [Limitations](#limitations)
+- [Opportunities For Improvement](#opportunities-for-improvement)
+- [Lessons Learnt](#lessons-learnt)
 
 ## Motivation {#motivation}
 I have been wanting to learn LLM for a while now. My first attempt was an utter failure. Not being proficient in python, needing to install a bunch of python packages, different error lingo, were quite discouraging. That said, it's always good to try something and fail, and then pick it up again some other time and invest more time chunks into learning the individual portions of it. This is exactly what happened! I'm glad that it did and now I have a better understanding of it. 
@@ -90,7 +91,7 @@ That said, it does not come without LOTS and LOTS of trial and error. Below I'll
 I assume you have python and reticulate installed, and your reticulate is pointing towards the python you use to install the following packages in python
 
 ```
-pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu
+pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu sentence-transformers
 ```
 
 Sorry if I missed anything. If when you run the code you noticed some error where packages not found, you can use that to troubleshoot. Let me know if I missed anything, I'll modify.
@@ -151,7 +152,7 @@ Explaination:
 - Creates a text splitter that will divide the text into chunks of approximately 1000 characters each, with an overlap of 200 characters between adjacent chunks (to maintain context).
 - Applies the splitter to the documents variable, breaking the text into smaller chunks stored in the docs variable.
 - Initializes an embedding model from the Hugging Face library. Embeddings are numerical representations of text that capture semantic meaning.
-- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store.
+- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store. HuggingFaceEmbeddings model when not specified will return `sentence-transformers/all-mpnet-base-v2` model. 
 - Creates a retriever object from the vectorstore. This retriever allows you to efficiently search the vector store for text chunks that are semantically similar to a given query.
 
 #### Embedding, huh?
@@ -170,7 +171,6 @@ embedding$embed_query(text="can i use gentamicin for pseudomonas infection")
 Then this embedding vector will be compared with all of the chunk vectors using squared L2 distance (Euclidean distance):
 
 $d(a,b) = \sum(a_i-b_i)^2$
-
 
 The actual euclidean distance we need to square-root it but here FAISS has omitted it for computational efficiency. The lower the number the more similar the 2 vectors are, it works the same regardless of square-rooting or not. [More details on the proof](https://math.stackexchange.com/questions/3451864/is-correct-to-say-squared-euclidean-2-norm)
 
@@ -218,7 +218,7 @@ Explaination:
 
 #### How to Download GGUF models?
 1. Go to [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&library=gguf&sort=trending), here I have pre-selected `text-generation` model and `GGUF` library for you
-2. Select a model that piqued your interest 
+2. Select a model that piqued your interest (try 7-15B param)
 3. Select "Files and versions" 
 ![](huggingface.png)
 4. Select a model to download and download. If the gguf contains part 1 of 2, make sure to download both parts and select the first part when you're assigning the model.
@@ -253,7 +253,7 @@ prompt
 
 Make sure the `system prompt` goes to `SystemMessage`. I had to debug this for sometime and finally realized that the `ChatPromptTemplate$from_messages` function takes a `list of tuples` in order for it to work. Found this out by reading LangChain documentation. 🙌 To be quite honest, I really find their documentation to be very helpful for me!
 
-### Chain / Runnables ⛓️‍💥 {#chain}
+### Chain or Runnables ⛓️‍💥 {#chain}
 ```{r, eval=F}
 question_answer_chain = create_stuff_documents_chain(llm, prompt)
 rag_chain = create_retrieval_chain(retriever, question_answer_chain)
@@ -322,7 +322,7 @@ Explaination:
 
 Ready for the response? Let's go! 🏃
 
-## Questions to Our LLM {#questions} 
+## Questions to Our LLM {#question} 
 Anything in baby blue highlight is LLM answer output, light green highlight is the source RAG found top 4 similarity to the question. If the `GIF` is too fast to follow, you can look at the actual output. I didn't return all sources, unless necessary to investigate. The first question will have everything outputted. 
 
 Below might be a bit clinical, please feel free to glance through the first few examples and move on if you're not interested. 
@@ -627,6 +627,12 @@ Output got cut off, also context included a bunch of references. Let's give it a
 Not too shabby!!! 
 
 > Note to self, remove references!!!
+
+<br>
+
+## Limitations {#limitations}
+- Hardware can be a problem (slow) if you download ?10 billion param models 
+- The above prompt is not generalizable to other models
 
 
 ## Opportunities for Improvement {#opportunities}

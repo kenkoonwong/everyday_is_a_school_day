@@ -25,10 +25,10 @@ tags:
 - langchain
 - prompt
 - reticulate
-excerpt: Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+excerpt: Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn't as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio! Not only we can read IDSA Guidelines, we can use LLM to assist us with retrieving information! 
 ---
 
-> Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn’t as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio!
+> Wow, what a journey, and more to come! We learned how to perform simple RAG with an LLM and even ventured into LangChain territory. It wasn’t as scary as some people said! The documentation is fantastic. Best of all, we did it ALL in R with Reticulate, without leaving RStudio! Not only we can read IDSA Guidelines, we can use LLM to assist us with retrieving information!
 
 ## TL;DR
 
@@ -42,14 +42,15 @@ This is mainly for data science educationa purpose only. This is **NOT** a medic
 
 - [Motivation](#motivation)
 - [Prerequisite](#prerequisite)
-- [Code In Action - Explained](#code)
-  - [Load & Embed Document](#load)
+- [Code In Action - Explained](#code-in-action---explained)
+  - [Load & Embed Document](#load-packages)
   - [Model](#model)
   - [Prompt](#prompt)
-  - [Chain/Runnables](#chain)
-- [Questions to Our LLM](#questions)
-- [Opportunities For Improvement](#opportunities)
-- [Lessons Learnt](#lessons)
+  - [Chain/Runnables](#chain-or-runnables-)
+- [Questions to Our LLM](#questions-to-our-llm)
+- [Limitations](#limitations)
+- [Opportunities For Improvement](#opportunities-for-improvement)
+- [Lessons Learnt](#lessons-learnt)
 
 ## Motivation
 
@@ -91,7 +92,7 @@ That said, it does not come without LOTS and LOTS of trial and error. Below I’
 
 I assume you have python and reticulate installed, and your reticulate is pointing towards the python you use to install the following packages in python
 
-    pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu
+    pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu sentence-transformers
 
 Sorry if I missed anything. If when you run the code you noticed some error where packages not found, you can use that to troubleshoot. Let me know if I missed anything, I’ll modify.
 
@@ -153,7 +154,7 @@ Explaination:
 - Creates a text splitter that will divide the text into chunks of approximately 1000 characters each, with an overlap of 200 characters between adjacent chunks (to maintain context).
 - Applies the splitter to the documents variable, breaking the text into smaller chunks stored in the docs variable.
 - Initializes an embedding model from the Hugging Face library. Embeddings are numerical representations of text that capture semantic meaning.
-- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store.
+- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store. HuggingFaceEmbeddings model when not specified will return `sentence-transformers/all-mpnet-base-v2` model.
 - Creates a retriever object from the vectorstore. This retriever allows you to efficiently search the vector store for text chunks that are semantically similar to a given query.
 
 #### Embedding, huh?
@@ -222,7 +223,7 @@ Explaination:
 #### How to Download GGUF models?
 
 1.  Go to [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&library=gguf&sort=trending), here I have pre-selected `text-generation` model and `GGUF` library for you
-2.  Select a model that piqued your interest
+2.  Select a model that piqued your interest (try 7-15B param)
 3.  Select “Files and versions”
     ![](huggingface.png)
 4.  Select a model to download and download. If the gguf contains part 1 of 2, make sure to download both parts and select the first part when you’re assigning the model.
@@ -258,7 +259,7 @@ prompt
 
 Make sure the `system prompt` goes to `SystemMessage`. I had to debug this for sometime and finally realized that the `ChatPromptTemplate$from_messages` function takes a `list of tuples` in order for it to work. Found this out by reading LangChain documentation. 🙌 To be quite honest, I really find their documentation to be very helpful for me!
 
-### Chain / Runnables ⛓️‍💥
+### Chain or Runnables ⛓️‍💥
 
 ``` r
 question_answer_chain = create_stuff_documents_chain(llm, prompt)
@@ -1112,6 +1113,13 @@ Output got cut off, also context included a bunch of references. Let’s give it
 Not too shabby!!!
 
 > Note to self, remove references!!!
+
+<br>
+
+## Limitations
+
+- Hardware can be a problem (slow) if you download ?10 billion param models
+- The above prompt is not generalizable to other models
 
 ## Opportunities for Improvement
 
