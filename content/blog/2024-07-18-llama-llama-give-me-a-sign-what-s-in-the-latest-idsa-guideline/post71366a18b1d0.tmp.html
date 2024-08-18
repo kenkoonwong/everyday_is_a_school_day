@@ -1,0 +1,404 @@
+<blockquote>
+
+</blockquote>
+<div id="tldr" class="section level2" number="0.1">
+<h2><span class="header-section-number">0.1</span> TL;DR</h2>
+<p>I think everyone should learn the intuition of LLM, prompt engineering, RAG, agents, etc. The concept itself and with some trial and error will provide users a renewed perspective of how these things work, how helpful and beneficial it can be for us, how it serves as a tool for learning and not a replacement. <strong>The simplest &amp; most straightforward way of learning is using GPT4All GUI</strong> <strong>LangChain’s tutorial, use a Local LLM, and then give it a go!</strong> Yes most of these are in <code>python</code> but it shouldn’t prevent R user like me to use it in <code>R</code> via <code>reticulate</code>!</p>
+<div id="disclaimer" class="section level4" number="0.1.0.1">
+<h4><span class="header-section-number">0.1.0.1</span> Disclaimer</h4>
+<p>This is mainly for data science educationa purpose only. This is <strong>NOT</strong> a medical advice, nor is it a medical education. Some medical statements here may be inaccurate. If you find any error in this article, please feel free to educate me.</p>
+</div>
+</div>
+<div id="objectives" class="section level2" number="0.2">
+<h2><span class="header-section-number">0.2</span> Objectives:</h2>
+<ul>
+<li><a href="#motivation">Motivation</a></li>
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#code">Code In Action - Explained</a>
+<ul>
+<li><a href="#load">Load &amp; Embed Document</a></li>
+<li><a href="#model">Model</a></li>
+<li><a href="#prompt">Prompt</a></li>
+<li><a href="#chain">Chain/Runnables</a></li>
+</ul></li>
+<li><a href="#questions">Questions to Our LLM</a></li>
+<li><a href="#opportunities">Opportunities For Improvement</a></li>
+<li><a href="#lessons">Lessons Learnt</a></li>
+</ul>
+</div>
+<div id="motivation" class="section level2" number="0.3">
+<h2><span class="header-section-number">0.3</span> Motivation</h2>
+<p>I have been wanting to learn LLM for a while now. My first attempt was an utter failure. Not being proficient in python, needing to install a bunch of python packages, different error lingo, were quite discouraging. That said, it’s always good to try something and fail, and then pick it up again some other time and invest more time chunks into learning the individual portions of it. This is exactly what happened! I’m glad that it did and now I have a better understanding of it.</p>
+<p>What really catalyzed this learning process was the recent AI Summit Conference. They provided a <code>Prompt Enigeering</code> beginner session and that really helped me to want to learn more about LLM. However, most LLM sessions, books, all involve paid version of API such as OpenAI GPT3.5/4o, Claude, Azure, etc, I wanted something local and does not involve paying for each token, in my case erroneous token 🤣, sent to the API and get charged for my mistakes. Then, we stumbled upon <a href="https://www.nomic.ai/gpt4all">GPT4All</a>. This was really something that kicked start the process of learning without requiring ANY codes! Just download it, and it has a GUI, attach local files, and then chat away, without internet!</p>
+<p>Below is a GIF of the website and a snapshot of the GUI
+<img src="gpt4all.gif" /></p>
+<p>We won’t be going through the details of using GPT4All here, it is quite intuitive. They also have a <a href="https://discord.com/invite/mGZE39AS3e">discord channel</a> if you have questions. Very nice and helpful people. I recently learnt that GPT4All does not have embedding implemented yet on the python SDK through the channel. The most straightforward way to learn how to run LLM locally is this in 3 simple ways:</p>
+<ol style="list-style-type: decimal">
+<li>Download the app</li>
+<li>Open the app, select model to download</li>
+<li>Attach folder on LocalDoc (this can be tricky if document is too large/long, but if you use nomic.ai’s embedding, which requires sign up and API key, it’s very fast).</li>
+<li>Then start chat, attach the LocalDoc folder of interest, and start chatting!</li>
+</ol>
+<p>You will also need to change setting of <code>n_ctx</code> (tokens that can be sent) and <code>max_tokens</code> (tokens that LLM returns response) if your question is long or want longer answer. I did not tweak other things in here much, I didn’t find the response was much accurate, though it’s quick. Since it doesn’t allow a whole lots of customization, I went to <code>LangChain</code> instead since mainstream uses this a lot and I can find more tutorial in that setting. However, this really got me started and am forever grateful I found this and its community. Another thing that the community pointed out was that if the prompt template has something like</p>
+<pre><code>### Human:
+%1
+
+### Assistant:</code></pre>
+<p>That’s not the right template, more so a placeholder and you’d have to enter the model specific prompt template for it to work, such as for Llama 3 system prompt template.</p>
+<pre><code>&lt;|im_start|&gt;system
+Write your system prompt here&lt;|im_end|&gt;</code></pre>
+<p>With LangChain, you don’t need the above, most of them are done for you! More to come.</p>
+</div>
+<div id="langchain" class="section level2" number="0.4">
+<h2><span class="header-section-number">0.4</span> 🦜⛓️‍💥LangChain</h2>
+<p>The reasons I chose LangChain to learn were because of standardization of the lingo, functions, workflow etc. It reminds me a whole lot of <code>TidyModels</code>. It has a specific workflow, but incorporates all the cool engines (ML methods) into the workflow. It doesn’t matter whether you’re using Llama 3, WizardLM, Gemma2 etc, the workflow, functions are all the same. Also, there are lot of resources out there that uses this and that is extremely helpful for me to start. Not to mention, the documentation of LangChain is fantastic! Because this field is evolving so swiftly some of the tutorial codes are deprecated but the documentations offer the current function and points you to the right direction. Definitely enjoyed reading through it when I stumbled upoen problem. ❤️</p>
+<p>That said, it does not come without LOTS and LOTS of trial and error. Below I’ll try to document the things I need for this to run on R. It may not be extensive, but if you are stuck in any of the steps below please let me know, I’ll try to see if I can reproduce it and help you troubleshoot if I can. Here, I am using <code>LlamaCpp</code> because it is an efficient, open-source C++ implementation of Meta’s LLaMA language model, designed for CPU-based inference. It allows users to run large language models on consumer-grade hardware with relatively low memory requirements, thanks to its support for various quantization levels</p>
+</div>
+<div id="prerequisite" class="section level2" number="0.5">
+<h2><span class="header-section-number">0.5</span> Prerequisite</h2>
+<p>I assume you have python and reticulate installed, and your reticulate is pointing towards the python you use to install the following packages in python</p>
+<pre><code>pip install --upgrade langchain langchain-community langchain_core langchain_huggingface llama-cpp-python faiss-cpu</code></pre>
+<p>Sorry if I missed anything. If when you run the code you noticed some error where packages not found, you can use that to troubleshoot. Let me know if I missed anything, I’ll modify.</p>
+</div>
+<div id="code" class="section level2" number="0.6">
+<h2><span class="header-section-number">0.6</span> Code In Action - Explained</h2>
+<div id="load-packages" class="section level3" number="0.6.1">
+<h3><span class="header-section-number">0.6.1</span> Load Packages</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(reticulate)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># load modules</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>langchain_community <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">&quot;langchain_community&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>langchain <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">&quot;langchain&quot;</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>langchain_core <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">&quot;langchain_core&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>langchain_huggingface <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">&quot;langchain_huggingface&quot;</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># load functions</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="do">### Documents</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>DirectoryLoader <span class="ot">&lt;-</span> langchain_community<span class="sc">$</span>document_loaders<span class="sc">$</span>directory<span class="sc">$</span>DirectoryLoader</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>PyPDFLoader <span class="ot">&lt;-</span> langchain_community<span class="sc">$</span>document_loaders<span class="sc">$</span>PyPDFLoader</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>RecursiveCharacterTextSplitter <span class="ot">&lt;-</span> langchain<span class="sc">$</span>text_splitter<span class="sc">$</span>RecursiveCharacterTextSplitter</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>HuggingFaceEmbeddings <span class="ot">&lt;-</span> langchain_huggingface<span class="sc">$</span>HuggingFaceEmbeddings</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="do">### Embedding / Vectorstorage / Retriever</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>FAISS <span class="ot">&lt;-</span> langchain_community<span class="sc">$</span>vectorstores<span class="sc">$</span>FAISS</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="do">### Model</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>LlamaCpp <span class="ot">&lt;-</span> langchain_community<span class="sc">$</span>llms<span class="sc">$</span>LlamaCpp</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>CallbackManager <span class="ot">&lt;-</span> langchain_core<span class="sc">$</span>callbacks<span class="sc">$</span>CallbackManager</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>StreamingStdOutCallbackHandler <span class="ot">&lt;-</span> langchain_core<span class="sc">$</span>callbacks<span class="sc">$</span>StreamingStdOutCallbackHandler</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="do">### Template</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>PromptTemplate <span class="ot">&lt;-</span> langchain<span class="sc">$</span>prompts<span class="sc">$</span>PromptTemplate</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>ChatPromptTemplate <span class="ot">&lt;-</span> langchain_core<span class="sc">$</span>prompts<span class="sc">$</span>ChatPromptTemplate</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="do">### Chain</span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>create_retrieval_chain <span class="ot">&lt;-</span> langchain<span class="sc">$</span>chains<span class="sc">$</span>create_retrieval_chain</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>create_stuff_documents_chain <span class="ot">&lt;-</span> langchain<span class="sc">$</span>chains<span class="sc">$</span>combine_documents<span class="sc">$</span>create_stuff_documents_chain</span></code></pre></div>
+<p>This is quite self-explainatory. If you have questions, copy and paste on LLM and have it explain. Make sure to get your copy of <a href="https://www.idsociety.org/globalassets/idsa/practice-guidelines/amr-guidance/4.0/amr-guidance-4.0.pdf">pdf here</a></p>
+</div>
+<div id="load" class="section level3" number="0.6.2">
+<h3><span class="header-section-number">0.6.2</span> Load &amp; Embed Document</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>loader <span class="ot">=</span> <span class="fu">PyPDFLoader</span>(<span class="st">&quot;amr-guidance-4.0.pdf&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>documents <span class="ot">=</span> loader<span class="sc">$</span><span class="fu">load</span>()</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>text_splitter <span class="ot">=</span> <span class="fu">RecursiveCharacterTextSplitter</span>(<span class="at">chunk_size=</span><span class="dv">1000</span>, <span class="at">chunk_overlap=</span><span class="dv">200</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>docs <span class="ot">=</span> text_splitter<span class="sc">$</span><span class="fu">split_documents</span>(documents)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>vectorstore <span class="ot">=</span> FAISS<span class="sc">$</span><span class="fu">from_documents</span>(<span class="at">documents=</span>docs, <span class="at">embedding=</span><span class="fu">HuggingFaceEmbeddings</span>())</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>retriever <span class="ot">=</span> vectorstore<span class="sc">$</span><span class="fu">as_retriever</span>()</span></code></pre></div>
+<p>Explaination:
+- Loads the contents of the PDF file named “amr-guidance-4.0.pdf”.
+- Extracts the text content from the loaded PDF and stores it in the documents variable.
+- Creates a text splitter that will divide the text into chunks of approximately 1000 characters each, with an overlap of 200 characters between adjacent chunks (to maintain context).
+- Applies the splitter to the documents variable, breaking the text into smaller chunks stored in the docs variable.
+- Initializes an embedding model from the Hugging Face library. Embeddings are numerical representations of text that capture semantic meaning.
+- Creates a FAISS vector store (vectorstore). It takes the split text chunks (docs) and converts them into embeddings using the specified HuggingFaceEmbeddings model. These embeddings are then stored in the vector store.
+- Creates a retriever object from the vectorstore. This retriever allows you to efficiently search the vector store for text chunks that are semantically similar to a given query.</p>
+<div id="embedding-huh" class="section level4" number="0.6.2.1">
+<h4><span class="header-section-number">0.6.2.1</span> Embedding, huh?</h4>
+<p>Embedding is a technique used in natural language processing (NLP) to represent words, sentences, or documents as numerical vectors. These vectors capture the semantic meaning of the text and can be used for various NLP tasks, such as similarity search, text classification, and language generation. In this case, we are using the Hugging Face library to generate embeddings for the text chunks extracted from the PDF document.</p>
+<p>This <a href="https://www.youtube.com/watch?v=2TJxpyO3ei4&amp;t=151s">tutorial</a> has a great description of what embedding model -&gt; vector storage means.</p>
+</div>
+<div id="example-of-embedding-vector" class="section level4" number="0.6.2.2">
+<h4><span class="header-section-number">0.6.2.2</span> Example of embedding vector</h4>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>embedding <span class="ot">=</span> <span class="fu">HuggingFaceEmbeddings</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>embedding<span class="sc">$</span><span class="fu">embed_query</span>(<span class="at">text=</span><span class="st">&quot;can i use gentamicin for pseudomonas infection&quot;</span>)</span></code></pre></div>
+<p><img src="embedding_vec.png" /></p>
+<p>Then this embedding vector will be compared with all of the chunk vectors using squared L2 distance (Euclidean distance):</p>
+<p>The actual euclidean distance we need to square-root it but here FAISS has omitted it for computational efficiency. The lower the number the more similar the 2 vectors are, it works the same regardless of square-rooting or not. <a href="https://math.stackexchange.com/questions/3451864/is-correct-to-say-squared-euclidean-2-norm">More details on the proof</a></p>
+</div>
+<div id="return-the-best-lowest-squared-l2-similarity" class="section level4" number="0.6.2.3">
+<h4><span class="header-section-number">0.6.2.3</span> Return the Best (lowest squared L2) Similarity</h4>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>vectorstore<span class="sc">$</span><span class="fu">similarity_search_with_score</span>(<span class="at">query =</span> <span class="st">&quot;can i use gentamicin for pseudomonas infection&quot;</span>, <span class="at">k=</span><span class="fu">as.integer</span>(<span class="dv">1</span>))</span></code></pre></div>
+<p><img src="embedding_similarity_k1.png" />
+#### Now let’s calculate it by hand!</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>query_v <span class="ot">&lt;-</span> embedding<span class="sc">$</span><span class="fu">embed_query</span>(<span class="at">text=</span><span class="st">&quot;can i use gentamicin for pseudomonas infection&quot;</span>) </span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>page53_v <span class="ot">&lt;-</span> embedding<span class="sc">$</span><span class="fu">embed_query</span>(<span class="at">text=</span>docs[[<span class="dv">167</span>]]<span class="sc">$</span>page_content) </span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">sum</span>((query_v <span class="sc">-</span> page53_v)<span class="sc">^</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## [1] 0.7473773</code></pre>
+<p>YES !!! Same number, awesome!!! ✅🙌👍</p>
+</div>
+</div>
+<div id="model" class="section level3" number="0.6.3">
+<h3><span class="header-section-number">0.6.3</span> Model</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>llm <span class="ot">=</span> <span class="fu">LlamaCpp</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">model_path=</span><span class="st">&quot;wizardlm-13b-v1.2.Q5_K_M.gguf&quot;</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">streaming=</span><span class="cn">TRUE</span>,  </span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">callback_manager=</span><span class="fu">CallbackManager</span>(<span class="at">handlers =</span> <span class="fu">list</span>(<span class="fu">StreamingStdOutCallbackHandler</span>())),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">n_ctx =</span> <span class="fu">as.integer</span>(<span class="dv">2048</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">max_tokens =</span> <span class="fu">as.integer</span>(<span class="dv">1024</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">temperature =</span> <span class="dv">0</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">verbose =</span> F)</span></code></pre></div>
+<p>Explaination:
+- Initializes a LlamaCpp object from the langchain.llms module
+- select path of GGUF model (see below how to download)
+- Enables streaming output, allowing the model to generate text incrementally and send it back as it’s produced, rather than waiting for the entire generation to finish.
+- Creates a CallbackManager object, which allows you to register callbacks (functions) to be executed during the text generation process. StreamingStdOutCallbackHandler. This handler prints the generated tokens directly to the standard output (your console) as they are produced, providing a real-time view of the generation.
+- Sets the maximum context window size to 2048 tokens. The context window is the amount of text the model can “remember” and use to generate its output.
+- Limits the maximum number of tokens in the model’s output to 1024. This prevents the model from generating overly long responses.
+- Controls the “creativity” or randomness of the model’s output. A temperature of 0 makes the model deterministic, always choosing the most likely next token.
+- Disables verbose logging from the LlamaCpp library. I disabled this to make it more aesthetically nice for the blog, you should set this to TRUE to see detailed output during the generation process.</p>
+<div id="how-to-download-gguf-models" class="section level4" number="0.6.3.1">
+<h4><span class="header-section-number">0.6.3.1</span> How to Download GGUF models?</h4>
+<ol style="list-style-type: decimal">
+<li>Go to <a href="https://huggingface.co/models?pipeline_tag=text-generation&amp;library=gguf&amp;sort=trending">Hugging Face</a>, here I have pre-selected <code>text-generation</code> model and <code>GGUF</code> library for you</li>
+<li>Select a model that piqued your interest</li>
+<li>Select “Files and versions”
+<img src="huggingface.png" /></li>
+<li>Select a model to download and download. If the gguf contains part 1 of 2, make sure to download both parts and select the first part when you’re assigning the model.</li>
+</ol>
+<p>Please note that certain LLM such as Llama, Gemma etc, requires you to request permission to use their models. It is quite straightforward, read through their policy, request it by filling out information, wait for approval then you’re in!</p>
+</div>
+</div>
+<div id="prompt" class="section level3" number="0.6.4">
+<h3><span class="header-section-number">0.6.4</span> Prompt</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>system_prompt <span class="ot">=</span> <span class="st">&quot;</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="st">    You are an expert for question-answering tasks. </span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="st">    Use the following pieces of retrieved context to answer the question.</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="st">    When answering, also make sure to state the reason or rationale for that answer.</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="st">    Then question that reason or rationale critically once with a sentence.</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="st">    Then provide an answer to the critical appraisal.</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="st">    If you don&#39;t know the answer, say that you don&#39;t know.</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="st">    {context}</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>prompt <span class="ot">=</span> ChatPromptTemplate<span class="sc">$</span><span class="fu">from_messages</span>(</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>    <span class="fu">tuple</span>(<span class="st">&quot;system&quot;</span>,system_prompt),</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>    <span class="fu">tuple</span>(<span class="st">&quot;user&quot;</span>,<span class="fu">paste0</span>(<span class="st">&quot;Question: &quot;</span>,<span class="st">&quot;{input}&quot;</span>)),</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>    <span class="fu">tuple</span>(<span class="st">&quot;assistant&quot;</span>,<span class="st">&quot;&quot;</span>))</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>)</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>prompt</span></code></pre></div>
+<p><img src="prompt.png" /></p>
+<p>Make sure the <code>system prompt</code> goes to <code>SystemMessage</code>. I had to debug this for sometime and finally realized that the <code>ChatPromptTemplate$from_messages</code> function takes a <code>list of tuples</code> in order for it to work. Found this out by reading LangChain documentation. 🙌 To be quite honest, I really find their documentation to be very helpful for me!</p>
+</div>
+<div id="chain" class="section level3" number="0.6.5">
+<h3><span class="header-section-number">0.6.5</span> Chain / Runnables ⛓️‍💥</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>question_answer_chain <span class="ot">=</span> <span class="fu">create_stuff_documents_chain</span>(llm, prompt)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>rag_chain <span class="ot">=</span> <span class="fu">create_retrieval_chain</span>(retriever, question_answer_chain)</span></code></pre></div>
+<p>Explaination:
+- <code>create_stuff_documents_chain()</code>: This function from LangChain creates a chain specifically designed for question-answering tasks. Your model <code>llm</code> will be used to generate answers. <code>prompt</code>: A PromptTemplate that guides the LLM on how to structure its response. It sets up a chain that takes a question and some documents as input. It passes the question and documents to your LLM. The LLM uses the prompt to generate an answer based on the given information.
+- <code>create_retrieval_chain()</code>·: This function from LangChain creates a RAG chain. <code>retriever</code>: Your retriever object (e.g., the one you created from your vector store). This is responsible for fetching relevant documents based on a query. <code>question_answer_chain</code>: The chain you just created in the previous line, which will be used to generate answers from the retrieved documents.
+What this line does:</p>
+<p>Then, we are ready to ask our questions!</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>result <span class="ot">=</span> rag_chain<span class="sc">$</span><span class="fu">invoke</span>(<span class="fu">dict</span>(<span class="st">&quot;input&quot;</span><span class="ot">=</span> <span class="st">&quot;What guideline are we looking at today?&quot;</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>result</span></code></pre></div>
+<p><img src="test_result.png" />
+The output was saved in <code>result</code> as a list. As you can see, the first output was the question, 2nd,3rd,4th were the context that our retriever found most similar to our question. Lastly we have our answer “Guidance on the Management of Antimicrobial Resistance” ❤️❤️❤️✅Though it seemed to have missed “Gram Negative” 🤣</p>
+<div id="create-a-vector-of-questions" class="section level4" number="0.6.5.1">
+<h4><span class="header-section-number">0.6.5.1</span> Create A Vector of Questions</h4>
+<p>Let’s create a vector of questions and then run pass our LLM and see what are the responses.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>questions <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;What is the preferred treatment of CRE?&quot;</span>,</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>             <span class="st">&quot;What is the preferred treatment of ESBL-E?&quot;</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>             <span class="st">&quot;Can we use fosfomycin in ESBL Klebsiella?&quot;</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>             <span class="st">&quot;Can we use fosfomycin in ESBL Ecoli?&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>             <span class="st">&quot;What is the preferred treatment of stenotrophomonas?&quot;</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>             <span class="st">&quot;What is the preferred treatment of DTR Pseudomonas?&quot;</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>             <span class="st">&quot;Which organisms require two active agent when susceptibility is known?&quot;</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>             <span class="st">&quot;Can we use gentamicin in pseudomonas infection?&quot;</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>             <span class="st">&quot;Can we use tobramycin to treat pseudomonas infection?&quot;</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>             <span class="st">&quot;Why is there carbapenemase non-producing organism?&quot;</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>             <span class="st">&quot;Can we use oral antibiotics for any of these MDRO?&quot;</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>             <span class="st">&quot;What is the preferred treatment of MRSA?&quot;</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>             <span class="st">&quot;What is the preferred treatment of CRAB?&quot;</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>             <span class="st">&quot;Can fosofmycin be used for pyelonephritis?&quot;</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>             <span class="st">&quot;Is IV antibiotics better than oral antibiotics?&quot;</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>response <span class="ot">=</span> <span class="fu">vector</span>(<span class="at">mode =</span> <span class="st">&quot;character&quot;</span>, <span class="at">length =</span> <span class="fu">length</span>(questions))</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>source <span class="ot">=</span> <span class="fu">vector</span>(<span class="at">mode =</span> <span class="st">&quot;character&quot;</span>, <span class="at">length =</span> <span class="fu">length</span>(questions))</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(questions)) {</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">rep</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>,<span class="dv">100</span>))</span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;Question: &quot;</span>, questions[i]))</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  result <span class="ot">=</span> rag_chain<span class="sc">$</span><span class="fu">invoke</span>(<span class="fu">dict</span>(<span class="st">&quot;input&quot;</span> <span class="ot">=</span> questions[i]))</span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a>  response[i] <span class="ot">=</span> result<span class="sc">$</span>answer</span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a>  source[i] <span class="ot">=</span> <span class="fu">map_chr</span>(<span class="at">.x=</span>result<span class="sc">$</span>context,<span class="at">.f=</span><span class="sc">~</span><span class="fu">paste</span>(.x)) <span class="sc">|&gt;</span> <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">##########</span><span class="sc">\n\n</span><span class="st">&quot;</span>) </span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(<span class="dv">10</span>)</span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>}</span></code></pre></div>
+<p>Explaination:
+- <code>questions</code> variable contains a vector of the questions we’re interested in asking
+- create <code>response</code> and <code>source</code> empty vectors
+- create a <code>for loop</code>:
+- clear console create by creatining lots of <code>new lines</code>
+- print the question
+- invoke the <code>i-th</code> question
+- save the ith response to ith response vector
+- save the ith source to ith source vector (this will tell us where the RAG got the source from our documents), separate each source with <code>\n\n##########\n\n</code>
+- sleep for 10s, otherwise our machine will heat up quite fast; this also will help us capture screen of the response</p>
+<p>Ready for the response? Let’s go! 🏃</p>
+</div>
+</div>
+</div>
+<div id="questions" class="section level2" number="0.7">
+<h2><span class="header-section-number">0.7</span> Questions to Our LLM</h2>
+<p>Anything in baby blue highlight is LLM answer output, light green highlight is the source RAG found top 4 similarity to the question. If the <code>GIF</code> is too fast to follow, you can look at the actual output. I didn’t return all sources, unless necessary to investigate. The first question will have everything outputted.</p>
+<div id="what-is-the-preferred-treatment-of-cre" class="section level3" number="0.7.1">
+<h3><span class="header-section-number">0.7.1</span> What is the preferred treatment of CRE?</h3>
+<div id="response" class="section level4" number="0.7.1.1">
+<h4><span class="header-section-number">0.7.1.1</span> Response:</h4>
+<p><img src="cre.gif" /></p>
+<span style="font-style: italic; color: #000000; background-color: #E6F3FF;"><br>The preferred treatment for infections outside of the urinary tract caused by Carbapenem-Resistant Enterobacteriaceae (CRE) that produce Klebsiella pneumoniae carbapenemase (KPC) depends on several factors, including the specific type of infection, the patient's clinical status, and the susceptibility patterns of the CRE isolate. According to the guidelines provided, the preferred antibiotics for such infections include:<br><br>1. Ceftazidime-avibactam, which inhibits KPC enzymes and other β-lactamases.<br>2. Meropenem-vaborbactam, where vaborbactam stabilizes meropenem against certain β-lactamases.<br>3. Imipenem-cilastatin-relebactam, which combines imipenem with the beta-lactamase inhibitor relebactam to protect against KPC and other carbapenemases.<br>4. Cefiderocol, a siderophore cephalosporin that can access bacterial iron centers and maintain activity against many Gram-negative bacteria, including those producing KPC.<br>5. Aminoglycosides, which can be considered as alternative options for certain types of infections.<br><br>It is important to note that the choice of antibiotic should be guided by susceptibility testing results, and the treatment regimen should be tailored to the individual patient's needs. The continued use of a second agent beyond the initial therapy should be evaluated for additional benefit and potential risks such as increased likelihood of antibiotic resistance development.<br><br>Critical Appraisal:<br>The answer provided is based on current guidelines and evidence-based recommendations for treating CRE infections, particularly when KPC production is present. The rationale includes the use of antibiotics that have been shown to be effective against KPC-producing CRE, such as ceftazidime-avibactam, meropenem-vaborbactam, imipenem-cilastatin-relebactam, cefiderocol, and aminoglycosides. These recommendations are supported by clinical studies and expert opinion.<br><br>However, it is crucial to consider that the treatment landscape for CRE infections may evolve with new data and emerging resistance patterns. Therefore, healthcare providers should always consult the most current guidelines and local antibiotic resistance profiles when making treatment decisions. Additionally, individual patient factors such as renal function, allergies, and concomitant medications must be taken into account to tailor the treatment plan appropriately.<br><br>Answer:<br>The preferred treatment for infections outside of the urinary tract caused by CRE that produce KPC, based on current guidelines and evidence, includes:<br><br>1. Ceftazidime-avibactam, which inhibits KPC enzymes and other β-lactamases.<br>2. Meropenem-vaborbactam, where vaborbactam stabilizes meropenem against certain β-lactamases.<br>3. Imipenem-cilastatin-relebactam, which combines imipenem with the beta-lactamase inhibitor relebactam to protect against KPC and other carbapenemases.<br>4. Cefiderocol, a siderophore cephalosporin that can access bacterial iron centers and maintain activity against many Gram-negative bacteria, including those producing KPC.<br>5. Aminoglycosides, which can be considered as alternative options for certain types of infections.<br><br>It is essential to perform susceptibility testing to guide the choice of antibiotic and to monitor for potential resistance development during treatment.</span>
+</div>
+<div id="source" class="section level4" number="0.7.1.2">
+<h4><span class="header-section-number">0.7.1.2</span> Source:</h4>
+<span style="font-style: italic; color: #000000; background-color: #E8F5E9;">page_content='therapeutic agent for patients at risk for CRE infections is being administered, data do not indicate that 
+continued  combination  therapy —once  the β-lactam  agent  has demonstrated  in vitro  activity —offers  any 
+additional benefit379. Rather, the continued use of a second agent increases the likelihood of antibiotic -' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 52}<br>##########<br>page_content='alternative  agents  for the treatment  of CRE bloodstream  infections352. Tigecycline  or eravacycline  can be 
+considered as alternative options for intra -abdominal infections, skin and soft tissue infections, 
+osteomyelitis, and respiratory infections when optimal dosing is used ( Table 1 ). Nausea and emesis are  
+reported in  as many  as 20-40%  of patients  receiving  tetracycline -derivatives353-355. Of note,  CLSI' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 50}<br>##########<br>page_content='Last updated  December  31, 2023,  and posted  online  at https://www.idsociety.org/practice -guideline/amr - 
+guidance/ . Please  check  website  for most  updated  version  of this guidance.  
+43  
+ CRE infections  when  susceptibility  to meropenem  or imipenem  has not been  demonstrated252,253. It is 
+plausible that the addition of vaborbactam or relebactam may decrease MICs of meropenem or 
+imipenem  even  in isolates  without  a carbapenemase  because  of other  β-lactamases  (e.g.,  ESBLs)  that 
+may be overproduced253. 
+Tigecycline or eravacycline  are alternative options for the treatment of CRE infections not 
+involving  the bloodstream  or urinary  tract  (Question  3.8). Their  activity  is independent  of the presence  
+or type  of carbapenemase.  
+ 
+ 
+ 
+Question  3.4: What  are the preferred  antibiotics  for the treatment  of infections  outside  of the urinary 
+tract caused by CRE if KPC production is present?' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 42}<br>##########<br>page_content='pyelonephritis or cUTI caused by CRE, if susceptibility is demonstrated. Ceftazidime -avibactam, 
+meropenem -vaborbactam, imipenem -cilastatin -relebactam, and cefiderocol are also preferred 
+treatment options for pyelonephritis or cUTIs. Aminoglycosides are alternative options for the 
+treatment of pyelonephritis or cUTI caused by CRE.  
+ 
+ 
+Rationale' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 39}</span>
+<p>Looking at output, it’s not too shabby. I did not specify exactly what condition and it picked out non-urinary source. When I saw aminoglycoside, it sounded wrong but it did say <code>in certain condition</code>, which it can be used in UTI/pyelo according to the guideline if susceptible, which also does not make sense in the LLM output as it already states <code>not urinary source</code>. As you can see from the last <code>source</code>, it did include <code>cUTI/pyelo</code> context.</p>
+<p>Thoughts to myself, More fine-tuning of the RAG might be helpful. Maybe set <code>k=3</code> ? Let’s continue to see the other responses.</p>
+</div>
+</div>
+<div id="what-is-the-preferred-treatment-of-esbl-e" class="section level3" number="0.7.2">
+<h3><span class="header-section-number">0.7.2</span> What is the preferred treatment of ESBL-E?</h3>
+<p><img src="esbl.gif" /></p>
+<span style="font-style: italic; color: #000000; background-color: #E6F3FF;"><br>The preferred treatment for Extended-Spectrum Beta-Lactamase (ESBL)-producing Enterobacterales (E) based on the provided context is carbapenem therapy. Specifically, meropenem or imipenem -cilastatin are recommended as first-line treatments. Ertapenem is also an option, particularly for patients who need to continue therapy in the outpatient setting when oral treatment options are not available. After clinical response is achieved and if susceptibility tests confirm it, a transition to oral therapies such as trimethoprim - sulfamethoxazole (TMP - SMX), ciprofloxacin, or levofloxacin may be considered.<br><br>Critical Appraisal:<br>The recommendation for carbapenem therapy is based on a large clinical trial that showed a notable direction of risk difference in 30-day mortality favoring carbapenems over piperacillin - tazobactam. However, the absolute risk difference was attenuated and no longer statistically significant after reanalyzing the data with more stringent inclusion criteria (clinical isolates with piperacillin - tazobactam MICs ≤16 µg/mL). This suggests that while carbapenems are currently preferred, further research may be needed to confirm their superiority, especially when considering the cost and potential for resistance development with widespread carbapenem use.<br><br>Answer to Critical Appraisal:<br>The critical appraisal raises a valid point about the reliance on a single clinical trial for the recommendation of carbapenems. While the initial trial showed promising results, the fact that the difference in mortality was not statistically significant after reanalysis suggests that there may be variability in outcomes. This highlights the importance of considering multiple studies and data sources when formulating treatment guidelines. Additionally, the potential for resistance development with carbapenems is a concern that must be balanced against the benefits of their use. Therefore, while carbapenems are currently recommended as first-line treatment, ongoing monitoring of clinical outcomes and resistance patterns is essential to ensure the most effective and safe treatment options for ESBL-E infections.</span>
+<span style="font-style: italic; color: #000000; background-color: #E8F5E9;">page_content='hours or meropenem 1 g IV every eight hours, both as standard infusions (i.e., over 30 minutes). The 
+primary outcome of 30 -day mortality occurred in 12% and 4% of patients receiving piperacillin - 
+tazobactam and meropenem, respectively60. Trial data were subsequently reanalyzed only including 
+patients with clinical isolates against which piperacillin -tazobactam MICs were ≤16 µg/mL by broth 
+microdilution, the reference standard for AST72. Reanalyzing the data from 320 (82%) patients with 
+clinical isolates available for retesting, 30 -day mortality occurred in 9% versus 4% of those in the 
+piperacillin -tazobactam and meropenem arms, respectively. Although the absolute risk difference was 
+attenuated  and no longer  significant  in the reanalysis  (i.e.,  the 95%  confidence  interval  ranged  from  −1% 
+to 11%)72, the panel still suggests carbapenem therapy as the preferred treatment of ESBL -producing' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 15}<br>##########<br>page_content='Suggested  approach:  Cephamycins  are not suggested  for the treatment  of ESBL -E infections  until  more 
+clinical outcomes data using cefoxitin or cefotetan are available and optimal dosing has been defined.  
+ 
+ 
+Rationale  
+ 
+The cephamycins are  cephalosporins  that are generally able  to withstand  hydrolysis from  ESBL 
+enzymes114,115. The cephamycins available in the United States are cefoxitin and cefotetan which are 
+both  IV agents.  At least  ten observational  studies  have  compared  the clinical  outcomes  of patients  with' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 20}<br>##########<br>page_content='to 11%)72, the panel still suggests carbapenem therapy as the preferred treatment of ESBL -producing 
+bloodstream infections due to the notable direction of the risk difference. Limitations of piperacillin -' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 15}<br>##########<br>page_content='experiencing hypoalbuminemia, meropenem or imipenem -cilastatin are the preferred carbapenems. 
+After appropriate clinical response is achieved, transitioning to oral TMP -SMX, ciprofloxacin, or 
+levofloxacin should be considered, if susceptibility is demonstrated.  
+ 
+ 
+Rationale  
+ 
+A carbapenem is recommended as first -line treatment of ESBL -E infections outside of the 
+urinary tract, based primarily on data from a large clinical trial, as described below60. Meropenem, 
+imipenem -cilastatin,  or ertapenem  are preferred  agents;  ertapenem  offers  a more  convenient  option  for 
+patients  needing  to continue  carbapenem  therapy  in the outpatient  setting  when  oral treatment  options 
+are not available.  
+For patients who are critically ill and/or experiencing hypoalbuminemia, meropenem or 
+imipenem -cilastatin  are the preferred carbapenems. Ertapenem, in contrast to meropenem and' metadata={'source': 'llm-langchain/idsa_data/amr-guidance-4.0.pdf', 'page': 14}</span>
+</div>
+<div id="can-we-use-fosfomycin-in-esbl-klebsiella" class="section level3" number="0.7.3">
+<h3><span class="header-section-number">0.7.3</span> Can we use fosfomycin in ESBL Klebsiella?</h3>
+<p><img src="kleb.gif" /></p>
+</div>
+<div id="can-we-use-fosfomycin-in-esbl-ecoli" class="section level3" number="0.7.4">
+<h3><span class="header-section-number">0.7.4</span> Can we use fosfomycin in ESBL Ecoli?</h3>
+<p><img src="ecoli.gif" /></p>
+</div>
+<div id="what-is-the-preferred-treatment-of-stenotrophomonas" class="section level3" number="0.7.5">
+<h3><span class="header-section-number">0.7.5</span> What is the preferred treatment of stenotrophomonas?</h3>
+<p><img src="steno.gif" /></p>
+</div>
+<div id="what-is-the-preferred-treatment-of-dtr-pseudomonas" class="section level3" number="0.7.6">
+<h3><span class="header-section-number">0.7.6</span> What is the preferred treatment of DTR Pseudomonas?</h3>
+<p><img src="psa.gif" /></p>
+</div>
+<div id="which-organisms-require-two-active-agent-when-susceptibility-is-known" class="section level3" number="0.7.7">
+<h3><span class="header-section-number">0.7.7</span> Which organisms require two active agent when susceptibility is known?</h3>
+<p><img src="combo.gif" /></p>
+</div>
+<div id="can-we-use-gentamicin-in-pseudomonas-infection" class="section level3" number="0.7.8">
+<h3><span class="header-section-number">0.7.8</span> Can we use gentamicin in pseudomonas infection?</h3>
+<p><img src="gent.gif" /></p>
+</div>
+<div id="can-we-use-tobramycin-to-treat-pseudomonas-infection" class="section level3" number="0.7.9">
+<h3><span class="header-section-number">0.7.9</span> Can we use tobramycin to treat pseudomonas infection?</h3>
+<p><img src="tobra.gif" /></p>
+</div>
+<div id="why-is-there-carbapenemase-non-producing-organism" class="section level3" number="0.7.10">
+<h3><span class="header-section-number">0.7.10</span> Why is there carbapenemase non-producing organism?</h3>
+<p><img src="carbapenemase.gif" /></p>
+</div>
+<div id="can-we-use-oral-antibiotics-for-any-of-these-mdro" class="section level3" number="0.7.11">
+<h3><span class="header-section-number">0.7.11</span> Can we use oral antibiotics for any of these MDRO?</h3>
+<p><img src="oral_cre.gif" /></p>
+</div>
+<div id="what-is-the-preferred-treatment-of-mrsa" class="section level3" number="0.7.12">
+<h3><span class="header-section-number">0.7.12</span> What is the preferred treatment of MRSA?</h3>
+<p><img src="mrsa.gif" /></p>
+</div>
+<div id="what-is-the-preferred-treatment-of-crab" class="section level3" number="0.7.13">
+<h3><span class="header-section-number">0.7.13</span> What is the preferred treatment of CRAB?</h3>
+<p><img src="crab.gif" /></p>
+</div>
+<div id="can-fosofmycin-be-used-for-pyelonephritis" class="section level3" number="0.7.14">
+<h3><span class="header-section-number">0.7.14</span> Can fosofmycin be used for pyelonephritis?</h3>
+<p><img src="fos_pyelo.gif" /></p>
+</div>
+<div id="is-iv-antibiotics-better-than-oral-antibiotics" class="section level3" number="0.7.15">
+<h3><span class="header-section-number">0.7.15</span> Is IV antibiotics better than oral antibiotics?</h3>
+<p><img src="oral_v_iv.gif" /></p>
+<p>Leaderboard</p>
+</div>
+</div>
+<div id="opportunities" class="section level2" number="0.8">
+<h2><span class="header-section-number">0.8</span> Opportunities for Improvement</h2>
+<p>opportunity
+langsmith
+agents
+llama3
+embedding models
+can design to point directly to website for most updated guideline since this is a living document</p>
+</div>
+<div id="lessons" class="section level2" number="0.9">
+<h2><span class="header-section-number">0.9</span> Lessons Learnt</h2>
+<p>tuples
+Documentation
+polygot
+Icd10</p>
+</div>

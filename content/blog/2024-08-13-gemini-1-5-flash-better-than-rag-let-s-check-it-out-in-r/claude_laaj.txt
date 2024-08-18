@@ -1,0 +1,89 @@
+1. Preferred treatment of CRE:
+Relevance: 0.97
+Factual Accuracy: 0.98
+Succinctness: 0.83
+Comment: The response is highly relevant and accurate, covering different scenarios for CRE treatment. It loses some points on succinctness due to the detailed breakdown, but this level of detail is necessary given the complexity of CRE treatment options.
+
+2. Preferred treatment of ESBL-E:
+Relevance: 0.95
+Factual Accuracy: 0.97
+Succinctness: 0.90
+Comment: The answer covers the main treatment options for different types of ESBL-E infections. It's mostly concise but could be slightly more streamlined. The factual accuracy is high, with only minor omissions.
+
+3. Fosfomycin in ESBL Klebsiella:
+Relevance: 1.00
+Factual Accuracy: 1.00
+Succinctness: 1.00
+Comment: This response is perfect in all aspects. It directly answers the question with a clear, accurate, and concise statement.
+
+4. Fosfomycin in ESBL E. coli:
+Relevance: 1.00
+Factual Accuracy: 0.97
+Succinctness: 0.93
+Comment: The answer is highly relevant and mostly accurate. It loses a bit on factual accuracy for not mentioning the limitations of fosfomycin use. It's quite succinct but could be slightly more concise.
+
+5. Preferred treatment of Stenotrophomonas:
+Relevance: 1.00
+Factual Accuracy: 0.98
+Succinctness: 0.95
+Comment: The response directly addresses the question with high accuracy. It's quite concise while still providing necessary details.
+
+6. Preferred treatment of DTR Pseudomonas:
+Relevance: 0.98
+Factual Accuracy: 0.97
+Succinctness: 0.85
+Comment: The answer covers various scenarios for DTR Pseudomonas treatment, making it highly relevant and accurate. However, it's less succinct due to the detailed breakdown of different infection types.
+
+7. Organisms requiring two active agents:
+Relevance: 0.95
+Factual Accuracy: 0.97
+Succinctness: 0.93
+Comment: The response accurately identifies the organisms requiring two active agents. It's relatively concise but could be more direct in its answer.
+
+8. Gentamicin in Pseudomonas infection:
+Relevance: 0.93
+Factual Accuracy: 0.97
+Succinctness: 0.90
+Comment: The answer is mostly relevant and accurate, but it could more directly address the use of gentamicin in Pseudomonas infections generally, not just DTR P. aeruginosa.
+
+9. Tobramycin in Pseudomonas infection:
+Relevance: 0.95
+Factual Accuracy: 0.98
+Succinctness: 0.87
+Comment: The response is relevant and accurate, providing additional useful information. However, it could be more concise in directly answering the question.
+
+10. Carbapenemase non-producing organisms:
+Relevance: 0.97
+Factual Accuracy: 1.00
+Succinctness: 1.00
+Comment: The answer directly addresses the question with perfect accuracy and conciseness.
+
+11. Oral antibiotics for MDRO:
+Relevance: 0.95
+Factual Accuracy: 0.93
+Succinctness: 0.90
+Comment: The response is relevant but could be more comprehensive in covering all MDROs mentioned in the document. It's relatively concise but could be more direct.
+
+12. Preferred treatment of MRSA:
+Relevance: 1.00
+Factual Accuracy: 1.00
+Succinctness: 1.00
+Comment: The response is perfect, accurately stating that the document does not discuss MRSA treatment.
+
+13. Preferred treatment of CRAB:
+Relevance: 0.98
+Factual Accuracy: 0.97
+Succinctness: 0.90
+Comment: The answer is highly relevant and accurate, providing detailed information on CRAB treatment. It could be slightly more concise.
+
+14. Fosfomycin for pyelonephritis:
+Relevance: 1.00
+Factual Accuracy: 0.98
+Succinctness: 0.95
+Comment: The response directly answers the question with high accuracy and conciseness. It loses a slight point on accuracy for not mentioning the ongoing research on this topic.
+
+15. IV vs. oral antibiotics:
+Relevance: 0.90
+Factual Accuracy: 0.95
+Succinctness: 0.87
+Comment: The answer is mostly relevant but doesn't directly state whether IV is better than oral. It accurately reflects the document's content but could be more concise and direct in addressing the specific question.
