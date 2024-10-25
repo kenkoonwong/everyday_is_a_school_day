@@ -1,0 +1,387 @@
+---
+title: '#IDWeek2024 Posts/Tweets Analysis'
+author: Ken Koon Wong
+date: '2024-10-20'
+slug: []
+categories: 
+- idweek2024
+- idweek24
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- idsa
+- idweek
+tags: 
+- idweek2024
+- idweek24
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- idsa
+- idweek
+excerpt: "Reflecting on this year's #IDWeek2024 tweet analysis, I'm struck by the incredible spirit of international collaboration and knowledge sharing from the ID community. The dedication of everyone who took time from their busy conference schedules to share insights, whether it was breaking news about the BALANCE trial, educational pearls, or moments of joy and connection, demonstrates what makes our ID community so special - thank you all for keeping those of us who couldn't attend connected and informed through your thoughtful posts and updates!"
+---
+
+> "Reflecting on this year's #IDWeek2024 tweet analysis, I'm struck by the incredible spirit of international collaboration and knowledge sharing from the ID community. The dedication of everyone who took time from their busy conference schedules to share insights, whether it was breaking news about the BALANCE trial, educational pearls, or moments of joy and connection, demonstrates what makes our ID community so special - thank you all for keeping those of us who couldn't attend connected and informed through your thoughtful posts and updates!"
+
+![](full.png)
+
+Wordcloud of all the `#IDweek2024` and `idweek` tweets/posts.    
+
+If you want to look at the specific tweets, I have created a shiny app that helps me to glance through essential topics. Here is the [link](https://kenkoonwong.shinyapps.io/idweek24/)
+
+# Thought Process:
+- [Post counts by days](#count) 
+- [Top 50 X Users Post Counts](#top50)
+- [Posts frequency separated by dates](#animate)
+- [Top 5 Liked Posts Seperated by Dates ](#like)
+- [Top 20 Bookmarked Posts](#bookmark)
+- [Top 20 Bookmarked Posts Usernames](#bookmark-user)
+- [World Map Of X Users Posted #IDWeek2024](#world-map-of-x-users-posted-idweek2024)
+- [USA Map Of X Users Posted #IDWeek2024](#usa-map-of-x-users-posted-idweek2024)
+- [Limitations](#limit)
+- [Acknowledgement](#ack)
+- [Lessons learnt](#lesson)
+
+```{r,eval=F, echo=F}
+library(tidyverse)
+library(lubridate)
+
+load("idweek24_x.rda")
+# load("idweek23_x_full.rda")
+
+
+  
+df3 %>%
+  mutate(created_at = with_tz(created_at, tz = "America/New_york")) %>% 
+  filter(created_at >= mdy("10/13/24")) %>%
+  mutate(date = created_at - hours(4),
+         date = date(date) %>% as.factor()) %>% 
+  ggplot(.,aes(x=created_at, fill=date)) +
+  geom_histogram(color="black",alpha=0.5,bins = 70) +
+  scale_x_datetime(date_breaks = "3 hours", date_labels = "%m/%d  %H %M") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position =  "none",
+        axis.text.y = element_text(size = 10)) +
+  ggtitle("IDWeek2024 Post counts by 3 hour interval", subtitle = "Days separated in different color")
+  
+
+```
+
+<br>
+
+## Post counts by days {#count}
+![](posts_days.png)
+> We had the least tweet counts this year when compared to 2023 and 2022! 
+
+Very interesting. When compared to IDweek [2022](https://www.kenkoonwong.com/blog/idweek2022/) and [2023](https://www.kenkoonwong.com/blog/idweek2023/), there is a difference in post peaks. This year it appears more consistent throughout whereas last year was bimodal and the year before it peaked on Friday. This year it also appeared to have less posts were compared to 2022 and 2023. We had a total of 1674 posts this year, in 2023 we had 2627 posts, and in 2022 it was ~2188. That's quite a huge drop in posts/tweets. Did I not capture them all? I double checked the code and re-queried it, it's still the same.  
+
+<br>
+
+## Top 50 X Users Post Counts {#top50}
+```{r,echo=F,eval=F}
+# tweet count
+top50 <- df3 |> 
+  filter(created_at >= mdy("10/13/24")) %>%
+  group_by(username) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  head(50) |>
+  ggplot(aes(x=reorder(username,n),y=n)) +
+  geom_col(fill = "blue",alpha=0.5, col="black") +
+  geom_text(aes(x=username,y=n+5,label=n)) +
+  coord_flip() +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.y = element_text(size = 10)) +
+  xlab("#Twitter Screen Name") 
+
+ggsave(filename = "top50.png", plot = top50)
+
+df3 |> 
+  filter(created_at >= mdy("10/13/24")) %>%
+  group_by(username) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  head(20) |>
+  # mutate(username= paste0("@",username)) |>
+  pull(username) |>
+  paste(collapse = ", ")
+```
+
+
+![](top50.png)
+Thanks to all who have contributed bryan_p_white, SIDPharm, AHRQNews, SAIRABT, PIDSociety, CalderwoodMD, IDWeekmtg, AST_IDCOP, WebsEdge_Med, CarlosdelRio7, NeerajaSwamina2, CUP_med_health, MarionKoopmans, TAInfDis, Contagion_Live, JosephMarcusID, DocWoc71, IDSAInfo, LisaIDpharmD, MelintaTx leading the top 20 posts combined. Can you find your handle here?
+
+<br>
+
+## Posts frequency separated by dates {#animate}
+```{r,eval=F,echo=F}
+library(gganimate)
+### gganimate
+df_anim <- 
+df3 |>
+  mutate(created_at = with_tz(created_at, tz = "America/New_york"),
+         date = date(created_at)) %>% 
+  filter(created_at >= mdy("10/13/24")) |>
+  group_by(username, date) |>
+  summarize(n = n()) 
+
+
+df_anim  %>%
+  mutate(n = map_dbl(.x = n, .f=~ .x + rnorm(n = 1, mean = -0.005, sd = 0.001)))
+
+p <- df_anim  %>%
+  mutate(n = map_dbl(.x = n, .f=~ .x + rnorm(n = 1, mean = -0.005, sd = 0.001))) |>
+  # build rank, labels and relative values
+  group_by(date) %>%
+  mutate(Rank = rank(-n),
+         # value_test = n[Rank==1],
+         Value_rel = n/n[Rank==1],
+         Value_lbl = n)  %>% 
+  group_by(username) %>%
+  # keep top 10
+  filter(Rank <= 20) %>%
+  # plot
+  ggplot(aes(-Rank,Value_rel,fill=username)) +
+  geom_col(width = 0.8, position="dodge2",alpha=0.6) +
+  coord_flip() + 
+  geom_text(aes(-Rank,y=0,label = username,hjust=0)) +       #country label
+  geom_text(aes(-Rank,y=Value_rel,label = round(Value_lbl), hjust=0)) + # value label
+  theme_minimal() +
+  theme(legend.position = "none",axis.title = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        panel.grid = element_blank()) +
+  # animate along Year
+  transition_time(date) +
+  ease_aes('cubic-in-out') +
+  enter_fade() +
+  exit_fade() +
+  labs(title = "Top 20 #IDWeek2024 Posts on {frame_time}")
+
+animate(p, 100, fps = 10, duration = 20, width = 800, height = 600, end_pause = 30)
+
+```
+
+![](anim.gif)
+
+Wow, looks like pharmacy is leading almost daily! Thanks for keeping us updated on what's happening at #IDWeek2024! 
+
+<br>
+
+
+## Top 5 Liked Posts Seperated by Dates {#like}
+#### 10-16-24
+```{r, echo=F, message=F,warning=F}
+library(tidyverse)
+library(DT)
+library(lubridate)
+library(kableExtra)
+
+load("idweek24_x.rda")
+
+kable_df <- 
+df3 |>
+  mutate(created_at = with_tz(created_at, tz = "America/New_york"),
+         date = date(created_at)) %>% 
+  group_by(date) 
+
+kable_df |>
+  filter(date == mdy("10/16/24")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(5) |>
+  kbl()
+
+```
+
+
+<p align="center">
+  <img src="balance.jpg" alt="image" width="40%" height="auto">
+</p>
+
+IDWeek opened with a bang! It's BALANCE trial !!! Treating hospitalized patients with bloodstream infections with antibiotics for seven days is just as effective as a 14-day treatment regimen. The study compared the safety and effectiveness of antibiotic courses in 3,608 patients with bloodstream infections across 74 hospitals in seven countries. Both treatment durations demonstrated similar 90-day mortality rates during the study period. Excluded Staph aureus, S lugdunensis, Candida, deep seated infections, severe immunocompromised. 
+
+From the wisdom of the crowd, you can see more details #IDTwitter Peeps posted regarding BALANCE. Thank you all!
+
+![](balance_table.png)
+
+![](https://pbs.twimg.com/media/GaM27T-bUAEDjln?format=jpg&name=large)
+
+Thanks to Brad  Langford for posting the above slide.    
+
+Followed by Fellows Day and PD Meeting. What a great start! ❤️
+
+
+#### 10-17-24
+```{r, echo=F}
+kable_df |>
+  filter(date == mdy("10/17/24")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(5) |>
+  kbl()
+
+
+```
+
+LOL. This is actually funny. The day of 10-17-24 opened with `Pokemon or antibiotic?` Again, more likes on positive, energy-filled #IDweek2024! 🙌 A favorited tweet of someone who fulfilled their dream of attending IDWeek even though there were challenges! Strong effort!
+
+
+#### 10-18-24
+```{r, echo=F}
+kable_df |>
+  filter(date == mdy("10/18/24")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(5) |>
+  kbl()
+```
+
+The theme for 10-18-24 was more congratulatory tweets! Hanging out with people with joy! 
+
+A new book from Tim Gauthier et al `Learn Antibiotics: Book of Games` is out! 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/GaNTRrtbUAQLDo0?format=jpg&name=large" alt="image" width="40%" height="auto">
+</p>
+
+IDSA & ESCMID meetup, the best of both worlds! 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/GaJZfN5a8AAZfPs?format=jpg&name=medium" alt="image" width="60%" height="auto">
+</p>
+
+
+Last but not least for the day, Dr. Rochelle Walensky was recognized with the Anthony Fauci Courage in Leadership Award. Congratulations to all! 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/GaL5D7mbMAAv7K7?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+
+
+#### 10-19-24
+```{r, echo=F}
+kable_df |>
+  filter(date == mdy("10/19/24")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(5) |>
+  kbl()
+```
+
+Last day of IDWeek2024, I noticed a consistent international collaborative theme this IDWeek, did you notice the same too? Top favorited tweet is JAPAN NIGHT! 🇯🇵
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/GaOswP6bUAYSZmb?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+Friendship bracelets!!! 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/GZ9Ey_Ib0AQm5EQ?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+More positve vibes!!! 
+
+Lastly, discussion on differing guidelines for how long to treat LTBI before starting anti-TNF in IBD!
+
+![](https://pbs.twimg.com/media/GaQ73kqWQAABmcl?format=jpg&name=4096x4096)
+
+Which do you follow?
+
+## Top 20 Bookmarked Posts {#bookmark}
+Alright, we've got all the fun, positive stuff! Next, we'll look at most bookmarked tweets. This usually reflects more of medical topics. We usually would bookmark it for future search. Let's dive into what topics are most sought out this #IDWeek2024
+
+```{r,echo=F}
+kable_df |>
+  arrange(desc(bookmark_count)) |>
+  select(date, username, text, bookmark_count) |>
+  head(20) |>
+  kbl()
+
+```
+
+I'll list a few that I thought were interesting and something new for me. We'll skip BALANCE, since we've already talked about it above.
+
+The 2nd most bookmarked tweet made me look at what's been discussed with Metformin and I found this `Metformin reduces the risk of Long COVID or Death over 6 months in an Emulated Target Trial of Primarily Omicron-infected Adults without Diabetes or Prediabetes: a New-User, Active-Comparator Analysis Using the National COVID Cohort Collaborative (N3C) Electronic Health Record Database` by [Carolyn T. Bramante](https://twitter.com/BramanteCarolyn)
+
+![](https://pbs.twimg.com/media/GaSKsTibUAIC9o5?format=jpg&name=large)
+
+<br>
+
+STOP-CDI trial by UPenn is interesting transplant/CART admissions screened for C diff colonization -> contact precautions and po vanco prophy. Reduced odds of CDI and LOS! Thanks CalderwoodMD for posting this info!
+
+![](https://pbs.twimg.com/media/GaLvItKXEAEZQX-?format=png&name=large)
+
+<br>
+
+[A nice non-partisan view of side by side comparison of the health policies of the two presidential candidates most relevant to ID physicians](https://www.hivma.org/globalassets/hivma/rwmpc-hivma_whats-at-stake-2024-election-fact-sheet_final.pdf) below is a snapshot of the first page of pdf
+
+![](presidential.png)
+
+<br>
+
+Interesting presentation on empyema treatment duration. Guidelines gives duration recommendations of 2-6 weeks, with most patients receiving 3-4 weeks in clinical practice. SLIM (Open label RCT, excluded RAPID score >4 high risk) showed no difference in treatment failure, though n of 50? 🧐. There was a comment that maybe 2 weeks would be OK for certain population. 
+
+![](https://pbs.twimg.com/media/GaRXY-Ub0AAQPds?format=jpg&name=large)
+
+
+## World Map Of X Users Posted #IDWeek2024 
+![](world.png)
+Wow, very diverse and international indeed! I'm impressed by the global involvement at an Infectious Disease conference. Wisdom of the crowd! I tried making a gradient color but it may be too hard to differentiate the frequencies of users when the color is subtle, hence I used solid different color for representation so that we can see the difference. If the picture is too small, right click on the picture and then click on "Open Image in New Tab", it should give you a bigger picture for details. What about United States? Which states are those 103 users from? Or at least where they listed they're from 🤣
+
+## USA Map Of X Users Posted #IDWeek2024 
+
+![](state.png)
+This is so awesome! Even though the conference was in LA, attendees from all over USA traveled and attended the conference! Or at least that was the inference was. Very cool! Keep up the great work #IDSA!
+
+## Limitations {#limit}
+- Posts are limited only if there is an #IDweek2024 or idweek keyword on the tweet. We may have missed quite a bit. 
+- Posts frequncies weren't as robust as last year or the year before, but still good information!
+- World and USA state map frequencies were curated from X user data which may not be completely accurate. We had about 22% missing data, and possibly some percentage of inaccurate / gibberish location data. Also these were parsed by LLM, which is great !!!
+
+
+## Acknowledgement {#ack}
+```{r, echo=F,warning=F}
+df3 |>
+  group_by(username) |>
+  summarize(n = n()) |>
+  slice_max(order_by = n, n = 50) |>
+  pull(username) -> names
+
+set.seed(1)
+sample_names <- sample(names, size = length(names))
+name_list <- paste0("@",sample_names)
+
+name_list_clean <- paste(name_list, collapse = " ")
+
+```
+
+Thank you `r name_list_clean` This is by no means sorted in order, it's sorted top 50 users who posted the most and then randomly sorted for acknowledgement. ❤️
+
+My apologies if your handle is not here. Everyone who have contributed, we are immensely grateful for your contribution! 🙏
+
+All pictures are directly linked to orignal posted images. 
+
+## Lessons Learnt
+- Balance RCT has been the hot topic
+- learnt geom_sf and geom_sf_text
+- used LLM to parse locations 
+- of course, all the informative tweets! 
+
+<br>
+  
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
