@@ -1,0 +1,160 @@
+---
+title: "A Step-by-step \U0001F98B Tutorial for #IDSky"
+author: Ken Koon Wong
+date: '2024-11-12'
+slug: bluesky
+categories: 
+- idtwitter
+- idxpost
+- idxposts
+- idmastodon
+- idsky
+- infectious disease
+tags: 
+- idtwitter
+- idxpost
+- idxposts
+- idmastodon
+- idsky
+- infectious disease
+excerpt: "BlueSky combines customizable filters, an ad-free experience, and free API access for data analysis. Here's a simple guide to help you navigate the platform and connect with the #IDSky community."
+---
+
+> BlueSky combines customizable filters, an ad-free experience, and free API access for data analysis. Here's a simple guide to help you navigate the platform and connect with the #IDSky community.
+
+## What is BlueSky 🦋 ?
+Bluesky represents a bold reimagining of social media for the decentralized age. Originally conceived within Twitter's walls in 2019 and later spun off as an independent venture, this platform is built on the innovative AT Protocol, allowing users to maintain control over their digital identity while seamlessly interacting across different hosting providers. While its clean, Twitter-like interface feels familiar with standard features like posts, likes, and reposts, Bluesky's true innovation lies beneath the surface – users can choose or even create their own content algorithms, effectively deciding how their social media feed is curated, rather than being at the mercy of a single company's black-box algorithm.
+
+
+
+## Objectives:
+- [Step 1: Create An Account](#create)
+- [Step 2: Edit Your Profile](#profile)
+- [Step 3: Add a Feed](#feed)
+- [Step 4: Starter Pack](#starter)
+- [Step 5: Post away!](#post)
+- [Pros](#pro)
+- [Cons](#con)
+- [What is the current statistics like for #IDtwitter/IDsky?](#stats)
+
+## Step 1: Create An Account {#create}
+
+![](create.png)
+This should be pretty straight forward. I'd recommend to use a web browser to follow all these steps before you download an iPhone or Android App. It might be easier to nagivate and also this tutorial is based on that. Alright, once you've created an account, I'll see you on step 2! 
+
+
+## Step 2: Edit Your Profile {#profile}
+
+![](profile.png)
+
+This next step is SO SO SO important! If you already have a Twitter account, just copy your existing description and paste it here. Also, don't forget to add your display name as well! This will allow other IDsky community to know who you are and easier to follow you! Here are some of the profiles look like. Be createive, use emojis if you want!
+
+Here are some examples of simple, creative, concise profile. 
+
+![](profile1.png)
+
+<br>
+
+![](profile2.png)
+
+<br>
+
+![](profile3.png)
+
+There are a WHOLE lot more creative ones but these are the ones I quickly took a snapshot of. What is your profile going to look like? 
+
+I cannot emphasize enough how having a profile, maybe just a placeholder at least, so that when you follow people, they know who you are and follow you back and interact with you! Look at the post below. 
+![](seb.png)
+
+[click here for the actual post](https://bsky.app/profile/sebpoule.bsky.social/post/3lamnu4xgf22m)
+
+
+## Step 3: Add A Feed {#feed}
+
+This, my friend, I think, is BlueSky's super power! The algorithm is curated by your community or by you if you want to! For our ID community, the first helpful feed to have is #IDSky. 
+
+![](feed.png)
+
+Instructions:
+1. Navigate to Feed tab
+2. Look for search section
+3. Search for "IDSky"
+4. When you find it, add/pin it to your feed! 
+
+So, what's the super power here? IDSky feed curated by [John Ross](https://bsky.app/profile/johnrossmd.bsky.social) will extract all posts that contain `#idsky, idsky` (case insensitive) for the past 24 hours. It's going to look like this when you click on the feed. 
+
+![](feed1.png)
+You know what the cool thing is about this? It will not contain other posts that do not have these words. It's almost like a focus mode! No other topics! 
+
+Don't just stop there on ID topics, look at other things that interest you! For me, it's naturalist, gardening, bird! Each feed as before, it's all topic related! Look at these flower posts! Instead of doomscrolling, some people called it bloomscrolling 🤣
+
+![](flower.png)
+
+
+
+## Step 4: Starter Pack {#starter}
+
+The ID community has curated several excellent starter packs to help newcomers find relevant accounts to follow. These packs include leading epidemiologists, infectious disease physicians, researchers, and public health organizations. Thanks to [Ilan Schwartz](https://bsky.app/profile/germhuntermd.bsky.social)
+
+In this section, a curated list has been prepared for you and you can click "Follw All" or selectively "follow" the oens you want to follow.
+
+![](starter.png)
+The Start pack doesn't just stop on 1, not 2, but 5 as for now! 
+
+![](ilan.png)
+
+[Click here](https://bsky.app/profile/germhuntermd.bsky.social/post/3las4cjwqyc2d) for all of the starter packs.
+
+
+## Step 5: Post away! {#post}
+
+Now that your profile is set up and you're connected with the ID community, it's time to contribute to the conversation. Start by sharing your expertise through well-crafted posts about your research, clinical observations, or commentary on recent developments in infectious diseases. Use relevant hashtags like #IDTwitter, #IDSky, or specific disease-related tags to increase visibility. 
+
+![](post.png)
+
+First post is always great to introduce yourself and tag `IDSky` to be included on the feed! FYI, the feed may take up to 5 minutes for it to show your tagged post. 
+
+Congratulations! You've made it! 
+
+#### Pros {#pro}
+- Decentralized platform offering greater user control and data portability
+- Clean, intuitive interface familiar to Twitter users
+- Customizable content algorithms for better information filtering
+- Growing, engaged ID community with high-quality professional discourse
+- Ability to create and share custom feeds for specific topics or research interests
+- Free API access for developers to build new features and integrations
+
+
+#### Cons {#con}
+- Growing community, may take a while for adoption
+- Mobile app still in development for some features
+- Custom feed creation requires some technical understanding, but not too hard. If you're interested. See [here](https://paulmusgrave.info/the-moderately-skilled-persons-guide-to-making-a-bluesky-feed/) 
+- Post character limit 300, but allows thread
+- After post, cannot edit, just like the good old twitter
+- DM cannot attach file/image
+
+
+## What is the current statistics like for #IDtwitter/IDsky? {#stats}
+
+![](stats.png)
+
+There is significantly more posts started 11/9/24. 11/13/24 we had the most posts with the tag #idsky idsky #idtwitter idxpost idxposts reaching 165! Wow!
+
+We created a [Shiny App](https://kenkoonwong.shinyapps.io/idsky/) for #IDsky community to monitor their activities, to see who posted, what's their display name, description. Toggle to the other tabs, there are links that will bring you to their original posts and profile! We'll query the data and update it daily for the next few weeks and see if this continues! But I am super hopeful! 
+
+Other acknowledgements including [Gabriele Pollara](https://bsky.app/profile/gpollara.bsky.social/), [Sébastien Poulin](https://bsky.app/profile/sebpoule.bsky.social) for keeping the feed lively, and many many authors who have contributed! You can probably find your name on the `Author` tab of the shiny app. Below is how it will look like.  
+
+![](authors.png)
+
+Here is another plot that looks at how many unique authors joined by date.
+
+![](author_joined.png)
+
+So, what do you think? You coming? Take your time, we'll be there waiting ❤️
+
+<br>
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
