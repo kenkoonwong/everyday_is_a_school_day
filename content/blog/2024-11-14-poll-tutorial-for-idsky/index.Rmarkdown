@@ -52,6 +52,21 @@ And click `Post Poll`
 
 That's it!!! And after 24h I think it will send a reply to the post with results. If you guys know other ways of polling, drop me a comment or teach us on #IDSky!
 
+End
+
+<br>
+
+
+#### Bonus - What About Poll in Reply, Instead of The Actual Post? 
+![](advance.png)
+- Look for the `Advanced options`, click on it and you'll see
+
+![](url.png)
+- Copy and paste the `post` of interest you want to `reply`.
+
+et voilà
+
+<br>
 
 If you like this article:
   - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
