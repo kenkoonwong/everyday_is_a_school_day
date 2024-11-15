@@ -13,6 +13,7 @@ tags:
 - idsky
 - infectious disease
 - poll
+excerpt: This is one way of creating an anonymous poll using poll.blue
 ---
 
 > This is one way of creating an anonymous poll using poll.blue
