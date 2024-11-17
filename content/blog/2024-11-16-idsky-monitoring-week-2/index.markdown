@@ -17,10 +17,10 @@ tags:
 - idmastodon
 - idsky
 - infectious disease
-excerpt: "How's #IDSky doing after 2 weeks? Pretty great! We're seeing steady posts worldwide, strong US-UK participation, and even outpacing Twitter metrics. The ID community isn't just dropping by - they're making BlueSky their new digital home."
+excerpt: "How's #IDSky doing on week 2? Pretty great! We're seeing steady posts worldwide, strong US-UK participation, and even outpacing Twitter metrics. The ID community isn't just dropping by - they're making BlueSky their new digital home."
 ---
 
-> How's #IDSky doing after 2 weeks? Pretty great! We're seeing steady posts worldwide, strong US-UK participation, and even outpacing Twitter metrics. The ID community isn't just dropping by - they're making BlueSky their new digital home.
+> How's #IDSky doing on week 2? Pretty great! We're seeing steady posts worldwide, strong US-UK participation, and even outpacing Twitter metrics. The ID community isn't just dropping by - they're making BlueSky their new digital home.
 
 ## Week 2 Of #IDSky, How Does It Look?
 ![](monitor.png)
