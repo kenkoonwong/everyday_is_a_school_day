@@ -1,0 +1,117 @@
+---
+title: "Have you tried \U0001F98B's Mute? \U0001F92B It's Life Changing 🧘"
+author: Ken Koon Wong
+date: '2024-11-27'
+slug: bluesky-mute
+categories: 
+- bluesky
+- idsky
+- tutorial
+tags: 
+- bluesky
+- idsky
+- tutorial
+excerpt: "The mute feature on BlueSky has been super helpful for filtering out posts I'm not interested in seeing. Just adding a few words to my mute list has made my feed much more enjoyable to browse. 🦋"
+---
+
+>The mute feature on BlueSky has been super helpful for filtering out posts I'm not interested in seeing. Just adding a few words to my mute list has made my feed much more enjoyable to browse. 🦋
+
+## Objectives
+- [Why Mute?](#whatismute)
+- [Where is Mute?](#mwhereisute)
+- [What does Muting look like?](#look)
+- [What format can you use for muting?](#style)
+
+<br>
+
+## Why Mute? {#whatismute}
+The main reason for joining BlueSky is to have control over feeds that suits you, and also posts that you would want to see more. It is, however, inevitable that you may come across posts that may not be beneficial for your wellness, especially over at that "Discover" feed. Though, that is a great forum where you can truly discover treasures! Mute, allows you to discover with your own wellness in mind! It's a feature that allows you to hide posts that you have absolutely no interest in! It's a great feature! 
+
+<br>
+
+## Where is Mute? {#whereismute}
+First, go to Settings
+<p align="center">
+  <img src="settings.png" alt="image" width="40%" height="auto">
+</p>
+
+Then navigate to `Muted words & tags`
+<p align="center">
+  <img src="moderate.png" alt="image" width="70%" height="auto">
+</p>
+
+Another way is via any posts. 
+<p align="center">
+  <img src="anotherway.png" alt="image" width="80%" height="auto">
+</p>
+
+
+Once you are there, it will look like this
+
+<p align="center">
+  <img src="mute.png" alt="image" width="100%" height="auto">
+</p>
+
+
+You can enter your `word` to mute, select duration, whether it appears on texts & tags or tags only, you can exclude users you follow, and then `add`! Don't be afraid to experiment with this, you can always remove it after! 
+
+<br>
+
+## What does Muting look like? {#look}
+
+Now, let's take a look at our friendly Québécois ID physician, Dr. Sébastien Poulin's posts on his profile (I got his permission to use it as an example). This is the first post.
+
+![](run.png)
+Let's say we want to mute `Strava`. Just put in `strava` (case insensitive) on the mute section, set your parameters, and add! On Sebastien's profile it will then look like this, instead of the post showing. 
+
+![](hide.png)
+
+Mind you, ALL of the posts existed in BlueSky 🦋 with the word `strava` will be hidden/muted for you! How cool is that!   
+
+Let's look at another example. Further down, we see he reposted Joseph Marcus's post. This is a good example to try and see if muted words would work on embedded URL texts. 
+
+<p align="center">
+  <img src="vaccine.png" alt="image" width="80%" height="auto">
+</p>
+
+Let's mute `cost-effectiveness` and see if it works. Notice that that word is not on the actual post but is the title of the article attached. Take note that the post above has a picture with the word `fascinating` and the post below was mine. If we apply this mute word, the post from Joseph should no longer be there! Let's try.
+
+<p align="center">
+  <img src="mute_cost.png" alt="image" width="100%" height="auto">
+</p>
+
+Alright! This is quite interesting! Now I better unmuted all the words above for this demonstration before I miss out on `strava` and `cost-effectiveness` related posts 🤣
+
+<br>
+
+## What format can you use for muting? {#style}
+From my experimentation, it's only plain words. Nothing fancy like regular expression, no comma/list feature. Just plain words. For example, if you want to mute these words `apple`, `orange`, and `water melon`. You would have to input all those 3 fruits separately, case insensitive, like so. 
+
+<p align="center">
+  <img src="fruit.png" alt="image" width="100%" height="auto">
+</p>
+
+Pros:
+- You have control of the type of posts you want to see less 🤫, which means the `Discover` feed will be more pleasant to go through to discover some interesting posts and authors to follow. 
+- You can always unmute the words you have muted
+- The change is instantaneous
+
+Cons:
+- If authors posts pictures only that contains those muted words, or resemble the topic you want to mute, you will still get them unfortunately. Hopefully it's few and far between. 
+- You have to input the words separately, no comma/list feature. E.g., one time input of `apple, orange, water melon`.
+- It only picks up the entire word, not partial. E.g., muted `apple` word, if a post contain the word `applet` or `@pple`, it will still show on your feed.
+
+I think the nice thing is you can experiment with this and keep adding muted words of your choice and hopefully your `discover` feed will be a stream of delight with minimal turbulence! 
+
+<br>
+
+I hope this article was helpful! If you have any questions, feel free to ask!
+
+
+<br>
+
+
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
