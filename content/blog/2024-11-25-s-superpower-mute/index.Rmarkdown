@@ -105,7 +105,7 @@ I think the nice thing is you can experiment with this and keep adding muted wor
 
 <br>
 
-I hope this article was helpful! If you have any questions, feel free to ask!
+I hope this article was helpful! If you have any questions, feel free to ask! Thanks Sébastien for letting me use your profile to demonstrate this! 
 
 
 <br>
