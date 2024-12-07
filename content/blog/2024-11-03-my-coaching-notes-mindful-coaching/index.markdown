@@ -1,0 +1,276 @@
+---
+title: 'My Coaching Notes: Mindful Coaching'
+author: Ken Koon Wong
+date: '2024-12-07'
+slug: coach5
+categories: 
+- coaching
+- upskill
+- leadership
+- mindfulness
+- notes
+tags: 
+- coaching
+- upskill
+- leadership
+- mindfulness
+- notes
+excerpt: "Amazed by Co-active Coaching's fresh insight through my own lens: treating level 3 listening like meditation, turning curiosity into powerful questions (wrote a formula of this), viewing emotions as data, not a symptom. I'm grateful for these insight and strategies. Hope to incorporate them to my daily routine."
+
+---
+
+> Amazed by Co-active Coaching's fresh insight through my own lens: treating level 3 listening like meditation, turning curiosity into powerful questions (wrote a formula of this), viewing emotions as data, not a symptom. I'm grateful for these insight and strategies. Hope to incorporate them to my daily routine.
+
+
+
+<p align="center">
+  <img src="feature.jpeg" alt="image" width="60%" height="auto">
+</p>
+
+
+Last coaching book of the year, let's take a look at [Co-Active Coaching](https://www.amazon.com/Co-Active-Coaching-Fourth-transformative-conversations/dp/1473674980/ref=sr_1_1?crid=1UDGH0B2NC992&dib=eyJ2IjoiMSJ9.t3Ddm9gfUBu03pxdQmpE9uWMO7EvFyJ7QJiUMOGfiE-2oEJ5Nh3wtdlfzM44ZzB4PlXiSeXTCG6A28QHWEqPR1sqdDcllTGNazoUrbxLDwm8a-8Mi4Iq6jslAY-0QJCr9ziBRv-fWG-CEcpm14WjHHqHrHujnKK6UH7h63nHpc78YcOjL9OSWIF1c3y3ZboqWlA-gg0NNz-zt3XanM2oxHSteKRT2JWn1UtqCvhcbTE.Ey_DB9oB69MzSDB6eg4YuA8Vst10gcw4z5F2sPjJSM4&dib_tag=se&keywords=coactive+coaching&qid=1733103075&sprefix=coactive+%2Caps%2C149&sr=8-1). Stephen Covey, the author of the 7 habits of highly effet people dubbed it as "The bible of coaching guides". I must say, I can't agree more. Not that it encompasses ALL of coaching skills/techniques/process but this definitely requires a tad more knowledge framework of coaching before it makes a deep connection, in my opinion.
+
+What resonated with me the most in this book is its careful description of the mindfulness of coaching. The coach's thought process, the automated thoughts, the reaction of powerful words, the activation of ideas that monitors and sources the outcome of each crafted coaching question. I find it quite familiar. Even though the book uses the word "self-management", which I do think to some level that it is about managing one's thoughts, but I think it goes beyond "management", it is about learning and knowing more of ourselves, the coaches, our reactive thoughts, and the ways to bring that back to the center, just like mindful meditation, bring it back to the breath.
+
+**Disclaimer: These are my interpretations and might not be the same as the author's. I highly advice and recommend to get a copy of this book and read it**
+
+<br>
+
+## Objectives:
+- [Levels of Listening](#level)
+  - [The 3 Levels of Listening: A Guide to Deeper Communication](#level3)
+- [Teach a person to fish](#teach)
+- [More Techniques](#more)
+  - [Information gathering vs curious question?](#curiousquestion)
+  - [Close vs Open Questions](#closed-vs-open-questions)
+  - [Bottom Lining](#bottom-lining)
+  - [Homework Inquiry](#homework-inquiry)
+- [Mindfulness](#mindful)
+  - [The Coach's Dilemma](#the-coachs-dilemma)
+  - [Self-Management, Championing, Clearing](#self-management-championing-clearing)
+  - [Feeling As Information, Not Symptoms](#feeling-as-information-not-symptoms)
+  - [Coach Senses Turbulence](#coach-senses-turbulence)
+  - [Where Not To Go?](#where-not-to-go)
+- [Opportunities For Improvement/Lessons Learnt](#opportunities)
+
+<br>
+
+
+## Levels of Listening {#level}
+### The 3 Levels of Listening: A Guide to Deeper Communication {#level3}
+Ever wondered why some conversations feel deeper and more meaningful than others? The secret might lie in how we listen. The Co-Active Training Institute (CTI) has identified three distinct levels of listening that can transform our communication.
+
+#### Level 1: Internal Listening 👂
+This is our default mode – where we listen through the filter of "me." During Internal Listening:
+- We focus on our own experiences and opinions
+- We're often planning what to say next
+- Our own thoughts dominate the conversation
+
+I'm sure a lot of us can relate to this. It starts when someone is sharing a story with you, and in order for one to relate, we look at our internal library to find similar stories in order to relate. And our response to the story being told to us was not "And what happened next?" but "Oh, I had similar experience too". Sounds familiar? Or perhaps we are waiting for the person to finish their sentence before sharing our story? This may sound acceptable in day-to-day conversation, but for coaching, in my opinion, this is not. Even for day-to-day conversation, I think we can do better by turning the knob to level 2 listening. 
+
+
+#### Level 2: Focused Listening 🎧
+Here's where real connection begins. In Focused Listening:
+- We give our complete attention to the speaker
+- Our own thoughts take a backseat
+- Curiosity drives our questions
+- We create space for others to express themselves
+
+With this level, we are surfing the wave with the speaker on the same surfboard. Each corner they turn, we follow. We are not there to share our stories, but to listen to theirs. We are not there to give advice, but to ask questions that will help them to find their own answers. We are not there to judge, but to understand. 
+
+Do you have someone that you always go to complaint when you have problem? What quality does that person have that makes you go to them over and over again? Is it the advice they offer? Or is it their time, generosity, empathy, and attention that won you over? That's level 2 listening. They're with you. They are your sidekick, your companion, your rock. You know we can always count on them. And how do you feel each time after each session? Relieved and cleared.
+
+
+#### Level 3: Global Listening 🌏
+This is listening with all our senses. We tune into:
+- Body language
+- Tone of voice
+- Emotional undercurrents
+- What's left unsaid
+- Energy in the room
+
+Yes, it does sound like non-verbal cues, but I think this goes beyond that. Yes, we are able to differentiate a person who feels angry, disappointed, happy, excited and so on, without the person saying a word by looking at their facial expression, body language. Level 3 listening, in my opinion, is able to sense what's written between the lines, the subtlety of the conversation, the energy that is being transferred. It is like a dance, where you can sense the next move, the next step, the next turn. It is like a music, where you can sense the next note, the next chord, the next rhythm. 
+
+The bottom line is each level serves a purpose, but Level 2 and 3 typically lead to deeper understanding and stronger connections. The key is recognizing which level you're using and adjusting as needed. Start noticing your listening patterns today – you might be surprised by what you discover.
+
+When we get to [mindfulness](#mindful) section, you will notice that these requires level 3 listening in order to sense these subtlety. 
+
+## Teach A Person To Fish {#teach}
+<p align="center">
+  <img src="fish.jpeg" alt="image" width="60%" height="auto">
+</p>
+
+
+Coaching isn't just about receiving guidance – it's an opportunity for coachees to master advanced listening skills. By observing their coach's intuitive practice, coachees learn to experiment with Levels 2 and 3 listening in their own lives. This mastery of focused and global listening, combined with skills like clarification and maintaining a meta-view, transforms them into more effective communicators both at work and home. The coaching relationship becomes a dual journey: achieving personal goals while developing powerful communication tools that last a lifetime. I guess it's not really teaching a person to fish, but more so, create an environment and conversation, where it gives opportunity to reflect on the discussion and observation.  
+
+
+## More Techniques {#more}
+### Information gathering vs curious question? {#curiousquestion}
+It seems like there is a formula for asking a curious question. From the book it showcased a few great examples of curious questions and there seems to be a formula to this great question! I think the equation is `Importance + Object = Outcome Answer`. Let's go through a few examples with questions asked by coach and answers by coachee's perspective. OK some of these are not technically "coaching" conversation but just to give some generalizable ideas for curious questions. 🤣 
+
+*--Begin of Mock Scenarios--*
+
+#### Birthday Gift Scenario
+A coach will be asking the coachee a question about birthday gift. 
+
+**Information gathering:**    
+Q: What do you want for your birthday?     
+A: Books on learning C++ or swift.     
+Q: Why books on learning C++ or swift?    
+A: Because I enjoy learning things that I can then use it to make cool stuff
+
+Instead of having the conversation above. Ask a curious question: `What is important to you when it comes to your birthday gifts?` which essentially opened up a whole different level of question. Let's explore that conversation.
+
+**Curious Question:**   
+Q: What is important to you when it comes to your birthday gifts?       
+A: Well, I want something that isn't physical that will occupy a bunch of spaces, and also something that I would use and read.        
+Q: What do you have in mind?        
+A: Maybe gift cards for ebooks and audiobooks! I love to learn! and this way it won't clutter my physical space! Also it would important for me to have books that I actually want to read...       
+
+#### Moving To A Different State Scenario
+
+**Information gathering:**    
+Q: What cities do you want to move to?    
+A: Midwest, maybe Ohio.   
+Q: Why Midwest?
+A: Because I like the distinct seasons and my family is there
+
+**Curious Quesion:**
+Q: What is important to you when you're looking at a location to move to?
+A: A stable career, close to family, with distinctive season where we can enjoy the 4 seasons with family. Having family close by will be of tremendous help especially with kids...
+
+The curious question scenario opens up opportunity to think things through in order for coachee to come up with an outcome answer without coach actually have to ask the outcome question.
+
+#### Looking For Future Leadership Position Scenario
+**Information gathering:**    
+Q: What positions are you looking for?    
+A: Management, C-suite, something like CTO, CIO, CMO.   
+Q: Why management, C-suite position?    
+A: Well, it aligns with my interest and skills I might be good at and what to hone further. I think also at a high level, I may be able to influence and make changes for the greater good.   
+
+**Curious question:**   
+Q: What is important to you when you're looking for a promotion?    
+A: I think have a culture of growth mindset, good support system, is important for me in order to hone skills to be able to influence and also make changes for the greater good. Having a collaborative team with the same vision and mission will have exponential result with enjoyable process working together...
+
+Had the conversation gone to targeting the position itself, we would not have explored the real reason for a promotion. The coachee wanted a position with good support, not just a position that fulfills coachee's wish list, a C-suite.
+
+#### Retirement Scenario
+**Information gathering:**    
+Q: When do you want to retire?    
+A: Maybe when I'm 65.   
+Q: Why 65?    
+A: Well, that's when I'm eligible for Medicare and possibly would have paid off my debt...    
+
+**Curious Quesion:**    
+Q: What is important to you when you no longer work?    
+A: Financial independence, healthcare. I still would want some problem solving challenges and also to be able to contribute to the community...   
+Q: When do you think you would be able to do that?    
+A: Well, I'd need to talk to my financial advisor and see when and what I'd need to do to achieve the first 2 things we discussed. I don't know, it could be as early as 55, I'd need to double check. I may not be eligble for Medicare but I might be able to get affordable health insurance. For the problem solving and community contribution, I should probably volunteer in some charity events this year and slowly build my way to retirement...    
+
+
+*--End of Mock Scenarios--*
+
+Wow, curious questions are quite insightful and it really got the coachee thinking and talking. Did you also realize that the `information gathering` technique is also helpful to construct the `curious question`? At least for me moving forward, if I feel that my question is an information gathering one, I would run through that scenario in my head and try to construct a curious question for my coachee. I believe if I practice enough of this, it would become automatic and I'd no longer need to think about it. Let's reiterate the formula:
+
+`\begin{gather}
+\text{Importance + Object = Outcome Answer}
+\end{gather}`
+
+`Importance`: What is important to you (there are other varieties below)    
+`Object`: The context of interest (e.g., birthday gift, moving location, retirement, promotion)   
+`Outcome Answer`: The answer we're trying to look for   
+
+Other variety of importance questioining:
+- "What brings you the most `joy` when..."
+- "What do you find deeply `satisfying` when..."
+- "What aspects create `value` for you when..."
+- "What `sparks joy` for you when..."
+- "What creates `lasting value` in your view when..."
+
+### Closed vs Open Questions
+Take the coachee on a journey, turn closed questions to open ones to explore more opportunities. Here are 5 closed questions that I've asked LLM to generate so that I can try to practice it. Give it a try on your preferred LLM and see if you wcan turn it around to open ones.
+
+|close|open|
+|---|---|
+|Did you enjoy the movie?|What did you find enjoyable of the movie??|
+|Is math your favorite subject?|What is your favorite subject?|
+|Do you have siblings?|What was it like growing up?|
+|Are you tired?|How are you doing?|
+|Was your vacation good?|What was memorable about your vacation?|
+
+Granted that, sometimes a closed end question can be powerful, according to the book. It can be powerful to use it to invoke a dramatic effect on the coachee calling them to their own commitment, thinking `where does that question send my coachee? `. It is part of the coach's job to help the coachee learn from action they take or don't take (`accountability`).  
+
+A note to myself, whenever I think of a close ended question, try to ask an open one at least once a day. 
+
+### Bottom Lining
+In coaching sessions, coachees can sometimes get carried away with extensive storytelling, either by elaborating their narratives at length or by jumping from one tale to another without clear direction. It's valuable to introduce the concept of bottom-lining to clients at the beginning of your coaching relationship, ensuring they understand and expect this technique when you need to guide them toward concise, focused communication. Being able to effectively bottom-line is also a crucial competency that coaches themselves must develop. 
+
+A note to myself, `Bottom-line, what will you commit to...?`. Look at page 125 for example.
+
+### Homework Inquiry
+A powerful question can take on a special role when assigned as a homework inquiry at the conclusion of a coaching session. While structured similarly to any powerful question used during coaching, a homework inquiry serves a distinct purpose - it invites coachees to engage in deeper reflection and exploration over an extended period, typically one week or longer. This sustained contemplation allows insights and awareness to emerge naturally between sessions, rather than requiring immediate responses during the coaching conversation. [A list of homework inquiry questions](https://learn.coactive.com/hubfs/2019%20Toolkit/Co-Active-Coaching-Toolkit-HOMEWORK%20INQUIRIES.pdf)
+
+
+
+## Mindfulness {#mindful}
+### The Coach's Dilemma
+Almost all of the coaching books would recommend the coach to refrain from offering advice or even framing a question where it may hint the coachee of a suggestion. This book, however, gives you the license to break that rule, by being conscientious about framing the conversation as your experience and encourage the coachees to find their own best way. That being said, it still said that it is inappropriate and a waste of the coachee's time for you to share your personal story, in almost all cases. However, there may be times when a little of your experience/advice wil be essential in building trust and relationship with the coachee, the fact that we're humans. And the key here is relationship.
+
+There are at times, the coache wears multiple hats, and does have the expertise that would be valuable to the coachee. That could save coachees from making costly mistakes. The simple 4 step to sharing this advice is:
+
+1. Is the information you have truly relevant to the coachee and the coachee's situation?
+2. Be clear to your coachee that you're not wearing your coaching's hat.
+3. Make sure your coachee wants the information.    
+4. Be clear that you are offering this without attachment.
+
+### Self-Management, Championing, Clearing
+During coaching, one would have to continuously monitor one own's level of listening. What are the things that bring us to level 1 listening instead of 3 as we had talked about? This to me is like almost like meditation. Well, more like the procedure of meditation. When we meditate, we basically monitor our breath as our procedure, whenever we realize that our thought process has drifted off to something else other than monitoring our breath, we come back to the breath. In coaching, this applies as well, level 3 listening is the procedure, whenever we drift to level 1 listening, bring it back. 
+
+Be your coachees' champion. Support them, believe in them, be their number 1 fan!
+
+The coach's responsibility and also perhaps superpower is to be mindful of the situation, of your coachee. When we see our coachee is clearly annoyed about something and can't seem to shake that off and get back to agenda, it's OK to be there and help them clear! Wow, this to me is liberating! I've always thought being a coach is not to get in the middle of coachee's emotion, perspective, but on page 127, if you see this is the major obstacle of the coachee, help them clear! Help them get over it by saying something like "You seem really stuck. LEt's take a moment to get it out of your system, like REALLY complain, whine, feel sorry for yourself. Exaggerate!". Help them go deeper, turn on the volume! Wow! Powerful!
+
+### Feeling As Information, Not Symptoms.
+First of all, `feeling good` about something is not a sign. We often confuse being fulfilled with feeling good, which is not true. Fulfillment can also be created when the journey is challenging, difficult, or uncomfortable. These are the times when novelty sparks occur. Hence, the `feeling good` portion comes after the hardship, not during. But, feeling fulfilled and perhaps even feeling good about accomplishing something can be as simple as achieving a small daily task that in the future cumulatively will sum up to a big task. 
+
+The feeling, however, is our data, flow of information. It is real, it is there, it is not a symptom though. When the coachee expresses certain emotion whether it is passion, anger, coach may automatically think the coaching relationship has turned into a therapy session. However, emotions and therapy are not the same thing. According to the book, emotions are just emotions, it doesn't mean the coachee is mentally unstable, it just means they are human beings with human reaction. As discussed on the previous chapter, it is OK for coaches to allow emotion, and sometimes to encourage it. Refrain from looking at the reason for coachee to feel a certain emotion (which is the typical response). Apparently the cause itself is unimportant; accepting the feeling, however, is. As a coach, we can acknowledge the feeling we see, help our coachee to label it, "That's a powerful feeling. I see that you're hurt". The book gives further guidance as to a few approaches to go deeper into those emotions. I will leave those to your reading on Chapter 10.
+
+
+### Coach Senses Turbulence 
+With level 3 listening, you may sense something that may be lingering under the surface of conversation, you feel that there is an unexpressed emotion. What do we do next? Name it! Bring it to the surface. It could be that the coachee is unaware of the emotion. Use words such as "I sense something very important is going on just below the surface". Allow the coachee to digest that sentence. They may not be ready to dive into the emotion, or they may not even know that they are reacting to it. See if that nudges the coachee before asking the coachee for approval to explore it. Once the process coaching occurs, mind you that we focus on what is true in the moment, the physical tension on the chest, the frown on the face, the pressured speech. Once the coachee experiences it and a deeper dive has happened, the shift happens.
+
+### Where Not To Go?
+A very important thing that I learnt from the book which others didn't cover, is what are the areas in our lives are hard for us to be with or explore? Those are the areas we might want to consider stopping our coaching rather than getting into those places. We don't want to shortchange our coachees in these off-limits areas. Hence, it is very important for coaches to have a robust process of self-discovery so that we can continue to be in level 3 listening during coaching session
+
+
+
+## Opportunities For Improvement/Lessons Learnt {#opportunities}
+There are definitely a lot of other things that covered in the book that I haven't. These are the only ones that resonated with me. And most likely the ones that I need to work on. Something for me to work on now and onwards are:
+
+- Treat level 3 listening like meditation, when the mind wonders, bring it back. Typically the mind wonders to more of a curious thought process, or a reason seeking mindset (e.g., why did my coachee think that way?). Instead of that, try to listen to how the conversation is going, what is the body posture like? what is the tones like? Did I sense a turbulence? 
+- Practice curious questions. Mindful of that thinking and then turn it into a curious question. [See equation](#curiousquestion)
+- Feeling as information, not a symptom. We all have emotions, and that is normal. Don't look for a reason, accept it.
+- Help coachee clear. I have not done that before, will be interested in trying if the situation is right.
+
+
+<br>
+
+My Coaching Notes Series:
+- [My Coaching Notes: The Map - Navigating the Coaching Path](https://www.kenkoonwong.com/blog/coach1/)
+- [My Coaching Notes: Effective Coaching](https://www.kenkoonwong.com/blog/coach2/)
+- [My Coaching Notes: Coaching Process](https://www.kenkoonwong.com/blog/coach3/)
+- [My Coaching Notes: Essential Coaching Skills](https://www.kenkoonwong.com/blog/coach4/)
+- [My Coaching Notes: Mindful Coaching](https://www.kenkoonwong.com/blog/coach5/)
+
+ 
+If you like this article:
+  - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
+
+
+
+
+
+
+
