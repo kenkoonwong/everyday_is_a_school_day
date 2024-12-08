@@ -127,7 +127,11 @@ Also please note that, these are not the only ID-relevant tags, there are #Liver
 
 ## Our Network {#network}
 ![](bluesky_network_full.gif)
-Last but not least, our community network! How was this done? From the #IDSky monitoring, we extracted all the authors and then query their followers and also authors they are following, then merge all of them up and visuazlize via `threejs` a package by `Bryan Lewis` who is part of our Cleveland R User Group! #IDSky community network has 219999 vertices (nodes) and 1591044 edges (relationships). Please pay no special attention to the colors, they are only for aesthetics. Limitation, there were ~1-5% error rate while acquiring data. I tried my best to parse of the error and refill them with re-query. That said, wow, our #IDSky community network looks REALLY Cool!
+Last but not least, our community network! Thanks to Gabrielle Pollara for the idea on week 1. 
+
+How was this done? From the #IDSky monitoring, we extracted all the authors' handles and then query their followers and also authors they are following, then merge all of them up and visuazlize via `threejs` a package by `Bryan Lewis` who is part of our Cleveland R User Group! 
+
+\#IDSky community network has 219999 vertices (nodes) and 1591044 edges (relationships). Meaning, there were 219999 authors here and 1591044 lines merging between these authors. Each author/node is resembled by a point (I deliberately made it very small, almost like a dot) so that we can visualize the edges (network/relationship) better. Please pay no special attention to the colors, they are only for aesthetics. Limitation, there were ~1-5% error rate while acquiring data. I tried my best to parse of the error and refill them with re-query. That said, wow, our #IDSky community network looks REALLY Cool!
 
 <br>
 
@@ -139,7 +143,9 @@ Wow, that was a fun project! 🦋 Post numbers have been high and stable. Engage
 ## Acknowledgement/Lessons Learnt {#lessons}
 - Found `ggsflabel` that has the repel function, learnt to set `max.overlap` in order to show labels that were hidden.
 - Defensive programming, wow! Getting large data such as this is no easy feat. Days and days of debugging, alas, I felt I was able to write a code that is adaptable and yet flexible. Used `tryCatch` a lot lol.
-- Learnt to visualize network graph with `threejs` package maintained by Bryan Lewis, from our very own Cleveland R User Community! Thanks to Alec Wong for the recommendation!
+- Learnt to visualize network graph with `threejs` package maintained by `Bryan Lewis`, from our very own Cleveland R User Community! Thanks to `Alec Wong` for the recommendation!
+- Thanks `Gabrielle Pollara` for the network visualization idea
+- Thanks `José Molina` for the non-IDSky tags monitoring!
 - Last but not least, the person who benefited the most for doing this was me! Thanks to #IDSky community for the influx of great ID news, articles, commentary, and discussion! Keep up the soild effort!
 
 <br>
