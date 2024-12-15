@@ -143,7 +143,8 @@ Alright! Let's go to our tutorial now!
   <img src="step3.2.png" alt="image" width="100%" height="auto">
 </p>
 
-- Fill this in `search for terms or tags in posts`
+- Fill this in `search for terms or tags in posts`, be careful not to fill it in the section that requires `approval`. 
+
 ```
 from:@dralicehan.bsky.social
 from:@sebpoule.bsky.social
@@ -261,7 +262,7 @@ Both Skyfeed and Bluesky Feed Creators are easy to use. I do think Bluesky Feed 
 ## You Should Give It A Try! 
 As the saying goes, `Practice Makes Progress`! The only way to learn this and make your own algorithm is to do it! Start simple! The tutorial provided by Bluesky Feed Creator even said so! Then slowly build it. Trial and error! 
 
-With `Alice`'s help in curating a [list](https://bsky.app/profile/did:plc:au5lnpbox3s3pbyihkeiqjzk/lists/3lbx3rdlaoh2n) of ID providers she followed before, and the help of umpteen times of testing with `Sébastien`, we created this [feed](https://bsky.app/profile/did:plc:zm44nohr674ex3mfyzmirqrf/feed/idtwitter) that captures a bunch of ID-related tags, ID peeps by Alice, and URLs of ID journals (CID/JID/OFID/lancet). If you want to copy our search terms, [here it is](https://github.com/kenkoonwong/everyday_is_a_school_day/blob/34f079bf393d6a892469b539dc0901a49ab66557/content/blog/2024-12-12-got-feed-a-step-by-step-tutorial-for-creating-a-feed/search_terms)
+With `Alice`'s help in curating a [list](https://bsky.app/profile/did:plc:au5lnpbox3s3pbyihkeiqjzk/lists/3lbx3rdlaoh2n) of ID providers she followed before, and the help of umpteen times of testing with `Sébastien`, we created this [feed](https://bsky.app/profile/did:plc:zm44nohr674ex3mfyzmirqrf/feed/idtwitter) that captures a bunch of ID-related tags, ID peeps by Alice, and URLs of ID journals (CID/JID/OFID/lancet). If you want to copy our search terms, [here it is](https://github.com/kenkoonwong/everyday_is_a_school_day/blob/b31636c756b58a52a2f669dde6d3694de08cc399/content/blog/2024-12-12-got-feed-a-step-by-step-tutorial-for-creating-a-feed/search_terms), it does go over 30 search terms, however, the free version will not be feasible. 
 
 Here are a few examples to spark your imagination & creativity in getting started with building your own feed!
 - ID content 
