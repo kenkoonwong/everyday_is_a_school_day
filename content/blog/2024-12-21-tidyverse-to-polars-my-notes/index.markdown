@@ -43,7 +43,7 @@ In preparation for using more Python in 2025 and also to speak more of the same 
 ``` r
 library(tidyverse)
 library(reticulate)
-use_virtualenv('/Users/kenkoonwong/mac-positron-python/.venv/')
+use_virtualenv('path/to/your/environment')
 
 df <- tibble(
   name = c("Alice", "Bob", "Charlie", "Ken", "Steven", "Carlos"),
