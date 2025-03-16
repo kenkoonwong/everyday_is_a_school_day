@@ -1,0 +1,315 @@
+---
+title: LLM-assisted Summarization of Abstracts And Bluesky Post via R
+author: Ken Koon Wong
+date: '2025-03-16'
+slug: summary-llm
+categories: 
+- r
+- R
+- llm
+- abstract
+- atproto
+- bluesky
+- openai
+- reticulate
+tags: 
+- r
+- R
+- llm
+- abstract
+- atproto
+- bluesky
+- openai
+- reticulate
+excerpt: How do we identify relevant articles in our domains? This project uses example journal RSS feeds with abstracts, uses LLMs to extract points of interest, and shares insights on Bluesky—stimulating curiosity.
+---
+
+> How do we identify relevant articles in our domains? This project uses example journal RSS feeds with abstracts, uses LLMs to extract points of interest, and shares insights on Bluesky—stimulating curiosity.
+
+![](llm.png)
+
+
+## Motivations {#motivation}
+There are countless excellent articles published daily, but how do we identify which ones are relevant to our domains? How can we extract the essence of an article—specifically, its abstract? Let's build something that uses Bluesky as a forum to stimulate curiosity and learning.
+
+The plan is to leverage RSS feeds provided by journals (which hopefully include abstracts) and then use those abstracts with an LLM to capture the essence. This could trigger curiosity in several ways: perhaps something seems unusual or intriguing, prompting us to verify if the LLM interpreted it correctly. Maybe we've already read the abstract and article, but the LLM identified something we missed.
+
+Following the summary of the summary generation 🤣, how can we utilize Bluesky as a platform to share these insights? We're going to explore how to implement all of these capabilities in R.
+
+## Objectives:
+- [Motivation](#motivation)
+- [Get ID RSS Feed](#feed)
+- [Summarize via LLM](#llm)
+- [Post On Bluesky](#post)
+- [Limitation](#limit)
+- [Final Thoughts](#final)
+- [Acknowledgement](#ack)
+- [Lessons Learnt](#lessons)
+
+
+## Get ID RSS Feed {#feed}
+
+``` r
+library(tidyverse)
+library(tidyRSS)
+
+url <- "https://academic.oup.com/rss/site_5269/3135.xml"
+
+(df <- tidyfeed(url))
+```
+
+```
+## # A tibble: 46 × 13
+##    feed_title       feed_link feed_description feed_language feed_pub_date      
+##    <chr>            <chr>     <chr>            <chr>         <dttm>             
+##  1 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  2 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  3 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  4 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  5 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  6 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  7 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  8 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+##  9 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+## 10 Clinical Infect… http://a… "\n    "         en-us         2025-02-24 00:00:00
+## # ℹ 36 more rows
+## # ℹ 8 more variables: feed_last_build_date <dttm>, feed_generator <chr>,
+## #   item_title <chr>, item_link <chr>, item_description <chr>,
+## #   item_pub_date <dttm>, item_guid <chr>, item_category <list>
+```
+
+It's that simple! Two lines of codes. I really appreciate that Oxford publisher adds abstract to their RSS feed. This is very helpful to send to LLM for summarization. 
+
+In order to set it as an automation, we'd have to pull old data and see if it matches new data. Let's assume we already have old data that's been save in `rda`. I'm going to simulate old data but removing random 50% of `df`, like so. And create a column `sent` with number `1`, my way of stating these have been posted on bluesky.
+
+### Get old data
+
+``` r
+df_old <- df |>
+  slice_sample(prop = 0.5) |>
+  mutate(sent = 1)
+```
+
+but in reality we'd load it from data file like so.
+
+``` r
+(load("old_data.rda")) #assuming it's saved under df_old 
+```
+
+```
+## [1] "df_old"
+```
+
+Also note that there is no LLM summary in our mock df_old. 
+
+### Match with new data
+Let's assume that `df`, the newly captured RSS feed is our new data, which we'll want to `anti_join` the old ones to only return the ones that in our old data.
+
+
+``` r
+df_new <- df |>
+  anti_join(df_old, by = "item_link") |>
+  mutate(sent = 0)
+
+df_new[10,"item_description"] |> pull()
+```
+
+
+```
+## [1] "AbstractBackgroundBlastomycosis is an environmentally acquired fungal infection that can result in severe pulmonary illness and high hospitalization rates. In 2023, a blastomycosis outbreak was detected among workers at a paper mill in Delta County, Michigan.MethodsWe included patients with clinical and laboratory evidence of blastomycosis who had spent ≥40 hours in Delta County since 1 September 2022 and had illness onset 1 December 2022–1 July 2023. We assessed epidemiological and clinical features of patients and evaluated factors associated with hospitalization. We performed whole-genome sequencing to characterize genetic relatedness of clinical isolates from 8 patients.ResultsIn total, 131 patients were identified; all had worked at or visited the mill. Sixteen patients (12%) were hospitalized; 1 died. Compared with nonhospitalized patients, more hospitalized patients had diabetes (P = .03) and urine antigen titers above the lower limit of quantification (P &lt; .001). Hospitalized patients were also more likely to have had ≥1 healthcare visits before receiving a blastomycosis diagnostic test (P = .02) and to have been treated with antibiotics prior to antifungal prescription (P = .001). All sequenced isolates were identified as Blastomyces gilchristii and clustered into a distinct outbreak cluster.ConclusionsThis was the largest documented blastomycosis outbreak in the United States. Epidemiologic evidence indicated exposures occurred at or near the mill, and genomic findings suggested a common exposure source. Patients with diabetes may have increased risk of hospitalization, and elevated urine antigen titers could indicate greater disease severity. Early suspicion of blastomycosis may prompt earlier diagnosis and treatment, potentially reducing unnecessary antibiotic prescriptions and improving patient outcomes."
+```
+
+As you can see, looking at row 10 of the data, CID RSS feed does include abstract! 🙌 Lucky for us! 
+
+## Summarize via LLM {#llm}
+
+``` r
+## install openai virtualenv
+## Run this if it's your first time by uncommenting it
+## reticulate::virtualenv_install(envname = "openai", packages = c("openai","atproto"))
+reticulate::use_virtualenv("openai")
+library(reticulate)
+
+openai <- import("openai")
+OpenAI <- openai$OpenAI
+
+client = OpenAI(api_key = 'YOUR API KEY') ## change this to yours  
+
+response <- client$chat$completions$create(
+  model = "gpt-4o-mini",
+  messages = list(dict(
+    role = "system",
+    content = "You are a summarizer. Please summarize the following abstract. 
+    Include statistics.Use emoji to shorten characters. The summary must not 
+    exceed 200 characters—if you reach 200 characters, stop immediately. 
+    Do not add any extra commentary or exceed the 200-character limit."
+  ), dict(
+    role = "user",
+    content = df_new[10,"item_description"] |> pull()
+  )
+  ),
+  temperature = 0
+)
+
+(summary <- response$choices[[1]]$message$content)
+```
+
+
+```
+## [1] "26,233 adults studied (median age 71). 60.9% treated on day 0; \n30-day mortality: 7.5% (day 0), 8.5% (day 1), 10.2% (days 2-5). Delay increases \ndeath risk (OR 1.14 & 1.40). 🚨💊"
+```
+
+This is where you really can customize to your likely. What is it that is important to you that you'd want to see from an abstract so that you will click on the journal link and read more? For me, it's the statistics. Hence, I specified that in the prompt. Because Bluesky only allows 300 graphenes (characters visible), I have experimented with 200,250,300 and found 200 appears to be the safest so we don't go over and end up giving an error. For future improvement, it'd be good to create a function that checks this and either re-run the prompt with adjustment or thread it. 
+
+## Post On Bluesky {#post}
+Please note that, this only demonstrates posting 1 specific title `df_new[[10,]]`. We can modify this code later so that it's not so rigid. This is just to show how to send blue posts via `atproto`. This is an R package called `bskyr` which you can use as well for sending post, though I'm not sure if you can embed external. 
+
+
+``` r
+atproto <- import("atproto")
+Client <- atproto$Client
+models <- atproto$models
+client_utils <- atproto$client_utils
+
+## Login
+bsky <- Client()
+bsky$login("username", "password") #change to your username and app password
+
+## Build Text
+text <- client_utils$TextBuilder()
+text$text(summary)
+
+## Embed 
+embed <- models$app$bsky$embed$external$Main(
+      external = models$AppBskyEmbedExternal$External(
+          uri=df_new[[10, 'item_link']],  # The main link
+          title=df_new[[10, 'item_title']], # Title of the preview
+          description=df_new[[10, 'item_description']],  #  # Description of the link
+      ))
+
+bsky$send_post(text = text, embed = embed)
+```
+
+![](post.png)
+## Save It And Post Later
+You may have noticed that we actually have a column in `df_old` called `sent`. That is to enable posting of titles that we have not posted. We basically assign `1` whenever we sent a post, and `0` whenever there is a new title that we have not posted. In the end, we will need to save the entire dataframe. Let's put all the code together just so it all makes sense. We'll also assume that we already have `old_data.rda`, and also we already have env for `openai` and `atproto`. 
+
+
+``` r
+### 1. Get Feed
+library(tidyverse)
+library(tidyRSS)
+
+url <- "https://academic.oup.com/rss/site_5269/3135.xml"
+df <- tidyfeed(url)
+
+### 2. Get Old Data
+load("old_data.rda") #df_old is our dataframe
+
+### 3. Match feed and old data, to return only ones that are not in old data
+df_new <- df |>
+  anti_join(df_old, by = "item_link") |>
+  mutate(sent = 0)
+
+### 4. Randomly pull a title that has not been sent previously
+topic_to_send <- df_new |> 
+  filter(sent == 0) |>
+  slice_sample(n = 1)
+
+### 5. OpenAI LLM summarization
+reticulate::use_virtualenv("openai")
+library(reticulate)
+
+openai <- import("openai")
+OpenAI <- openai$OpenAI
+
+client = OpenAI(api_key = 'YOUR API KEY') ## change this to yours  
+
+response <- client$chat$completions$create(
+  model = "gpt-4o-mini",
+  messages = list(dict(
+    role = "system",
+    content = "You are a summarizer. Please summarize the following abstract. Include statistics.Use emoji to shorten characters. The summary must not exceed 200 characters—if you reach 200 characters, stop immediately. Do not add any extra commentary or exceed the 200-character limit."
+  ), dict(
+    role = "user",
+    content = topic_to_send |> pull(item_description)
+  )
+  ),
+  temperature = 0
+)
+
+summary <- response$choices[[1]]$message$content
+
+### 6. Post on Bluesky
+atproto <- import("atproto")
+Client <- atproto$Client
+models <- atproto$models
+client_utils <- atproto$client_utils
+
+## Login
+bsky <- Client()
+bsky$login("username", "password") #change to your username and app password
+
+## Build Text
+text <- client_utils$TextBuilder()
+text$text(summary)
+
+## Embed 
+embed <- models$app$bsky$embed$external$Main(
+      external = models$AppBskyEmbedExternal$External(
+          uri=topic_to_send[[1, 'item_link']],  # The main link
+          title=topic_to_send[[1, 'item_title']], # Title of the preview
+          description=topic_to_send[[1, 'item_description']],  #  # Description of the link
+      ))
+
+## Post
+bsky$send_post(text = text, embed = embed)
+
+### 7. Combine old and new 
+df_old <- rbind(df_old, df_new) |>
+  mutate(sent = case_when(
+    item_link == topic_to_send$item_link ~ 1,
+    TRUE ~ sent
+  ))
+
+save(df_old, file = "old_data.rda")
+```
+
+Not the most elegant code, but you get the concept and that will do for now 🤣. You can then set task scheduler or crontab to run it once a week etc. The posting part can probably be separate from the entire script so that your new feed screener and post are separate. I'll leave that to your creative tidy coding 🙌
+
+## Limitation/Opportunities For Improvement {#limit}
+- The LLM model is not perfect. It may not always summarize correctly. Especially with years, one way we can improve on that is to set the current year
+  - I realized that when articles do not explicitly state the current year, it will default to 2023. 🤔 
+- Characters limitation in LLM query
+- Not free, but gpt-4o-mini is quite [affordable](https://openai.com/api/pricing/). [50% off if batched](https://platform.openai.com/docs/guides/batch)
+- Abbreviations are hard to understand sometimes
+  - Future project would be to add abbreviation legends on a thread
+- Sometimes if the summary contains more than 300 graphenes (kinda characters), we won't be able to post
+  - need to create a function that checks 300 graphene and then do something to modify it
+- convert `openai` and `bluesky` to use their http api so that we're not relying on `reticulate` and respective modules
+  - `httr2` will be a great tool for this
+
+## Final Thoughts {#final}
+- This does not replace humans, it would be great if humans can summarize all but we know that's not possible.
+- It provides a snippet, a snapshot, and also you can customize prompt to what is important for you, here i want stats specifically. But you can change the prompt to your liking, experiment with it!
+- On the first read or glance, it may not capture your attention, but subsequent posts by others might trigger further attention. Or what captured my attention was if I didn't quite understand the abbreviations... just out of curiosity made me check what those meant
+
+
+## Acknowledgement {#ack}
+I really appreciate [Jonathan Ryder](https://bsky.app/profile/jonathanrydermd.bsky.social) and [Joseph Marcus](https://bsky.app/profile/josephmarcusid.medsky.social)' feedback on this project! They helped to cross-check what were important to summarize, what weren't. Which summary made sense, which didn't. Also provided good links for ID journal monitoring as well. Really couldn't have done it without their insight and oversight. Give them a follow on 🦋
+
+
+## Lessons Learnt {#lessons}
+- Oxford provides a good framework of feed schema including abstract
+- Prompt engineering is important
+- Learnt `()` in R means to print it
+- though not part of the above, but I did read `httr2` package and I think it would be a great modification for the code above so that we're not dependent on `python` modules
+- Having friends to provide feedback on the project is important! When writing these code, we will have inherent bias that it looks great 🤣. But having others will bring you back to earth. I learnt so much from Joseph and Jonathan. Thanks for being part of this!
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
+
