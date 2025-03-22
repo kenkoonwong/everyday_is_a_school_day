@@ -24,7 +24,7 @@ excerpt: 🙈 Made a hilariously redundant R package for a simple OpenAI calls, 
 ## Motivations
 We've been using a lot of LLM lately especially OpenAI GPT4omini via `reticulate`. Trying to load `reticulate` -> import OpenAI -> initialize it -> insert API_key etc again and again whenever we want to use it for a new project or new script, that's just very redundant, tedious and so on. 
 
-Recently, with motivation from `Alec Wong` kindly recommending me to read [R Package](https://r-pkgs.org/) after I asked him a noob question "How does one test and make changes of an existing R package and pull request?" 🤣 The book is great! I really enjoy the first part, it actually teaches you how to create an R package right from the get go! Before it dives into the details. I found that to be extremely refreshing, because you can easily create an MVP right upfront for personal use by following a workflow! 🙌 
+Recently, with motivation from [`Alec Wong`](https://alecsalces.com/) kindly recommending me to read [R Package](https://r-pkgs.org/) after I asked him a noob question "How does one test and make changes of an existing R package and pull request?" 🤣 The book is great! I really enjoy the first part, it actually teaches you how to create an R package right from the get go! Before it dives into the details. I found that to be extremely refreshing, because you can easily create an MVP right upfront for personal use by following a workflow! 🙌 
 
 With the LLM in mind, and wanting to learn how to create an R package (ahem properly, best practice 🫡), why don't we try to make our very own package called `myopenai` !? Alright, there is already a brilliant package called `ellmer`, and my current project is most likey redundant (hence the title), but what a better way to start learning? And we're going to do it the inefficient way, via `reticulate` (this is when you see R experts shake their head of disbelief 🤭) instead of the http API! 🤣 Join me in learning how to create an R Package! 
 
@@ -482,7 +482,7 @@ This is a great image of the actual workflow from the book.
 </p>
 
 ## Acknowledgement {#ack}
-I am grateful of the book and also the style of putting the simple example right up front to stimulate curiosity and having the end in mind. That makes learning very inspirational. I also want to thank `Alec Wong` for guiding me to this book that pushed me to learn the workflow of creating an R package. Now I have some idea on how this works, it makes contributing to existing R packages a step closer!!! woo hoo!!! Not that I have much to contribute 🤣
+I am grateful of the book and also the style of putting the simple example right up front to stimulate curiosity and having the end in mind. That makes learning very inspirational. I also want to thank [`Alec Wong`](https://alecsalces.com/) for guiding me to this book that pushed me to learn the workflow of creating an R package. Now I have some idea on how this works, it makes contributing to existing R packages a step closer!!! woo hoo!!! Not that I have much to contribute 🤣
 
 
 ## Lessons Learnt {#lessons}
