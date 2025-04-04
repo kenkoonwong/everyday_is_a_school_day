@@ -23,7 +23,7 @@ excerpt: Setting up the Raspberry Pi with a BMP180 sensor to track barometric pr
 ![](weather.jpg)
 
 
-## Movitation
+## Motivation
 I've always wondered if migraines are related to barometric pressure or the difference of it? There are studies that showed that there may be some association with it [link](https://www.iris.unina.it/retrieve/handle/11588/673210/117687/EFFECT%20OF%20WEATHER.pdf). This study showed migraines fluctuate more dramatically and worsen with rising temperatures and pressure. What if we want to see if that's the case for ourselves? It sounds like it's a great opportunity to explore some barometric pressure sensor and see how we can log pressure for our own use! This blog is a note to myself of the process, and also codes to interact with the sensor.   
 
 #### Disclaimer:
