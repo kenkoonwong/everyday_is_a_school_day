@@ -1,0 +1,315 @@
+---
+title: Getting My Feet Wet With `Plumber` and JavaScript
+author: Ken Koon Wong
+date: '2025-04-14'
+slug: plumber
+categories: 
+- r
+- R
+- plumber
+- javascript
+- log
+- systemctl
+tags: 
+- r
+- R
+- plumber
+- javascript
+- log
+- systemctl
+excerpt: Tried out plumber and a bit of JavaScript to build a simple local API for logging migraine events 🧠💻. Just a quick tap on my phone now records the time to a CSV—pretty handy! 📱✅
+---
+
+>Tried out plumber and a bit of JavaScript to build a simple local API for logging migraine events 🧠💻. Just a quick tap on my phone now records the time to a CSV—pretty handy! 📱✅
+
+## Motivation
+After our previous blog on [barometric pressure monitoring](https://www.kenkoonwong.com/blog/pressure/), my friend [Alec Wong](https://alecsalces.com/) said 'Won't it be great if we can just hit a button and it will record an event?". 
+
+In this case the reason for recording barometric pressure is to see if there is a link between migraine event and barometric pressure values/change etc. And yes, it would be great if we can create an app of something sort to make recording much easier! 
+
+There are many ways to do this. The way where we can maximize learning within R environment is to use `plumber` to create an API for us to interact and record event! Our use case is actually quite straight forward. We just need something that record a current timestamp when a button is clicked. Simple! 
+
+But since I've never used `plumber` before, this is a great opportunity to explore it! And also a bit of JavaScript too. Again, this blog is more for my benefit where it serves as a note for myself. Here we go!  
+
+## Objectives:
+- [Big Picture](#bigpicture)
+- [plumber.R](#plumber)
+- [How to run it?](#serve)
+- [One Click on iOS](#hack)
+- [Opportunities for Improvement](#opportunity)
+- [Lessons Learnt](#lessons)
+
+## Big Picture {#bigpicture}
+![](big_pic.png)
+As the image above shows, we want an app on our phone that once clicked will somehow change a csv dataframe. All these can be done by `plumber` setting an API to the `csv`. Since I just want to be able to do this on a local network of a different device (e.g. raspberrypi), we don't need to deploy this to digital ocean or a server per se. We can run it in the background and set `systemctl` in case rpi restarts, point it to `0.0.0.0` and we can GET/POST via the device's IP. 
+
+Yes, unfortunately this will not work if we're no longer on local network, which at least from my utility, it will be just fine. No need to expose port forwarding. The safer way would be to use digital ocean droplet to do this, so you're not exposing your own IP and open port to the public. That also means, you may have to pay some 💰 (e.g. ~$5/month). May someday when it can incorporate the barometric pressure and/or other metrics then  
+
+
+## plumber.R {#plumber}
+
+
+``` r
+library(plumber)
+library(readr)
+
+file <- "migraine.csv"
+
+if (file.exists(file)) {
+  df <- read_csv(file)
+} else {
+df <- tibble(date=as.POSIXct(character()))
+}
+
+#* @apiTitle Migraine logger
+#* @apiDescription A simple API to log migraine events
+
+#* Return HTML content
+#* @get /
+#* @serializer html
+function() {
+  
+  # Return HTML code with the log button
+  html_content <- '
+     <!DOCTYPE html>
+     <html>
+     <head>
+       <title>Migraine Logger</title>
+     </head>
+     <body>
+       <h1>Migraine Logger</h1>
+       <button id="submit">Oh No, Migraine Today!</button>
+       <div id="result" style="display: none;"></div>
+       
+      <script>
+       document.getElementById("submit").onclick = function() {
+          fetch("/log", {
+            method : "post"
+          })
+          .then(response => response.json())
+          .then(data => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = data[0];
+            resultDiv.style.display = "block";
+          })
+          .catch(error => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = error.message
+          })
+       };
+      </script>
+      
+     </body>
+     </html>
+     '
+  return(html_content)
+}
+
+#* logging 
+#* @post /log
+function(){
+  date_now <- tibble(date=Sys.time())
+  df <<- rbind(df,date_now)
+  write_csv(df, "migraine.csv")
+  list(paste0("you have logged ", date_now$date[1], " to migraine.csv"))
+}
+
+#* download data
+#* @get /download
+#* @serializer csv
+function(){
+  df
+}
+```
+
+Alright, let's explore the code one by one. Again, as a note for my benefit.
+
+#### Load libraries, load data, metadata
+
+``` r
+library(plumber)
+library(readr)
+
+file <- "migraine.csv"
+
+if (file.exists(file)) {
+  df <- read_csv(file)
+} else {
+df <- tibble(date=as.POSIXct(character()))
+}
+
+#* @apiTitle Migraine logger
+#* @apiDescription A simple API to log migraine events
+```
+
+The above is quite self-explainatory. Point to a file, if it exists, read it, if not create an empty dataframe. The title and description of this API is described as such.
+
+#### Let's Write Out HTML & Javascript
+
+``` r
+#* Return HTML content
+#* @get /
+#* @serializer html
+function() {
+  
+  # Return HTML code with the log button
+  html_content <- '
+     <!DOCTYPE html>
+     <html>
+     <head>
+       <title>Migraine Logger</title>
+     </head>
+     <body>
+       <h1>Migraine Logger</h1>
+       <button id="submit">Oh No, Migraine Today!</button>
+       <div id="result" style="display: none;"></div>
+       
+      <script>
+       document.getElementById("submit").onclick = function() {
+          fetch("/log", {
+            method : "post"
+          })
+          .then(response => response.json())
+          .then(data => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = data[0];
+            resultDiv.style.display = "block";
+          })
+          .catch(error => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = error.message
+          })
+       };
+      </script>
+      
+     </body>
+     </html>
+     '
+  return(html_content)
+}
+```
+
+1. The skeleton #*, first is comment, 2nd is `GET /` (HTTP method), 3rd is `Turn this function into HTML output` [Serializer](https://www.rplumber.io/articles/rendering-output.html#serializers-1). Basically means if we go to `http://localhost:8000/`, it will return this HTML. Now if we set `GET /hello`, then html will also show if you go to `http://localhost:8000/hello`
+2. Next is the HTML (without the Javascript, which is between <script></script>). Basically, write a heading, create a button, and a div to return result.
+3. The Javascript:
+- `document.getElementById("submit").onclick`: when the `submit` button has been clicked, run the function
+- `fetch("/log", { method : "post" })`: this is the part where it will call the `POST /log` function (see below) and run it.
+- `.then(response => response.json())`: This is a Promise chain. After the fetch request completes, this takes the response from the server and calls the .json() method on it, which parses the JSON response body into a JavaScript object. This method also returns a Promise that resolves to the parsed JSON data.    
+- `.then(data => { const resultDiv = document.getElementById("result"); resultDiv.textContent = data[0]; resultDiv.style.display = "block";})`: This is the next step in the Promise chain. Once the JSON is parsed, It finds the HTML element with the ID "result". Sets its text content to be the first item in the data array (data[0]). Makes the element visible by setting its CSS display property to "block"
+- `.catch(error => { const resultDiv = document.getElementById("result"); resultDiv.textContent = error.message })};`This catches any errors that might occur during the fetch operation or when processing the response. If an error happens, it finds the HTML element with ID "result". Sets its text content to the error message. 
+
+The interesting thing I've not come across is the arrow function. `response => response.json()` means `function(response) { return response.json() }`.
+
+#### More Plumber API functions:
+
+``` r
+#* logging 
+#* @post /log
+function(){
+  date_now <- tibble(date=Sys.time())
+  df <<- rbind(df,date_now)
+  write_csv(df, "migraine.csv")
+  list(paste0("you have logged ", date_now$date[1], " to migraine.csv"))
+}
+
+#* download data
+#* @get /download
+#* @serializer csv
+function(){
+  df
+}
+```
+
+1. The `POST /log` function is where the magic happens. When the button is clicked, it will run this function. It will create a new row with the current timestamp and append it to the dataframe. Then write it out to `migraine.csv`. The `<<-` operator is used to assign a value to a variable in the parent environment (in this case, the global environment). This allows us to modify the `df` variable defined outside of the function.  The `list(paste0("you have logged ", date_now$date[1], " to migraine.csv"))` will return a message to the user that the event has been logged. This is what will be displayed in the div with ID "result" in the HTML.
+
+2. The `GET /download` function is to download the data. It will return the dataframe as a CSV file when you go to `http://localhost:8000/download`. The `@serializer csv` line tells plumber to serialize the output as a CSV file.
+
+#### OK, Let's Check It Out! Click that `Run API` button for A Test Run!
+![](swagger.png)
+We should see something like this. You can test it via Swagger UI or you can go to the address without `__doc__` to get to the html directly. 
+
+Hurray! It works, locally... now let's see if it works if it's on a different device.
+
+## How To Run It? {#serve}
+1. Transfer `plumber.R` or whatever file you saved to, to your device of choice.
+2. Install packages, of course
+3. Then run the following code
+
+
+``` bash
+Rscript -e "pr <- plumber::plumb('plumber.R'); pr |> pr_run(port=8000,host='0.0.0.0')"
+```
+
+What it does it it'll run the plumber API. And use a different device in the same network, then go to `http://your-local-device-ip:8000/` and you should see something like the following
+
+
+<p align="center">
+  <img src="api.jpeg" alt="image" width="50%" height="auto">
+</p>
+
+Hurray! It works! Now, let's make sure we run it in the background and if rpi restarts, it will re-run the script by using `systemctl`. All of the code below are to be run in `bash`
+
+
+``` bash
+sudo nano /etc/systemd/system/migraine-logger.service
+```
+
+#### Paste this in the migraine-logger.service 
+
+``` bash
+[Unit]
+Description=Migraine Logger Plumber API
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/path/to/your/app
+ExecStart=/usr/bin/Rscript -e "pr <- plumber::plumb('plumber.R'); pr |> pr_run(port=8000, host='0.0.0.0')"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+- Change `/path/to/your/app` to the directory where your `plumber.R` file is located.
+
+#### Enable, Start, Check Status
+
+``` bash
+sudo systemctl enable migraine-logger.service
+sudo systemctl start migraine-logger.service
+sudo systemctl status migraine-logger.service
+```
+![](systemctl.png)
+Hurray !!! 
+
+## One Click On iOS? {#hack}
+Use your browser on iOS to go to your device's IP and port e.g. `http://192.168.1.11:8000` , then click on share and create shortcut homescreen, like so 
+
+<p align="center">
+  <img src="link.jpeg" alt="image" width="50%" height="auto">
+</p>
+
+Then you can have a shortcut on your iOS device that will open the app and click the button for you!
+
+
+## Opportunities For Improvement {#opportunity}
+- This only works if you're on the local network, could potentially expand this to digital ocean droplet, especially if we add more features (e.g., post old log if we had forgotten to record one, show 10 latest data, show barometric data etc.)
+- need to learn more node.js/javascript, really enjoyed using Positron and `Code Runner` to be able to quickly call `node` and run the entire script on console
+- need to learn more about `plumber`, e.g. how to deploy it to digital ocean
+- a python part we could translate to is FastAPI, need to learn that as well, but implementation & code structure should be quite similar
+
+
+## Lessons Learnt {#lessons}
+- Learnt some simple GET/POST plumber API
+- Learnt some simple JavaScript, found this has major potential for future projects. 
+- Learnt `systemctl`
+
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
