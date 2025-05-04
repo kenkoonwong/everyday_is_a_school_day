@@ -1,0 +1,344 @@
+---
+title: Simulating A Simple Response Adaptive Randomization - I Have To See It To Believe
+  It
+author: Ken Koon Wong
+date: '2025-05-04'
+slug: rar
+categories: 
+- r
+- R
+- RAR
+- response adaptive randomization
+- simulation
+- randomization
+tags: 
+- r
+- R
+- RAR
+- response adaptive randomization
+- simulation
+- randomization
+excerpt: In my simulations of Response Adaptive Randomization, I discovered it performs comparably to fixed 50-50 allocation in identifying treatment effects. The adaptive approach does appear to work! However, with only 10 trials, I've merely scratched the surface. Important limitations exist - temporal bias risks, statistical inefficiency, and complex multiplicity adjustments in Bayesian frameworks. 
+---
+
+> In my simulations of Response Adaptive Randomization, I discovered it performs comparably to fixed 50-50 allocation in identifying treatment effects. The adaptive approach does appear to work! However, with only 10 trials, I've merely scratched the surface. Important limitations exist - temporal bias risks, statistical inefficiency, and complex multiplicity adjustments in Bayesian frameworks. 
+
+![](dice.jpg)
+
+## Objectives
+- [What Is Response Adaptive Randomization?](#what)
+  - [Adaptive Formula for Response Adaptive Randomization](#formulae)
+- [Simulation Plan](#plan)
+  - [Adaptive vs 50-50 Allocation](#adapt)
+- [Code](#code)
+- [Interpretation](#interpretation)
+- [Limitations](#limit)
+- [Opportunity for Improvement](#opportunity)
+- [Lessons Learnt](#lessons)
+
+## What Is Response Adaptive Randomization? {#what}
+Response-Adaptive Randomization (RAR) is a technique used in clinical trials where the allocation of patients to different treatment arms changes based on interim results collected during the trial. Unlike traditional fixed randomization where treatment allocation ratios remain constant throughout the study, RAR adjusts the probability of assignment to treatment groups as data accumulates, typically to assign more patients to treatments that appear to be performing better. This approach is designed to achieve two main goals: to maximize the information gained about superior treatments while minimizing the number of patients exposed to inferior treatments during the trial itself.
+
+The primary motivation for using RAR is ethical - it aims to treat more trial participants effectively while still gathering sufficient data for scientific conclusions. It's particularly considered in trials involving serious conditions with high mortality rates or in multi-arm trials where several experimental treatments are being compared. RAR has received considerable theoretical attention since the 1930s but remains controversial in practice, with proponents citing its potential ethical advantages while critics point to concerns about statistical validity, potential bias from temporal trends, and increased complexity in trial design and analysis.
+
+[REMAP-CAP](https://www.remapcap.org/) was the first study that I came across that introduced me to this design and I found the theory quite intriguing and interesting! It does appear too good to be true but for me, I cannot get the intuition behind how the adaptive randomization be able to identify it. Fortunately, there is another way we can convince ourselves that this works, and that is to simulate it for ourselves, Bayesian style!  
+
+### Adaptive Formula for Response Adaptive Randomization {#formulae}
+#### Thall and Wathen approach 
+This is a commonly used formula that adjusts randomization probabilities based on posterior probabilities. For a two-arm trial, the probability of assigning a patient to treatment 1 is:
+
+\begin{gather}
+π₁,ᵢ = \frac{[P(p₁ > p₀|data)]^c}{[P(p₁ > p₀|data)]^c + [1-P(p₁ > p₀|data)]^c}
+\end{gather}
+
+Where P(p₁ > p₀|data) is the posterior probability that treatment 1 is better than treatment 0, and c is a tuning parameter that controls adaptation speed. When c=0, this reduces to equal randomization; when c=1, it becomes Thompson Sampling.
+
+There may be other approaches to RAR, but this is the one that makes sense and easy to implement. [Dive deeper](https://pmc.ncbi.nlm.nih.gov/articles/PMC2030491/)
+
+## Simulation Plan {#plan}
+Hopefully simulating this multiple times might give me a better idea of how it will work in practice. How do we do that?
+
+<h4>Adaptive vs 50-50 Allocation
+<a href="#adaptive"><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 0h24v24H0z" fill="currentColor"></path>
+      <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"></path>
+    </svg></a></h4>
+
+1. Set up a world where we have the entire population and we know how they respond with and without treatment. 
+2. We're going to set treatment effect as `-1.09`, which means the treatment is better at reducing some proportion of event than the control. The formula would be `log odds = b0 + b1 * treatment`, where `b0` is 0, and `b1` is our treatment effect.
+3. We will then write a code to simulate both `Response Adaptive Randomization` and `50-50 allocation`, with a 50 sets. Each set will then have 4 sequential analyses and sampling. The first analysis will have 50 patients with random allocation with 50%. For subsequent interim analyses, response adaptive randomization group will depend on the response, whereas 50-50 allocation group will remain as 50%. For adatpive randomization, we will use Thall and Wathen approach with `c` between `0` and `0.5`. We will use Thall and Warten's formula for updating the `c` with `n / (2*N)`, where `n` is the number of patients sampled thus far plus the ones will be sampled this in interim trial, and `N` is the maximum number of patients in the trial. As you can see, when total of 200 patients sampled, c will be `0.5` at the last interim analysis.
+4. Each trial for both groups is set with the same seed to ensure reproducibility.
+5. After each trial, we extract the coefficient of interest (in our case beta1), and also assess what is the probability of beta1 being less than 0, which means the treatment is helpful at reducing whatever outcome we want to reduce.
+
+#### Questions I Have For Myself
+1. What is the difference between `Response Adaptive Randomization` and `50-50 allocation` in terms of treatment effect estimates? Will RAR have the same accuracy at identifying treatment effect? Will RAR reach identify treatment effect faster than 50-50 allocation?
+2. If there is no effect, will RAR be able to tease that out to? And what would that look like? 
+
+
+## Code {#code}
+```{r, eval=F}
+library(tidyverse)
+library(cmdstanr)
+library(glue)
+
+## comparing 50-50 allocation vs Adaptive Randomization
+method_list <- c("50_50","adaptive")
+seeds <- sample(1:100000, size = 10, replace = F)
+
+
+## set up empty dataframe
+result <- tibble(
+  b0 = numeric(),
+  b0_lower = numeric(),
+  b0_upper = numeric(),
+  b1 = numeric(),
+  b1_lower = numeric(),
+  b1_upper = numeric(),
+  prob = numeric(),
+  treatment_num = numeric(),
+  num_sample = numeric(),
+  treatment_num_cum = numeric(),
+  num = numeric(),
+  method = character(),
+  seed = numeric()
+)
+
+for (seed in seeds) {
+for (method in method_list){
+treatment_effect <- -1.09
+
+### Set Up Entire Population, knowing both effects of placebo and treatment of each patient
+set.seed(seed)
+N <- 100000
+x0 <- replicate(N, 0)
+y0 <- rbinom(N, 1, plogis(treatment_effect*x0))
+x1 <- replicate(N,1)
+y1 <- rbinom(N, 1, plogis(treatment_effect*x1))
+df <- tibble(y0,y1) |>
+  mutate(id = row_number())
+
+
+### Max sample
+max_n <- 200
+
+### How many sampling trials
+n <- 50
+sample_number <- max_n / n
+b0 = b0_lower = b0_upper = b1 = b1_lower = b1_upper = prob_vec = treatment_num = num_vec = vector(mode = "numeric", length = sample_number)
+x_vec <- c()
+
+### Changing c parameter
+n_sum <- 0
+c_param <- function(x) {
+  value <- x / (2*max_n)
+  return(value)
+}
+
+for (i in 0:sample_number) {
+  ## Set initial parameters and don't log it
+  if (i == 0) {
+    b0mu <- 0
+    b0sd <- 10
+    b1mu <- 0
+    b1sd <- 2.5
+    diff <- 0.5
+    x <- rbinom(n, 1, 0.5)
+    num_vec[i+1] <- n
+    n_sum <- n
+  } else {
+  ## Update prior
+b0mu <- fit$summary("beta0")[['median']]
+b0sd <- fit$summary("beta0")[['sd']]
+b1mu <- fit$summary("beta1")[['median']]
+b1sd <- fit$summary("beta1")[['sd']]
+b0[i] <- b0mu
+b0_lower[i] <- fit$summary("beta0")[["q5"]]
+b0_upper[i] <- fit$summary("beta0")[["q95"]]
+b1[i] <- b1mu
+b1_lower[i] <- b1_lower_i
+b1_upper[i] <- b1_upper_i
+n_sum <- n_sum + n
+
+
+## Assigment of sampling proportion; 50% allocation at all times vs Adaptive
+if (method == "50_50") {
+  diff <- 0.5
+  } else {
+    
+    prob <- beta1 |>
+      mutate(treatment_benefit = ifelse(beta1 < 0, 1, 0)) |>
+      summarize(prop = mean(treatment_benefit)) |>
+      pull()
+    
+    c <- c_param(n_sum)
+    # diff <- min(max(prob, 0.1), 0.9)
+    diff <- prob^c / (prob^c + (1-prob)^c)
+  }
+
+prob_vec[i] <- diff
+treatment_num[i] = sum(x)
+
+## Each Sampling is 50 patients
+num_vec[i+1] <- n
+x <- rbinom(n, 1, diff)
+}
+  
+
+## Sampling from population
+df_list <- df |>
+  slice_sample(n = n) |>
+  bind_cols(x=x) |>
+  mutate(y = case_when(
+    x == 1 ~ y1,
+    x == 0 ~ y0
+  ))
+
+## Bayesian Model
+
+## main model
+stan_model <- glue("
+data {{
+  int<lower=0> N;  
+  array[N] int x;  
+  array[N] int y;  
+}}
+parameters {{
+  real beta0;  
+  real beta1;  
+}}
+model {{
+  beta0 ~ normal({b0mu},{b0sd});
+  beta1 ~ normal({b1mu},{b1sd});
+  y ~ bernoulli_logit(beta0 + beta1*to_vector(x));
+}}
+")
+  
+## compile model
+mod <- write_stan_file(stan_model)
+model <- cmdstan_model(mod)
+fit <- model$sample(
+  data = list(N=nrow(df_list), x=df_list$x, y=df_list$y),
+  chains = 4, 
+  iter_sampling = 2000,
+  iter_warmup = 1000,
+  seed = 1,
+  parallel_chains = 4
+)
+
+## Remove patients who are already sampled from the population
+sample <- df_list |> pull(id)
+df <- df |> filter(!id %in% sample)
+x_vec <- c(x_vec,x)
+print(i)
+
+## Extract MCMC
+mcmc <- as.data.frame(fit$draws(inc_warmup = F))
+
+## Assess probability that treatment effect is < 0 
+beta1 <- mcmc |>
+  select(contains("beta1")) |>
+  pivot_longer(cols = everything(), names_to = "column", values_to = "beta1") 
+
+b1_lower_i <- beta1 |>
+  summarize(lower = quantile(beta1, 0.025)) |>
+  pull(lower)
+
+b1_upper_i <- beta1 |>
+  summarize(upper = quantile(beta1, 0.975)) |>
+  pull(upper)
+
+
+}
+
+
+## log results
+result <- result |>
+  bind_rows(tibble(b0=b0,b0_lower=b0_lower,b0_upper=b0_upper,b1=b1,b1_lower=b1_lower,b1_upper=b1_upper,prob=prob_vec,treatment_num=treatment_num, num_sample=num_vec[1:(length(num_vec)-1)]) |> 
+  mutate(treatment_num_cum = cumsum(treatment_num),
+         num = cumsum(num_sample),
+         method = method,
+         seed = seed) |>
+  slice_head(n=30))
+
+
+}
+}
+
+
+```
+
+
+## Interpretation {#interpretation}
+#### Visualization
+```{r,eval=F}
+## Visualize the result
+result |>
+  ggplot(aes(x=num,y=b1)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin=b1_lower,ymax=b1_upper), alpha=0.5) +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = treatment_effect, color = "blue") +
+  geom_label(aes(x=num,y=b1,label=treatment_num_cum), size=3) +
+  ggtitle("Reponse Adaptive Randomization vs 50-50 Fixed Randomization", subtitle = "Blue line = True value, Black line = No different between treatment & placebo, Numbers labeled = Number of treatment") +
+  xlab("Patients") +
+  theme_bw() +
+  xlim(40,210) +
+  facet_grid(method~seed)
+```
+
+![](simulation_plot.png)
+The above plot shows the beta1 coefficient parameter from the posterior distribution. The 10 columns are the seeds for each set of trial. The row represents the method of allocation, either 50-50 or adaptive randomization. The blue line is the true treatment effect, which is -1.09. The grey line is when there is no effect (0), and the shaded area is the 95% credible interval. Simple heuristic is that if the grey area goes below the black line, it then means there is 95% probability that there is a treatment effect. Now let's see if we can answer the questions we had.
+
+#### Will RAR need less patients to show a positive treatment effect?
+Does not seem like it like, both 50-50 and RAR seem to have similar number of patients to show a positive treatment effect.
+
+#### Will RAR have the same accuracy at identifying treatment effect?
+Yes. The patterns on both methods appear to be quite similar.
+
+#### If there is no effect, will RAR be able to tease that out? And what would that look like?
+![](simulation_null.png)
+Maybe? both 50-50 and adpative randomization seem to be able to identify that there is no treatment effect. However, the 50-50 allocation seems to be more stable than the adaptive randomization. This is only from 10 trials, hard to say. We also didn't set criteria for stopping for futility. 
+
+On a side note, notice how with seed `26561` and `87907`, we will falsely conclude that there is a treatment effect when there is none. 
+
+## Limitations {#limit}
+According to [Resist the Temptation of Response-Adaptive Randomization](https://academic.oup.com/cid/article/71/11/3002/5813456), Response-Adaptive Randomization (RAR) causes many problems, including:
+1. Bias from temporal trends in clinical trials when patients enrolled at different times face systematically different conditions.
+2. Inefficiency in treatment effect estimation that often requires larger sample sizes to maintain statistical power.
+3. Volatility in sample-size distributions that can paradoxically assign more patients to inferior treatments due to random variation. 
+4. Difficulty of validly analyzing results when sample sizes themselves contain information about treatment efficacy.
+5. The potential for selection bias when researchers become unintentionally unblinded to interim results as allocation probabilities shift.
+
+##### What About Multiplicity Adjustment and Type 1 Error?
+Bayesian adaptive designs face a practical dilemma regarding multiplicity adjustment. While Bayesian inference theoretically doesn't require corrections for multiple looks at data, regulatory requirements typically demand Type I error control for confirmation trials regardless of statistical approach. Case studies show that unadjusted interim analyses with early efficacy stopping inflate Type I error rates, while futility-only stopping decreases Type I error but reduces power. For researchers implementing Bayesian adaptive designs with early efficacy stopping, adjustments to boundaries become necessary as analyses increase, creating tension between Bayesian philosophy and regulatory demands, especially in trials aiming to change clinical practice.
+
+Read more: [Do we need to adjust for interim analyses in a Bayesian adaptive trial design?](https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-020-01042-7)
+
+## Opportunity for Improvement {#opportunity}
+- We only did 10 trials total, which is not enough to draw concrete conclusions.
+- Cauchy distribution for logistic regression coefficient prior [read more](https://statmodeling.stat.columbia.edu/2015/11/01/cauchy-priors-for-logistic-regression-coefficients/)
+- Set ROPE (Region of Practical Equivalence) for the treatment effect, and see if we can get a better idea of how many patients we need to sample before we can conclude that there is no treatment effect.
+
+I had sent my friend Alec Wong the script earlier on to proof-read. Here are the comments for me to improve in for future reference. 
+
+- Extract functionality into dedicated functions, ideally small, concise, and highly descriptive of what it does. Write them to avoid global variables as much as possible, and instead be explicit about what variables the function depends on, and pass them in.
+- A lot of lines that are independent of the "methods" loop, but nevertheless show up inside the loop. Anything that does not depend on the loop should not belong in the loop. You modify the df of simulated data during the loop, yes, but that needs not be the case, you could modify to a new variable instead of overwriting df.
+- The "method" loop is actually quite small and doesn't do very much. There appears little reason to write the script so that everything is run twice.
+- You re-use n many times in this script, making it difficult to reason about what the value of n is at any given time.  If you follow the advice in (1), you can re-use n inside functions without ambiguity because they are scoped to the function.
+
+Thanks Alec! I'll work on these! 
+
+## Lessons Learnt {#lessons}
+- Refreshed on our bayesian statistics and Stan code
+- Learnt about RAR, and what it looks like compared to 50-50 allocation
+- Literature search on the question on multiplicity and bayesian statistics 
+- Cauchy distribution for logistic regression coefficient prior [read more](https://statmodeling.stat.columbia.edu/2015/11/01/cauchy-priors-for-logistic-regression-coefficients/)
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
+
