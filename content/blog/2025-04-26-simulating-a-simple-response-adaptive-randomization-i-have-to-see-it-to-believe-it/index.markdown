@@ -298,7 +298,7 @@ Yes. The patterns on both methods appear to be quite similar.
 
 #### If there is no effect, will RAR be able to tease that out? And what would that look like?
 ![](simulation_null.png)
-Maybe? both 50-50 and adpative randomization seem to be able to identify that there is no treatment effect. However, the 50-50 allocation seems to be more stable than the adaptive randomization. This is only from 10 trials, hard to say. We also didn't set criteria for stopping for futility. 
+Maybe? both 50-50 and adpative randomization seem to be able to identify that there is no treatment effect. This is only from 10 trials, hard to say. We also didn't set criteria for stopping for futility.  
 
 On a side note, notice how with seed `26561` and `87907`, we will falsely conclude that there is a treatment effect when there is none. 
 
@@ -328,6 +328,12 @@ I had sent my friend Alec Wong the script earlier on to proof-read. Here are the
 - You re-use n many times in this script, making it difficult to reason about what the value of n is at any given time.  If you follow the advice in (1), you can re-use n inside functions without ambiguity because they are scoped to the function.
 
 Thanks Alec! I'll work on these! 
+
+#### Addendum:
+2025-05-04 22:41:17.565832 
+Gave Cauchy distribution a try for our initial `beta` prior. This is the result. 
+![](simulation_cauchy.png)
+
 
 ## Lessons Learnt {#lessons}
 - Refreshed on our bayesian statistics and Stan code
