@@ -214,6 +214,8 @@ Since we know the derivative of the log-likelihood function, let's create a grad
 
 ```{r}
 # Custom gradient descent function for logistic regression
+grad_beta0_vec <- grad_beta1_vec <- c()
+
 logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100000, tol = 1e-6) {
   # Initialize parameters
   beta0 <- 0
@@ -230,6 +232,10 @@ logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100
     # Calculate gradients (derivatives of log-likelihood)
     grad_beta0 <- sum(y - p)
     grad_beta1 <- sum((y - p) * x)
+    
+    # records grad for visualization
+    grad_beta0_vec[i] <<- grad_beta0
+    grad_beta1_vec[i] <<- grad_beta1
     
     # Store current parameters
     history[i, ] <- c(beta0, beta1)
@@ -248,6 +254,7 @@ logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100
     # Update parameters
     beta0 <- beta0_new
     beta1 <- beta1_new
+    
   }
   
   # Calculate final log-likelihood
@@ -280,7 +287,41 @@ cat(paste0("Final parameter estimates:\n",
              "Final log-likelihood: ", round(result_custom$log_likelihood, 4)))
 ```
 
-Not too shabby! Alternatively you can just use likelihood function and `optim` to find the coefficients like so. 
+Not too shabby! Let's visualize our coefficients
+
+```{r,warning=F,message=F,echo=F}
+library(tidyverse)
+
+beta <- result_custom$history |> data.frame()
+colnames(beta) <- c("beta0", "beta1")
+
+beta |>
+  mutate(iteration = row_number()) |>
+  bind_rows(tibble(iteration=0,beta0=0,beta1=0)) |>
+  pivot_longer(cols = c(beta0, beta1), names_to = "beta", values_to = "value") |>
+  ggplot(aes(x=iteration, y=value, color=beta)) +
+  geom_point(alpha=0.5) +
+  theme_bw()
+
+```
+
+Let's visualize our gradients, our derivatives with respect to beta0 and beta1
+```{r, echo=F}
+tibble(
+  iteration = 1:length(grad_beta0_vec),
+  grad_beta0 = grad_beta0_vec,
+  grad_beta1 = grad_beta1_vec
+) |>
+  pivot_longer(cols = c(grad_beta0, grad_beta1), names_to = "beta", values_to = "value") |>
+  ggplot(aes(x=iteration, y=value, color=beta)) +
+  geom_point(alpha=0.5) +
+  geom_line(alpha=0.5) +
+  theme_bw()
+```
+
+This is great, you can see that the first few iterations, there were wide gradients, but then it quickly converges to a small gradient. 
+
+Alternatively you can just use likelihood function and `optim` to find the coefficients like so. 
 
 ```{r}
 n <- 1000
@@ -452,6 +493,57 @@ cat(paste0("Standard errors:\n",
              "Beta1: ", round(se[2], 4), "\n"
 ))
 ```
+
+Let's visualize using our `logistic_gradient_descent` function
+
+```{r,echo=F}
+grad_beta0_vec <- grad_beta1_vec <- c()
+result_separation <- logistic_gradient_descent(x,y)
+
+beta <- result_separation$history |> data.frame()
+colnames(beta) <- c("beta0", "beta1")
+
+beta |>
+  mutate(iteration = row_number()) |>
+  bind_rows(tibble(iteration=0,beta0=0,beta1=0)) |>
+  pivot_longer(cols = c(beta0, beta1), names_to = "beta", values_to = "value") |>
+  arrange(iteration) |>
+  head(400) |>
+  ggplot(aes(x=iteration, y=value, color=beta)) +
+  geom_point(alpha=0.5) +
+  theme_bw()
+
+```
+
+Very interesting. The plot shows non-convergence even after 200 iters. Let's see what it looks like after max iteration of 100000
+
+```{r,echo=F}
+beta |>
+  mutate(iteration = row_number()) |>
+  bind_rows(tibble(iteration=0,beta0=0,beta1=0)) |>
+  pivot_longer(cols = c(beta0, beta1), names_to = "beta", values_to = "value") |>
+  arrange(iteration) |>
+  ggplot(aes(x=iteration, y=value, color=beta)) +
+  geom_point(alpha=0.5) +
+  theme_bw()
+```
+
+Let's visualize our gradients of the first 200 iters
+```{r,echo=F}
+tibble(
+  iteration = 1:length(grad_beta0_vec),
+  grad_beta0 = grad_beta0_vec,
+  grad_beta1 = grad_beta1_vec
+) |>
+  pivot_longer(cols = c(grad_beta0, grad_beta1), names_to = "beta", values_to = "value") |>
+  head(400) |>
+  ggplot(aes(x=iteration, y=value, color=beta)) +
+  geom_point(alpha=0.5) +
+  geom_line(alpha=0.5) +
+  theme_bw()
+```
+
+Looks quite odd indeed!
 
 Let's compare it with `glm` again
 

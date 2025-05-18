@@ -104,15 +104,17 @@ summary(model)
 ## glm(formula = y ~ x, family = "binomial")
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)
-## (Intercept)   0.3970     0.4343   0.914    0.361
-## x             1.1060     0.7822   1.414    0.157
+##             Estimate Std. Error z value Pr(>|z|)  
+## (Intercept) -0.09489    0.41616  -0.228   0.8196  
+## x            1.82823    0.80311   2.276   0.0228 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 118.59  on 99  degrees of freedom
-## Residual deviance: 116.55  on 98  degrees of freedom
-## AIC: 120.55
+##     Null deviance: 125.37  on 99  degrees of freedom
+## Residual deviance: 119.88  on 98  degrees of freedom
+## AIC: 123.88
 ## 
 ## Number of Fisher Scoring iterations: 4
 ```
@@ -255,6 +257,8 @@ Since we know the derivative of the log-likelihood function, let's create a grad
 
 ``` r
 # Custom gradient descent function for logistic regression
+grad_beta0_vec <- grad_beta1_vec <- c()
+
 logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100000, tol = 1e-6) {
   # Initialize parameters
   beta0 <- 0
@@ -271,6 +275,10 @@ logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100
     # Calculate gradients (derivatives of log-likelihood)
     grad_beta0 <- sum(y - p)
     grad_beta1 <- sum((y - p) * x)
+    
+    # records grad for visualization
+    grad_beta0_vec[i] <<- grad_beta0
+    grad_beta1_vec[i] <<- grad_beta1
     
     # Store current parameters
     history[i, ] <- c(beta0, beta1)
@@ -289,6 +297,7 @@ logistic_gradient_descent <- function(x, y, learning_rate = 0.01, max_iter = 100
     # Update parameters
     beta0 <- beta0_new
     beta1 <- beta1_new
+    
   }
   
   # Calculate final log-likelihood
@@ -323,13 +332,22 @@ cat(paste0("Final parameter estimates:\n",
 
 ```
 ## Final parameter estimates:
-## Beta0: 0.4953 (True: 0.5)
-## Beta1: 2.0957 (True: 2)
-## Converged in 121 iterations
-## Final log-likelihood: -464.5161
+## Beta0: 0.6373 (True: 0.5)
+## Beta1: 1.6966 (True: 2)
+## Converged in 110 iterations
+## Final log-likelihood: -475.2707
 ```
 
-Not too shabby! Alternatively you can just use likelihood function and `optim` to find the coefficients like so. 
+Not too shabby! Let's visualize our coefficients
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+
+Let's visualize our gradients, our derivatives with respect to beta0 and beta1
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+
+This is great, you can see that the first few iterations, there were wide gradients, but then it quickly converges to a small gradient. 
+
+Alternatively you can just use likelihood function and `optim` to find the coefficients like so. 
 
 
 ``` r
@@ -369,14 +387,14 @@ gradient <- function(param, x, y) {
 
 ```
 ## $par
-## [1] 0.5332625 2.1409545
+## [1] 0.5692477 1.7972978
 ## 
 ## $value
-## [1] 447.1439
+## [1] 482.6135
 ## 
 ## $counts
 ## function gradient 
-##       24       11 
+##       37        9 
 ## 
 ## $convergence
 ## [1] 0
@@ -386,8 +404,8 @@ gradient <- function(param, x, y) {
 ## 
 ## $hessian
 ##           [,1]     [,2]
-## [1,] 140.56298 56.77555
-## [2,]  56.77555 33.25137
+## [1,] 154.60997 62.55555
+## [2,]  62.55555 37.19229
 ```
 
 OK, something we need to note here is that the `optim` function minimizes the function, while we want to maximize the log-likelihood function. So we need to negate the log-likelihood function and the gradient, hence you see the return of `-` in both the logistic regression function and gradient. This means that the original Hessian matrix should be multiplied by `-`. 
@@ -399,8 +417,8 @@ OK, something we need to note here is that the `optim` function minimizes the fu
 
 ```
 ##            [,1]      [,2]
-## [1,] -140.56298 -56.77555
-## [2,]  -56.77555 -33.25137
+## [1,] -154.60997 -62.55555
+## [2,]  -62.55555 -37.19229
 ```
 
 Now, because according to [Fisher Information](https://en.wikipedia.org/wiki/Fisher_information): 
@@ -497,7 +515,7 @@ sqrt(diag(solve(result$hessian)))
 ```
 
 ```
-## [1] 0.1514097 0.3113037
+## [1] 0.1422853 0.2901030
 ```
 
 Let's see if it's close to `glm`
@@ -509,7 +527,7 @@ summary(glm(y~x, family="binomial"))$coefficients[,2]
 
 ```
 ## (Intercept)           x 
-##   0.1514081   0.3112891
+##   0.1422849   0.2901005
 ```
 
 there you go !!! 
@@ -584,6 +602,19 @@ cat(paste0("Standard errors:\n",
 ## Beta0: 37962.5062
 ## Beta1: 53677.2729
 ```
+
+Let's visualize using our `logistic_gradient_descent` function
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+
+Very interesting. The plot shows non-convergence even after 200 iters. Let's see what it looks like after max iteration of 100000
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+
+Let's visualize our gradients of the first 200 iters
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+
+Looks quite odd indeed!
 
 Let's compare it with `glm` again
 
