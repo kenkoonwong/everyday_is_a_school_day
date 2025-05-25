@@ -1,0 +1,378 @@
+---
+title: Taylor Series Approximation To Newton Raphson Algorithm - A note for myself of the proof
+author: Ken Koon Wong
+date: '2025-05-25'
+slug: newton-raphson
+categories: 
+- r
+- R
+- taylor series
+- newton raphson algorithm
+- fisher information matrix
+- hessian
+- optimization
+tags: 
+- r
+- R
+- taylor series
+- newton raphson algorithm
+- fisher information matrix
+- hessian
+- optimization
+excerpt: "We learnt to derive the Newton-Raphson algorithm from Taylor series approximation and implements it for logistic regression in R. We'll show how the second-order Taylor expansion leads to the Newton-Raphson update formula, then compare individual parameter updates versus using the full Fisher Information matrix for faster convergence"
+---
+
+> We learnt to derive the Newton-Raphson algorithm from Taylor series approximation and implements it for logistic regression in R. We'll show how the second-order Taylor expansion leads to the Newton-Raphson update formula, then compare individual parameter updates versus using the full Fisher Information matrix for faster convergence.
+
+![](math.jpg)
+
+## Objectives
+- [The Proof From Taylor Series Approximation To Newton Raphson Algorithm](#proof)
+- [Let's Code](#code)
+- [Compare with glm](#glm)
+- [Lessons Learnt](#lessons)
+
+## The Proof From Taylor Series Approximation To Newton Raphson Algorithm {#proof}
+#### What is Taylor Series?
+A Taylor series approximation is a mathematical technique that represents a smooth function as an infinite sum of terms calculated from the function's derivatives at a single point. Named after mathematician Brook Taylor, this method expresses a function f(x) around a point 'a' as `f(a) + f'(a)(x-a) + f''(a)(x-a)²/2! + f'''(a)(x-a)³/3! + ...`, where each term involves higher-order derivatives and powers of (x-a). The beauty of Taylor series lies in their ability to approximate complex functions using simple polynomial terms - the more terms you include, the more accurate your approximation becomes within a certain radius of convergence around the expansion point. This makes Taylor series invaluable in calculus, physics, and engineering for solving differential equations, analyzing oscillations, and performing numerical computations where exact solutions are difficult to obtain.
+
+#### What is Newton Raphson Algorithm?
+The Newton-Raphson algorithm is an iterative numerical method used to find successively better approximations of the roots (or zeroes) of a real-valued function. It is based on the idea that if you have a function f(x) and its derivative f'(x), you can use the tangent line at a point x₀ to find a better approximation of the root. The formula for the next approximation x₁ is given by `x₁ = x₀ - f(x₀)/f'(x₀)`. By repeating this process, you can converge to the actual root of the function. The method is particularly effective for functions that are continuous and differentiable, and it converges rapidly when the initial guess is close to the true root.
+
+#### How Do We Get From Taylor Series to Newton Raphson - Proof
+Theorem 1: Taylor Theorem
+
+$$
+f(x+h) = f(x) + f'(x)h + \frac{1}{2}f''(x)h^2 + \frac{1}{3!}f'''(x)h^3 + \ldots + \frac{1}{k!}f^{(k)}(x)h^k + \frac{1}{(k+1)!}f^{(k+1)}(w)h^{k+1}
+$$
+It can be shown that as h goes to 0 the higher order terms in our Taylor theorem go to 0 much
+faster than h goes to 0. 
+
+If we were to use the second-Order Taylor Approximation
+We have:
+$$
+f(x + h) ≈ f(x) + f'(x)h + \frac{1}{2}f''(x)h^2
+$$
+So we have a `f(x)` and we want to add a value `h` to `x`. The Taylor series expansion gives us an approximation of the `function f(x + h)` 
+
+Let's call this approximation `g(h)`
+
+$$
+g(h) = f(x) + f'(x)h + \frac{1}{2}f''(x)h^2
+$$
+We want to find the value of `h` that maximizes `g(h)`. That means we can take the derivative of g(h) with respect to h and set it equal to 0.
+
+$$
+\begin{gather}
+\frac{\partial}{\partial h} g(h) = 0 + f'(x) + f''(x)h \\\
+0 = f'(x) + f''(x)h \\\
+-f'(x) = f''(x)h \\\
+h = -\frac{f'(x)}{f''(x)}
+\end{gather}
+$$
+This gives us the value of `h` that maximizes `g(h)`.
+
+If we want to estimate the new value of `x`, we can add `h` to `x`:
+$$
+x_{new} = x_{old} + h \\\ = x_{old} - \frac{f'(x_{old})}{f''(x_{old})}
+$$
+Et viola! From Taylor series to Newton Raphson Alogorithm! ❤️
+
+[Dive deeper](https://sites.stat.washington.edu/adobra/classes/536/Files/week1/newtonfull.pdf)
+
+Now, let's continue our logistic regression journey by implementing the Newton-Raphson algorithm to estimate coefficients using MLE.
+
+[Previously](https://www.kenkoonwong.com/blog/mle/), we have established the likelihood function for logistic regression and derived the log-likelihood function for beta0 (intercept) and beta1 (coefficient for 1 predictor). 
+
+$$
+\ln L(\boldsymbol{\beta_0, \beta_1}) = \sum_{i=1}^{n} \left[ y_i \ln(p_i) + (1-y_i) \ln(1-p_i) \right] 
+$$
+For beta0, to find the derivate of the log-likelihood function, we need to take the first derivative of the log-likelihood function with respect to beta0, like so.
+
+$$
+\frac{\partial \ln L(\boldsymbol{\beta_0, \beta_1})}{\partial \beta_0} = \sum_{i=1}^{n} \left( y_i - p_i \right)
+$$
+For beta1, we need to take the first derivative of the log-likelihood function with respect to beta1, like so.
+$$
+\frac{\partial \ln L(\boldsymbol{\beta_0, \beta_1})}{\partial \beta_1} = \sum_{i=1}^{n} \left( y_i - p_i \right) x_{1i}
+$$
+These will be our `f'(x)`
+
+<br>
+
+The second derivative of the log-likelihood function with respect to beta0 is given by:
+$$
+\frac{\partial^2 \ln L(\boldsymbol{\beta_0, \beta_1})}{\partial \beta_0^2} = -\sum_{i=1}^{n} p_i (1 - p_i)
+$$
+For beta1, we need to take the second derivative of the log-likelihood function with respect to beta1, like so.
+$$
+\frac{\partial^2 \ln L(\boldsymbol{\beta_0, \beta_1})}{\partial \beta_1^2} = -\sum_{i=1}^{n} p_i (1 - p_i) x_{1i}^2
+$$
+
+These will be our `f''(x)`
+
+<br>
+
+#### Let's put it all together
+We can now use the Newton-Raphson algorithm to estimate the coefficients of the logistic regression model. The algorithm will iteratively update the coefficients until convergence is achieved.
+
+#### Beta0
+$$
+\begin{gather}
+\beta_{new} = \beta_{old} + h \\\ 
+= \beta_{old} - \frac{f'(\beta_{old})}{f''(\beta_{old})} \\\
+= \beta_{old} - (\frac{\sum_{i=1}^{n} \left( y_i - p_i \right)}{-\sum_{i=1}^{n} p_i (1 - p_i)}) \\\
+= \beta_{old} + \frac{\sum_{i=1}^{n} \left( y_i - p_i \right)}{\sum_{i=1}^{n} p_i (1 - p_i)} 
+\end{gather}
+$$
+#### Beta1
+$$
+\begin{gather}
+\beta_{new} = \beta_{old} + h \\\
+= \beta_{old} - \frac{f'(\beta_{old})}{f''(\beta_{old})} \\\
+= \beta_{old} - (\frac{\sum_{i=1}^{n} \left( y_i - p_i \right) x_{1i}}{-\sum_{i=1}^{n} p_i (1 - p_i) x_{1i}^2}) \\\
+= \beta_{old} + \frac{\sum_{i=1}^{n} \left( y_i - p_i \right) x_{1i}}{\sum_{i=1}^{n} p_i (1 - p_i) x_{1i}^2}
+\end{gather}
+$$
+Wow, amazing! We did it! Now, let's put these formulae into code and see how it works.
+
+## Let's Code {#code}
+
+``` r
+library(tidyverse)
+
+set.seed(100)
+n <- 100
+x <- rbinom(n,1,0.5)
+y <- rbinom(n,1,plogis(-2+2*x))
+
+beta <- c(0,0)
+iter <- 100
+history <- matrix(0,nrow = iter, ncol = 2)
+tolerance <- 10^-8
+
+for (i in 1:iter) {
+
+z <- beta[1] + beta[2]*x
+p <- 1 / (1+exp(-z))
+d_b0 <- sum(y-p)
+d_b1 <- sum((y-p)*x)
+d2_b0 <- -sum(p*(1-p))
+d2_b1 <- -sum(p*(1-p)*x^2)
+
+beta_new <- beta - c(d_b0/d2_b0, d_b1/d2_b1)
+history[i,] <- beta_new
+
+if (abs(beta_new[1] - beta[1]) < tolerance && abs(beta_new[2] - beta[2]) < tolerance) {
+  cat(paste0("converged on iter ", i,"\nbeta0: ",beta_new[1],"\nbeta1: ",beta_new[2]))
+  break
+}
+beta <- beta_new
+
+if (i==iter) {
+  cat(paste0("converged on iter ", i,"\nbeta0: ",beta_new[1],"\nbeta1: ",beta_new[2]))
+}
+}
+```
+
+```
+## converged on iter 100
+## beta0: -2.75149081264213
+## beta1: 2.99265005420773
+```
+
+Alright! We have successfully implemented the Newton-Raphson algorithm to estimate the coefficients of the logistic regression model. The algorithm iteratively updates the coefficients until convergence is achieved, and we can see the final estimates of beta0 and beta1. 
+
+It's kind of odd that it took so many more iterations to converge than glm as the max iter set for glm is 25. 
+
+
+``` r
+glm.control
+```
+
+```
+## function (epsilon = 1e-08, maxit = 25, trace = FALSE) 
+## {
+##     if (!is.numeric(epsilon) || epsilon <= 0) 
+##         stop("value of 'epsilon' must be > 0")
+##     if (!is.numeric(maxit) || maxit <= 0) 
+##         stop("maximum number of iterations must be > 0")
+##     list(epsilon = epsilon, maxit = maxit, trace = trace)
+## }
+## <bytecode: 0x10544c4a8>
+## <environment: namespace:stats>
+```
+
+
+## Compare with glm {#glm}
+
+``` r
+(summary(glm(y~x,family = binomial(link = "logit"))))
+```
+
+```
+## 
+## Call:
+## glm(formula = y ~ x, family = binomial(link = "logit"))
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -2.7515     0.5955  -4.621 3.83e-06 ***
+## x             2.9927     0.6601   4.533 5.80e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 123.82  on 99  degrees of freedom
+## Residual deviance:  91.29  on 98  degrees of freedom
+## AIC: 95.29
+## 
+## Number of Fisher Scoring iterations: 5
+```
+
+OK, the point estimates look very close to each other. But why is our iteration so much more than glm? That's because we are not using the full Fisher Information matrix to update our coefficients.
+
+#### Fisher Information Matrix
+[As previously stated](https://www.kenkoonwong.com/blog/mle/#hessian), the Fisher Information matrix is a square matrix that contains the second-order partial derivatives of the log-likelihood function with respect to the parameters. It provides information about the curvature of the log-likelihood function and is used to estimate the variance-covariance matrix of the maximum likelihood estimates. Not only that, using as a whole, further optimizes the convergence of the algorithm.
+
+$$
+\begin{gather}
+I(\boldsymbol{\beta}) = \begin{bmatrix}
+\frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0^2} & \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0 \partial \beta_1} \\\
+\frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1 \partial \beta_0} & \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1^2}
+\end{bmatrix} \\\
+= \begin{bmatrix}
+-\sum_{i=1}^{n} p_i (1 - p_i) & -\sum_{i=1}^{n} p_i (1 - p_i) x_{1i} \\\
+-\sum_{i=1}^{n} p_i (1 - p_i) x_{1i} & -\sum_{i=1}^{n} p_i (1 - p_i) x_{1i}^2
+\end{bmatrix}
+\end{gather}
+$$
+#### Let's put it all together
+We can now use the Fisher Information matrix to update the coefficients of the logistic regression model. The algorithm will iteratively update the coefficients until convergence is achieved. 
+
+Let's expand our previous formulae to include the Fisher Information matrix and score vector (aka gradient of the vectors) like so.
+
+$$
+\beta_{new} = \beta_{old} + h \\\ 
+\begin{bmatrix}
+\beta_{0_\text{new}} \\\
+\beta_{1_\text{new}}
+\end{bmatrix} 
+= \begin{bmatrix}
+\beta_{0_\text{old}} \\\
+\beta_{1_\text{old}}
+\end{bmatrix} - I(\boldsymbol{\beta_{old}})^{-1} \cdot \nabla f(\beta_{old}) \\\
+= \begin{bmatrix}
+\beta_{0_\text{old}} \\\
+\beta_{1_\text{old}}
+\end{bmatrix} - \begin{bmatrix}
+\frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0^2} & \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0 \partial \beta_1} \\\
+\frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1 \partial \beta_0} & \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1^2}
+\end{bmatrix}^{-1} \cdot \begin{bmatrix}
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_0} \\\
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_1}
+\end{bmatrix} 
+$$
+Let's try to make it a bit less messy
+$$
+\text{Let a} = \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0^2} , \text{b} = \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_0 \partial \beta_1} , \text{c} = \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1 \partial \beta_0} , \text{d} = \frac{\partial^2 \ln L(\boldsymbol{\beta})}{\partial \beta_1^2} \\\
+\begin{bmatrix}
+\beta_{0_\text{new}} \\\
+\beta_{1_\text{new}}
+\end{bmatrix} = \begin{bmatrix}
+\beta_{0_\text{old}} \\\
+\beta_{1_\text{old}}
+\end{bmatrix} - \begin{bmatrix}
+a & b \\\
+c & d
+\end{bmatrix}^{-1} \cdot \begin{bmatrix}
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_0} \\\
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_1}
+\end{bmatrix} \\\
+= \begin{bmatrix}
+\beta_{0_\text{old}} \\\
+\beta_{1_\text{old}}
+\end{bmatrix} - \frac{1}{ad - bc} \begin{bmatrix}
+d & -b \\\
+-c & a
+\end{bmatrix} \cdot \begin{bmatrix}
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_0} \\\
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_1}
+\end{bmatrix} \\\
+= \begin{bmatrix}
+\beta_{0_\text{old}} \\\
+\beta_{1_\text{old}}
+\end{bmatrix} - \begin{bmatrix}
+\frac{d}{ad - bc} & \frac{-b}{ad - bc} \\\
+\frac{-c}{ad - bc} & \frac{a}{ad - bc}
+\end{bmatrix} \cdot \begin{bmatrix}
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_0} \\\
+\frac{\partial \ln L(\boldsymbol{\beta})}{\partial \beta_1}
+\end{bmatrix} 
+$$
+As we can see here, we have a matrix multiplication of the inverse of the Fisher Information matrix and the score vector. In our previous simple example, we only included the diagonal individual elements of the Fisher Information matrix. By including the off-diagonal elements, we can achieve a more accurate estimate of the coefficients and probably a faster convergence like in glm. Let's code and see if that's true!
+
+#### Fisher Information Iteration
+
+``` r
+beta <- c(0,0)
+iter <- 25
+history <- matrix(0,nrow = iter, ncol = 2)
+tolerance <- 10^-8
+
+for (i in 1:iter) {
+
+z <- beta[1] + beta[2]*x
+p <- 1 / (1+exp(-z))
+d_b0 <- sum(y-p)
+d_b1 <- sum((y-p)*x)
+score_vec <- c(d_b0, d_b1)
+i_11 <- sum(p*(1-p))
+i_10 <- sum(x*p*(1-p))
+i_01 <- i_10
+i_22 <- sum(x^2*p*(1-p))
+i_mat <- matrix(c(i_11,i_01,i_10,i_22),nrow = 2, ncol = 2)
+i_mat_inv <- solve(i_mat)
+
+beta_new <- beta + i_mat_inv %*% score_vec
+history[i,] <- beta_new
+
+## se
+se_beta0 <- sqrt(diag(i_mat_inv)[1])
+se_beta1 <- sqrt(diag(i_mat_inv)[2])
+
+if (abs(beta_new[1] - beta[1]) < tolerance && abs(beta_new[2] - beta[2]) < tolerance) {
+  cat(paste0("converged on iter ", i,"\nbeta0: ",beta_new[1]," (",se_beta0,") ","\nbeta1: ",beta_new[2]," (",se_beta1,") "))
+  break
+}
+beta <- beta_new
+
+if (i==iter) {
+  cat(paste0("converged on iter ", i,"\nbeta0: ",beta_new[1]," (",se_beta0,") ","\nbeta1: ",beta_new[2]," (",se_beta1,") "))
+}
+}
+```
+
+```
+## converged on iter 7
+## beta0: -2.75153531304195 (0.595491334175413) 
+## beta1: 2.99269736985884 (0.660135410538508)
+```
+
+Wow, not too shabby! Point estimates and SE are very close to glm. Iterations were definitely shorter than the previous example. 
+
+There we have it! It's fascinating to look under the hood how all these works. The Newton-Raphson algorithm is a powerful tool for estimating coefficients in logistic regression, and understanding its connection to Taylor series approximation provides valuable insight into its convergence properties.
+
+## Lessons Learnt {#lessons}
+- Learnt the surface understanding of what Taylor series approximation does.
+- Learnt Newton-Raphson algorithm. Such an elegant formula!
+- The proof of the Newton-Raphson algorithm using Taylor series approximation 
+- How including the Fisher Information matrix can improve convergence, previously I've always thought the coefficients are independent of each other and only the individual diagonal elements are needed. But it turns out the off-diagonal elements are also important for convergence. 
+- learnt the `\(\nabla\)` symbol is called the nabla symbol, which is used to denote the gradient of a function. 
+- learnt `glm.control` and how glm default maxiter is 25 and epsilon (tolerance threshold) is 10^-8.
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)

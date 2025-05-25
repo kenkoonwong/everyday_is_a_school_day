@@ -105,16 +105,16 @@ summary(model)
 ## 
 ## Coefficients:
 ##             Estimate Std. Error z value Pr(>|z|)  
-## (Intercept) -0.09489    0.41616  -0.228   0.8196  
-## x            1.82823    0.80311   2.276   0.0228 *
+## (Intercept)   0.1989     0.4677   0.425   0.6707  
+## x             1.7392     0.8823   1.971   0.0487 *
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 125.37  on 99  degrees of freedom
-## Residual deviance: 119.88  on 98  degrees of freedom
-## AIC: 123.88
+##     Null deviance: 114.61  on 99  degrees of freedom
+## Residual deviance: 110.59  on 98  degrees of freedom
+## AIC: 114.59
 ## 
 ## Number of Fisher Scoring iterations: 4
 ```
@@ -254,6 +254,7 @@ YES !!! WE DID IT !!! It was a really good time to refresh on my calculus. Espec
 
 Since we know the derivative of the log-likelihood function, let's create a gradient descent function to find the coefficients. Let's code it!
 
+#### Code
 
 ``` r
 # Custom gradient descent function for logistic regression
@@ -332,10 +333,10 @@ cat(paste0("Final parameter estimates:\n",
 
 ```
 ## Final parameter estimates:
-## Beta0: 0.6373 (True: 0.5)
-## Beta1: 1.6966 (True: 2)
-## Converged in 110 iterations
-## Final log-likelihood: -475.2707
+## Beta0: 0.4365 (True: 0.5)
+## Beta1: 1.9399 (True: 2)
+## Converged in 115 iterations
+## Final log-likelihood: -485.1456
 ```
 
 Not too shabby! Let's visualize our coefficients
@@ -387,14 +388,14 @@ gradient <- function(param, x, y) {
 
 ```
 ## $par
-## [1] 0.5692477 1.7972978
+## [1] 0.3549094 2.3746947
 ## 
 ## $value
-## [1] 482.6135
+## [1] 458.7256
 ## 
 ## $counts
 ## function gradient 
-##       37        9 
+##       24       11 
 ## 
 ## $convergence
 ## [1] 0
@@ -404,8 +405,8 @@ gradient <- function(param, x, y) {
 ## 
 ## $hessian
 ##           [,1]     [,2]
-## [1,] 154.60997 62.55555
-## [2,]  62.55555 37.19229
+## [1,] 145.81103 58.28458
+## [2,]  58.28458 33.50235
 ```
 
 OK, something we need to note here is that the `optim` function minimizes the function, while we want to maximize the log-likelihood function. So we need to negate the log-likelihood function and the gradient, hence you see the return of `-` in both the logistic regression function and gradient. This means that the original Hessian matrix should be multiplied by `-`. 
@@ -417,8 +418,8 @@ OK, something we need to note here is that the `optim` function minimizes the fu
 
 ```
 ##            [,1]      [,2]
-## [1,] -154.60997 -62.55555
-## [2,]  -62.55555 -37.19229
+## [1,] -145.81103 -58.28458
+## [2,]  -58.28458 -33.50235
 ```
 
 Now, because according to [Fisher Information](https://en.wikipedia.org/wiki/Fisher_information): 
@@ -515,7 +516,7 @@ sqrt(diag(solve(result$hessian)))
 ```
 
 ```
-## [1] 0.1422853 0.2901030
+## [1] 0.1500541 0.3130440
 ```
 
 Let's see if it's close to `glm`
@@ -527,7 +528,7 @@ summary(glm(y~x, family="binomial"))$coefficients[,2]
 
 ```
 ## (Intercept)           x 
-##   0.1422849   0.2901005
+##   0.1500526   0.3130307
 ```
 
 there you go !!! 
@@ -653,7 +654,8 @@ Wow, quite similar results !!! Interesting note to myself, if we use `x <- seq(1
 - If we face complete separation from real data, here are some [possible solutions](https://stats.stackexchange.com/questions/11109/how-to-deal-with-perfect-separation-in-logistic-regression)
 - Striving to be perfect is not a natural thing for the language of the universe
 
-
+#### Addendum:
+[Click here](https://www.kenkoonwong.com/blog/newton-raphson/) to go to the next post on using Fisher information Iteration & how we used the entire information matrix (hessian) to derive Netwon-Raphson method. 
 
 ## Lessons Learnt {#lessons}
 - A complete separation in logistic regression, symptoms are non-convergence, extreme estimates, and large standard errors, very small residual deviance

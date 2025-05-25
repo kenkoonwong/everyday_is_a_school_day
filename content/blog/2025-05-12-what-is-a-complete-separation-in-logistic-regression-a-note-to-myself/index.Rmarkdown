@@ -212,6 +212,7 @@ YES !!! WE DID IT !!! It was a really good time to refresh on my calculus. Espec
 
 Since we know the derivative of the log-likelihood function, let's create a gradient descent function to find the coefficients. Let's code it!
 
+#### Code
 ```{r}
 # Custom gradient descent function for logistic regression
 grad_beta0_vec <- grad_beta1_vec <- c()
@@ -562,7 +563,8 @@ Wow, quite similar results !!! Interesting note to myself, if we use `x <- seq(1
 - If we face complete separation from real data, here are some [possible solutions](https://stats.stackexchange.com/questions/11109/how-to-deal-with-perfect-separation-in-logistic-regression)
 - Striving to be perfect is not a natural thing for the language of the universe
 
-
+#### Addendum:
+[Click here](https://www.kenkoonwong.com/blog/newton-raphson/) to go to the next post on using Fisher information Iteration & how we used the entire information matrix (hessian) to derive Netwon-Raphson method. 
 
 ## Lessons Learnt {#lessons}
 - A complete separation in logistic regression, symptoms are non-convergence, extreme estimates, and large standard errors, very small residual deviance
