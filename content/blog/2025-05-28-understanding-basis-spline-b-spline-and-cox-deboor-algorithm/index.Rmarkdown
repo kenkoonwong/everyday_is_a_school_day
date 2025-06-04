@@ -1,7 +1,7 @@
 ---
 title: Understanding Basis Spline (B-spline) By Working Through Cox-deBoor Algorithm
 author: Ken Koon Wong
-date: '2025-05-28'
+date: '2025-06-03'
 slug: bspline
 categories: 
 - r
