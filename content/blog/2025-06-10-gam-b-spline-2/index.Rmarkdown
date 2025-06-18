@@ -356,7 +356,7 @@ OK. We went through ALL those trouble to find out the equation to find `beta` co
 To find the optimal `lambda`, we can use Generalized Cross Validation (GCV). GCV is a method that estimates the prediction error of a model by minimizing the GCV score. The GCV score is defined as follows:
 
 $$
-\text{GCV} = \frac{|| y - \hat{y} ||^2}{(1 - \text{trace}(H))^2}
+\text{GCV} = \frac{n \times RSS}{(n - \text{trace}(H))^2}
 $$
 
 Where $\hat{y}$ is the predicted value, and $H$ is the hat matrix. The trace of the hat matrix is the sum of the diagonal elements of the hat matrix, which is the number of parameters in the model. The GCV score is a measure of how well the model fits the data, and we want to minimize this score to find the optimal `lambda`.
