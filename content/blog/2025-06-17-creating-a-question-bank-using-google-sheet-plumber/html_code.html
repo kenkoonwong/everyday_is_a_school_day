@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Questions</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ID Questions</h1>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                Loading question...
+            </div>
+
+            <div id="error" class="error hidden">
+                Failed to load question.
+            </div>
+
+            <div id="questionContainer">
+                <!-- Question will be loaded here -->
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="loadNextQuestion()">
+                    Next Question
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "/api";
+        let allQuestions = [];
+        let currentQuestionIndex = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadAllQuestions();
+        });
+
+        async function apiCall(endpoint) {
+            try {
+                console.log("Making API call to:", `${API_BASE}${endpoint}`);
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                console.log("Response status:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error("API call failed:", error);
+                throw error;
+            }
+        }
+
+        async function loadAllQuestions() {
+            showLoading();
+            
+            try {
+                console.log("Fetching all questions from /api/questions/all");
+                const result = await apiCall("/questions/all");
+                console.log("API response:", result);
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    allQuestions = result.data;
+                    currentQuestionIndex = 0;
+                    console.log("Loaded", allQuestions.length, "questions");
+                    showCurrentQuestion();
+                } else {
+                    console.error("API returned error or no data:", result);
+                    showError();
+                }
+                hideLoading();
+            } catch (error) {
+                console.error("Error loading questions:", error);
+                showError();
+                hideLoading();
+            }
+        }
+
+        function showCurrentQuestion() {
+            if (allQuestions.length === 0) {
+                showError();
+                return;
+            }
+            
+            const question = allQuestions[currentQuestionIndex];
+            console.log("Showing question", currentQuestionIndex + 1, "of", allQuestions.length);
+            displayQuestion(question);
+            
+            enableNextButton();
+        }
+
+        function loadNextQuestion() {
+            console.log("loadNextQuestion called. Current index:", currentQuestionIndex, "Total questions:", allQuestions.length);
+            
+            if (allQuestions.length === 0) {
+                console.log("No questions loaded, loading all questions...");
+                loadAllQuestions();
+                return;
+            }
+            
+            currentQuestionIndex = (currentQuestionIndex + 1) % allQuestions.length;
+            console.log("New index:", currentQuestionIndex);
+            
+            if (currentQuestionIndex === 0) {
+                console.log("Completed full cycle, disabling next button");
+                showCurrentQuestion();
+                disableNextButton();
+            } else {
+                console.log("Showing existing question at index", currentQuestionIndex);
+                showCurrentQuestion();
+            }
+        }
+
+        function disableNextButton() {
+            const button = document.querySelector('.controls button');
+            button.disabled = true;
+            button.textContent = 'All Questions Complete!';
+            button.className = 'btn btn-secondary';
+        }
+
+        function enableNextButton() {
+            const button = document.querySelector('.controls button');
+            button.disabled = false;
+            button.textContent = 'Next Question';
+            button.className = 'btn btn-primary';
+        }
+
+        function displayQuestion(question) {
+            const container = document.getElementById("questionContainer");
+            container.innerHTML = "";
+
+            const questionCard = createQuestionCard(question);
+            container.appendChild(questionCard);
+        }
+
+        function createQuestionCard(question) {
+            const card = document.createElement("div");
+            card.className = "question-card";
+            
+            console.log("Creating card for question:", question);
+            
+            let imageHtml = "";
+            if (question.image_url && question.image_url !== "" && question.image_url !== "NA") {
+                console.log("Adding image:", question.image_url);
+                imageHtml = `<div class="question-image"><img src="${question.image_url}" alt="Question image" onerror="this.parentElement.remove()"></div>`;
+            }
+            
+            let referenceHtml = "";
+            if (question.reference && question.reference !== "" && question.reference !== "NA") {
+                console.log("Adding reference:", question.reference);
+                referenceHtml = `<div class="reference-link"><a href="${question.reference}" target="_blank">Reference</a></div>`;
+            }
+            
+            card.innerHTML = `
+                <div class="question-header">
+                    <span class="question-number">Question #${question.id} (${currentQuestionIndex + 1}/${allQuestions.length})</span>
+                    <span class="question-tag">${question.tag}</span>
+                </div>
+                
+                <div class="question-text">${question.question}</div>
+                
+                ${imageHtml}
+                
+                <button class="btn btn-primary" onclick="toggleAnswer(${question.id})">
+                    Show Answer
+                </button>
+                
+                <div id="answer-${question.id}" class="answer-section hidden">
+                    <div class="answer-text">${question.answer}</div>
+                    ${referenceHtml}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function toggleAnswer(questionId) {
+            const answerSection = document.getElementById(`answer-${questionId}`);
+            const button = document.querySelector(`button[onclick="toggleAnswer(${questionId})"]`);
+            
+            if (answerSection.classList.contains("hidden")) {
+                answerSection.classList.remove("hidden");
+                button.textContent = "Hide Answer";
+                button.classList.remove("btn-primary");
+                button.classList.add("btn-secondary");
+            } else {
+                answerSection.classList.add("hidden");
+                button.textContent = "Show Answer";
+                button.classList.remove("btn-secondary");
+                button.classList.add("btn-primary");
+            }
+        }
+
+        function showLoading() {
+            document.getElementById("loading").classList.remove("hidden");
+            document.getElementById("error").classList.add("hidden");
+            document.getElementById("questionContainer").innerHTML = "";
+        }
+
+        function hideLoading() {
+            document.getElementById("loading").classList.add("hidden");
+        }
+
+        function showError() {
+            document.getElementById("error").classList.remove("hidden");
+        }
+    </script>
+</body>
+</html>

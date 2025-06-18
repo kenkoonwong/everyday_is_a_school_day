@@ -1,0 +1,411 @@
+---
+title: Creating A Question Bank Using Google Sheet, Plumber, and Digital Ocean Droplet
+author: Ken Koon Wong
+date: '2025-06-18'
+slug: qbank
+categories: 
+- r
+- R
+- meded
+- medical education
+- plumber
+- google sheet
+- digitial ocean
+- droplet
+tags: 
+- r
+- R
+- meded
+- medical education
+- plumber
+- google sheet
+- digitial ocean
+- droplet
+excerpt: Learn how to build a flash-card style question bank using Google Sheets as storage, R’s Plumber API, and host it on a Digital Ocean droplet—step-by-step setup, deployment, and tips.
+---
+
+> Learn how to build a flash-card style question bank using Google Sheets as storage, R’s Plumber API, and host it on a Digital Ocean droplet—step-by-step setup, deployment, and tips.
+
+![](qbank.png)
+
+## Motivations
+One of my colleagues wanted to create a cumulative question banks to help our learners in infectious disease topic and this idea popped in my head. Why don't we use google sheet for a place where we can store the questions and answers, then have another platform to host that? There are many ways to make this work, but I think the least interrupted way (changing one thing won't affect the other parts) is to have google sheet as a storage system, plumber as an API, and digital ocean droplet to host it! This is a step by step tutorial in creating one. 
+
+## Objectives:
+- [The End In Mind](#theend)
+- [Tools You Need](#tools)
+- [Set Up Your Questions](#questions)
+- [Plumber & HTML stuff](#plumber)
+- [Host It With Digital Ocean](#host)
+- [Tips](#tips)
+- [Opportunities For Improvement And Other Ideas](#opportunities)
+- [Lessons Learnt](#lessons)
+
+## The End In Mind {#theend}
+
+So, what we want to achieve at the end is a site where we can have some sort of flash card time study questions. Where we have a simple question, and the a button to click to reveal the answer, a button to go to the next question, randomly sort the questions, like so ...
+
+![](the_end.png)
+
+## Tools You Need {#tools}
+If you're familair with R or other programming languages, these all should make sense to you. If not, you might need to learn a bit of R and some coding knowledge. The best part is, now you can use LLM to help you (e.g., explain code, fix code, learn code etc). Also note that some of the steps will require some form of registration and payment (e.g., cheapest ~$5/month) especially when it comes to digital ocean droplet and account. So here is a list of tools you need:
+
+- `Patience & persistence`, if you don't know how to code (Sorry this tutorial is meant for those who already know and have installed R). This may also apply to those who know how to code, but not familiar with plumber or digital ocean.
+- `Some coding` or at least `lots of copy and pasting`
+- Familiar with `Google Sheet`
+- Installed `R`, `plumber`, have a `digital ocean` account (if not create one)
+- Have some `ssh`, `bash` knowledge 
+- Familiar with `HTML` and `CSS` (optional, but helpful)
+- Last but not least, `Be very good with using LLM to help you`
+
+## Set Up Your Questions {#questions}
+To set up your questions, you can use google sheet. Like so:
+
+![](googlesheet.png)
+This is just an example. Take note that we have 5 columns here. Once you created this google sheet, make sure to click share and change access to "Anyone with the link can view". This is important because we will be using this link to access the data in our plumber API. Like so:
+
+![](share.png)
+
+Then copy the link and our `sheet ID` is between `/d/` and `/edit`. In this case, our id looks like this `1iDup4-23ir8Faos2Ml_hvWiWYQGv73aLs7NmhjWDxz9` (fyi, this is not a real id). Save this id for later.
+
+## Plumber & HTML stuff {#plumber}
+Now we need to create a plumber API. If you don't know what plumber is, it is an R package that allows you to create APIs using R. You can read more about it [here](https://www.rplumber.io/).
+
+To create a plumber API, you need to create a new R script file (e.g., `api.R`) and add the following code:
+
+#### plumber.R
+
+``` r
+library(plumber)
+library(googlesheets4)
+library(dplyr)
+
+# Disable authentication for public sheets
+gs4_deauth()
+
+# Configuration
+SHEET_ID <- "1iDup4-23ir8Faos2Ml_hvWiWYQGv73aLs7NmhjWDxz9" #### <- this is your google sheet ID
+
+# Global variables for caching
+questions_cache <- NULL
+last_fetch_time <- 0
+cache_duration <- 5 * 60  # 5 minutes in seconds
+
+# Function to fetch questions from Google Sheets
+fetch_questions_from_sheet <- function() {
+  tryCatch({
+    sheet_data <- read_sheet(SHEET_ID, range = "A2:E100", col_names = FALSE)
+    
+    # Set column names
+    names(sheet_data) <- c("question", "answer", "reference", "image_url", "tag")
+    
+    # Clean and process data
+    questions <- sheet_data %>%
+      filter(!is.na(question) & !is.na(answer) & 
+               question != "" & answer != "") %>%
+      mutate(
+        id = row_number(),
+        question = as.character(question),
+        answer = as.character(answer),
+        reference = ifelse(is.na(reference), "", as.character(reference)),
+        image_url = ifelse(is.na(image_url), "", as.character(image_url)),
+        tag = ifelse(is.na(tag), "general", as.character(tag))
+      ) %>%
+      select(id, question, answer, reference, image_url, tag)
+    
+    # Update cache
+    questions_cache <<- questions
+    last_fetch_time <<- as.numeric(Sys.time())
+    
+    cat("Successfully loaded", nrow(questions), "questions\n")
+    return(questions)
+    
+  }, error = function(e) {
+    cat("Error loading from Google Sheets:", e$message, "\n")
+    # Return empty data frame with correct structure
+    return(data.frame(
+      id = integer(0),
+      question = character(0),
+      answer = character(0),
+      reference = character(0),
+      image_url = character(0),
+      tag = character(0),
+      stringsAsFactors = FALSE
+    ))
+  })
+}
+
+# Function to get questions with caching
+get_questions <- function() {
+  current_time <- as.numeric(Sys.time())
+  
+  if (is.null(questions_cache) || 
+      (current_time - last_fetch_time) > cache_duration) {
+    return(fetch_questions_from_sheet())
+  }
+  
+  return(questions_cache)
+}
+
+#* Enable CORS
+#* @filter cors
+cors <- function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res$setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+  if (identical(req$REQUEST_METHOD, "OPTIONS")) {
+    res$status <- 200
+    return(list())
+  } else {
+    plumber::forward()
+  }
+}
+
+#* Get all questions (shuffled)
+#* @get /api/questions/all
+function() {
+  tryCatch({
+    cat("API call received for all questions\n")
+    
+    questions <- get_questions()
+    cat("Retrieved", nrow(questions), "questions\n")
+    
+    if (nrow(questions) == 0) {
+      cat("No questions found\n")
+      return(list(
+        success = FALSE,
+        error = "No questions found"
+      ))
+    }
+    
+    # Shuffle the questions
+    shuffled_questions <- questions[sample(nrow(questions)), ]
+    
+    # Convert to list format
+    questions_list <- lapply(1:nrow(shuffled_questions), function(i) {
+      q <- shuffled_questions[i, ]
+      list(
+        id = as.numeric(q$id),
+        question = as.character(q$question),
+        answer = as.character(q$answer),
+        reference = ifelse(is.na(q$reference) || q$reference == "", "", as.character(q$reference)),
+        image_url = ifelse(is.na(q$image_url) || q$image_url == "", "", as.character(q$image_url)),
+        tag = as.character(q$tag)
+      )
+    })
+    
+    result <- list(
+      success = TRUE,
+      data = questions_list,
+      total = length(questions_list)
+    )
+    
+    cat("Returning", length(questions_list), "shuffled questions\n")
+    return(result)
+    
+  }, error = function(e) {
+    cat("Error in all questions endpoint:", e$message, "\n")
+    return(list(
+      success = FALSE,
+      error = paste("Server error:", e$message)
+    ))
+  })
+}
+
+#* Serve the main HTML page
+#* @get /
+#* @serializer html
+function() {
+  readLines("public/index.html", warn = FALSE) %>% paste(collapse = "\n")
+}
+
+#* Serve CSS file
+#* @get /styles.css
+#* @serializer contentType list(type="text/css")
+function() {
+  readLines("public/styles.css", warn = FALSE) %>% paste(collapse = "\n")
+}
+
+# Cache will be initialized on first API call
+```
+
+Step 1: Save the above as `plumber.R`. 
+
+#### qbank_api.R
+
+``` r
+#!/usr/bin/env Rscript
+
+library(plumber)
+
+HOST <- "0.0.0.0"
+PORT <- 8000
+
+cat("Starting Plumber API...\n")
+cat("Available at: http://localhost:", PORT, "\n\n")
+
+# Create API from plumber.R file
+api <- plumber::plumb("plumber.R")
+api$run(host = HOST, port = PORT)
+```
+
+Step 2: Save the above code as `qbank_api.R`.     
+Step 3: Create a folder called `public` and create two files in it: [`index.html`](html_code.html) and [`styles.css`](styles.css).       
+Step 4: Run `qbank_api.R` in your R console. This will start the plumber API and you should see something like this:
+
+![](localhost.png)
+
+Step 5: Go to your browser and navigator to `http://0.0.0.0:8000/` or `http://localhost:8000/`. You should see a simple HTML page, just like what we saw on our [The End In Mind](#theend)
+
+If you've reached here, and everything is running, congratulations! You have created an API for your questions bank locally! Now if you want access to it from anywhere, you need to host it somewhere. If you don't need that (you're OK with just locally hosted question bank), then you're done! 🙌
+
+## Host It With Digital Ocean {#host}
+This is the part that may be a tad frustrating to be honest. I hope to provide a step by step guide here. This is also a way for myself to take note for future self to refer. Things get updated all the time, by the time you read this, things may no longer apply, and the droplet I created for demo would have been destroyed, but let's give our best!
+
+Step 1. **Create a Digital Ocean account**: If you don't have one, go to [Digital Ocean](https://www.digitalocean.com/) and create an account. You may need to add a payment method.    
+      
+Step 2. 
+  - **Create a project**: After logging in, create a new project. You can name it something like "Question Bank" or whatever you like. 
+  - **Create a Droplet**: Go to `create` and then click on `droplet`. Choose the following options:
+    - **Data Center Region**: Choos a region close to you.
+    - **Image**: Choose `Ubuntu 22.04 (LTS) x64` (This is important !!! I was not able to install R with Ubbuntu 24)
+    - **Plan**: Choose the cheapest one (e.g., `Basic` plan with 1GB RAM)
+   - **Authentication**: Use SSH keys if you have them set up, or use a password. Password may be the easiest for a starter
+   - **Finalize and Create**: Click on `Create Droplet`.     
+   
+You will then see something like this:
+![](droplet.png)
+        
+Step 3. **Connect to your Droplet**:
+  - Open your terminal (or command prompt) and use the following command to connect to your droplet:
+    ```bash
+    ssh root@your_droplet_ip_address
+    ```
+  - OR, you can use their `console`, it's located top right corner of your droplet page. Click on `Console` and it will open a terminal window in your browser. You will need to enter your password if you chose password authentication. If you used SSH keys, it should connect automatically. 
+
+
+Step 4. **Install R and Plumber**:
+
+``` bash
+# install R, dependencies, libraries
+sudo apt update
+sudo apt install r-base r-base-dev
+sudo apt install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsodium-dev libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev build-essential libgit2-dev libssh2-1-dev
+Rscript -e "install.packages(c('tidyverse', 'plumber', 'rvest', 'googlesheets4'), repos='https://cran.rstudio.com/', dependencies=TRUE)"
+
+```
+
+Copy and paste the above in your terminal after you've ssh-ed into your droplet. **Beware that this may take sometime, also some manual enters**, while waiting for these, please feel free to go to step 5 to upload the necessary files
+
+Also, take note, that if you have issues installing the above, it could be that you ran out of RAM or disk space. You can check your disk space with `df -h` and RAM with `free -h`. If you ran out of space, you may need to resize your droplet or delete some files.
+
+Step 5. **Upload your files**:
+- Use `sftp` or `filezilla` to upload the files. Below is an example of using `sftp`:
+
+``` bash
+sftp root@your_droplet_ip_address
+sftp> put qbank_api.R
+sftp> put plumber.R
+sftp> put public/index.html
+sftp> put public/styles.css
+sftp> exit
+```
+Make sure the path to the file is specified correctly. 
+
+[Here is a link to the zip for all the files you need](https://github.com/kenkoonwong/qbank/blob/9387602989c200a0098afc53ac27046579a45d7d/qbank.zip) to get a minimal viable product. 🤞
+
+- If you are using `filezilla`, you can drag and drop the files to your droplet's home directory. Make sure the files are in the same directory as `plumber.R` and `qbank_api.R`.
+
+Step 6. **Run the API**:
+
+``` bash
+sudo nano /etc/systemd/system/qbank-api.service
+```
+
+
+``` bash
+[Unit]
+Description=QBank API Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/idqbank/
+ExecStart=/usr/bin/Rscript qbank_api.R
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=qbank-api
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Take note on the `WorkingDirectory` and `ExecStart` lines. You need to change the path to where you uploaded your files. For example, if you uploaded your files to `/home/your_username/qbank/`, then you need to change `WorkingDirectory=/home/idqbank/` to `WorkingDirectory=/home/your_username/qbank/` and `ExecStart=/usr/bin/Rscript qbank_api.R` to `ExecStart=/usr/bin/Rscript /home/your_username/qbank/qbank_api.R`.
+
+
+
+``` bash
+# Reload systemd to recognize the new service
+sudo systemctl daemon-reload
+
+# Enable the service to start on boot
+sudo systemctl enable qbank-api.service
+
+# Start the service now
+sudo systemctl start qbank-api.service
+```
+
+This will create a systemd service that will run your API in the background. You want to make sure if the droplet restarts for some reason, you want your API to restart automatically. Hence the above step is important. 
+
+Step 7. **Check if the API is running**:
+
+``` bash
+sudo systemctl status qbank-api.service
+```
+
+You should see something like this:
+![](status.png)
+Step 8. **Access your API**:
+Now you can access your API from anywhere! Just go to `http://your_droplet_ip_address:8000/` in your browser. You should see the same HTML page as before. Make sure you include the `port` you specified in your `qbank_api.R` file (e.g., `8000`). It won't work with the current setting if you don't. 
+
+If you're interested in eliminating the port number, you can set up a reverse proxy using `Nginx`. This is a bit more advanced and beyond the scope of this tutorial, but you can find many tutorials online on how to do that.
+
+![](the_end.png)
+Take note that we're using `http` not `https`. Which means we don't have a secure connection yet. If you want to have a secure connection, you need to set up an SSL certificate. We're not going to go through that on this blog. 
+
+That's it! If you've made it this far, congratulations! 👏 You have successfully created a question bank using Google Sheet, Plumber, and Digital Ocean Droplet. You can now add more questions to your Google Sheet and they will automatically be available in your API, after `5 minutes` of changes.
+
+
+## Tips {#tips}
+If you already have used LLM (e.g. chatGPT, Claude, gemini etc), fantastic! If you haven't, I highly recommend you to use it to help you with coding, debugging, and learning. Here are some tips:
+
+- `Explaination`: All these look foreign to you? Copy and paste into LLM and ask `explain this code to me`
+- `Follow up on it`: If you still don't understand something, ask LLM to explain it further. 
+- `Debugging`: If you have an error, copy and paste the error message into LLM and ask `what does this error mean?` or `how do I fix this error?` 
+  - `Screen Caputure`: Still unsure? Screen capture what you're seeing, attach a picture on LLM and ask!
+  - `Fetch URL`: Confused with what I wrote here? Paste this url and ask `what does this blog mean?` or `how do I do this?`
+- Interested in `SSL cert` and `nginx` reverse proxy? Ask LLM to explain it to you, or ask `how do I set up SSL certificate for my droplet?` or `how do I set up nginx reverse proxy for my droplet?`.    
+- `Having the end in mind helps`: Make sure it runs locally before you host it. If it doesn't run locally, it won't run on the server.
+
+
+
+## Opportunities For Improvement And Other Ideas {#opportunities}
+- Definitely need to create SSL certificate for a secured connection. You can use [Let's Encrypt](https://letsencrypt.org/) to create a free SSL certificate. 
+- This does not have to be a question bank. How about Idea Factory? Dashboard of some sort? Metrics? OKR? Use your imagination!
+
+
+## Lessons Learnt {#lessons}
+- Tried on multipel droplets to install R, but only Ubuntu 22.04 works for now.
+- If you have issues installing R, it could be that you ran out of RAM or disk space.
+
+
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
