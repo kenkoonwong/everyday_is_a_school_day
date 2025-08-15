@@ -1,0 +1,492 @@
+---
+title: Learning Antimicrobial Resistance (AMR) genes with Bioconductor
+author: Ken Koon Wong
+date: '2025-08-15'
+slug: amr
+categories: 
+- r
+- R
+- bioconductor
+- biostring
+- amr
+- antimicrobiral resistance
+- esbl
+- blactx-m
+- blashv
+- blatem
+tags: 
+- r
+- R
+- bioconductor
+- biostring
+- amr
+- antimicrobiral resistance
+- esbl
+- blactx-m
+- blashv
+- blatem
+excerpt: Instead of flashcards, we Rube Goldberg'd this with Bioconductor! Analyzed 3,280 E. coli genomes from NCBI, detecting ESBL genes in 84.4% of samples. CTX-M-15 was most common. Helped us understand gene nomenclature and sequence analysis! 📊🔬
+---
+
+> Instead of flashcards, we Rube Goldberg'd this with Bioconductor! Analyzed 3,280 E. coli genomes from NCBI, detecting ESBL genes in 84.4% of samples. CTX-M-15 was most common. Helped us understand gene nomenclature and sequence analysis! 📊🔬
+
+## Motivation
+I've always had a hard time learning and remembering all these genes for antimicrobial resistance (AMR). Yes, we can probably create some nice flash cards and try to memorize that way. But, why do the easy way when we can Rube Goldberg machine this! And use this as an opportunity to revisit [Bioconductor](https://www.bioconductor.org/) and learn it! Let's go! 
+
+![](amr.jpeg)
+
+## Thought Process
+But, how? There is so much to learn! Well, to make it somewhat clinically applicable, or at least bridge the gap of understanding, is answer some of my own questions:
+
+1. What genes control the production of extended spectrum beta lactamase (ESBL) in Escherichia coli (E. coli)? 
+2. Do these genes have the same DNA sequence across species and genus?
+
+#### Disclaimer
+*I am not a bioinformatician and do not work with amr, the articles and method presented is my attempt to form a better memory association towards clinical amr and the genetic terminologies that are usually used by microbiologists. Please take this with a grain of salt. Verify the information presented. If you noted some error in this article, please let me know so that I can learn! Also, some of the analysis results were not run during rmarkdown knitting because that causes a significant delay, however, the results posted here should be reprodicuble. Please again let me know if they are not* 
+
+## Objectives
+- [How To Download E. Coli Data?](#download)
+- [How To Download Class A Beta Lactamase Genes?](#classabla)
+- [How To Detect Gene?](#detect)
+- [Let's Go All In and Assess ALL Available ESBL Ecoli in NCBI](#allin)
+- [Answer To My Questions](#answer)
+- [Opportunity for Improvements](#opportunity)
+- [Lessons Learnt](#lessons)
+
+### How To Download E. Coli Data ? {#download}
+Let's select 2 different groups. The first group is just a search of the bacteria and download the first 10. The second group we'll specifically filter out ESBL group. 
+
+#### Regular E. Coli
+1. [Click here](https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=562) to go to this page.
+
+![](ecoli.png)
+
+2. Select the first 10 E. coli and then click `Download` > `Download Package`
+
+![](ecoli_download.png)
+
+3. The selection should be default like above, then hit `Download` and you'll have a `zip` file.
+
+Once you downloaded the `zip` file above. After unzipping it, go to the `data` folder and you'll have quite a few `folders` with their `NCBI RefSeq assembly` like so. Each folder contains `fna` file (FASTA file containing nucleotide sequences) of the bacteria that contains the whole genome sequence of that particular strain of bacteria. 
+
+<p align="center">
+  <img src="fna.png" alt="image" width="30%" height="auto">
+</p>
+
+Let's take a look at the first assembly! 
+
+
+``` r
+(sequence <- Biostrings::readDNAStringSet("GCA_000005845.2_ASM584v2_genomic.fna"))
+```
+
+```
+## DNAStringSet object of length 1:
+##       width seq                                             names               
+## [1] 4641652 AGCTTTTCATTCTGACTGCAAC...AACGCCTTAGTAAGTATTTTTC U00096.3 Escheric...
+```
+
+Here you can see the sequence of the first E. coli strain. The width is the length of the sequence, `~4.6Mb (Megabases)`. Followed by the sequence, and then the name. And on our console, it actually looks much prettier such as this.
+
+![](biostring.png)
+Let's take a better look at the name. 
+
+
+``` r
+names(sequence)
+```
+
+```
+## [1] "U00096.3 Escherichia coli str. K-12 substr. MG1655, complete genome"
+```
+
+Wow, whole genome! Very cool! So, this specific Ecoli strain only has one long sequence? You're right! This is the chromosome! And there is no plasmids! Look at the picture below from `sciencelearn.org.nz` as a refresher of bacteria genetics. The things we learnt in undergraduate and high school really sets the foundation to understanding these in the future. Back then, I never really knew the purpose of learning these, but now knowing that we can apply it, makes it even more crucial that the foundation needs to be there! An interesting food for thought, when we're building a house, do we ever build the foundation without visualizing what the end product is (blueprint)? Sometimes, I do feel that we were taught how to build the foundation without the end in mind, how can we do this better?
+
+![](https://www.sciencelearn.org.nz/_next/image?url=https%3A%2F%2Fwww.datocms-assets.com%2F117510%2F1722387675-enzymes_bacterialdna.jpg%3Fw%3D1840%26h%3D920&w=1920&q=85&dpl=dpl_5eApKz8jKGfw2gQ3Ek22rUiNYFxt)
+You actually don't need to load this on `biostring` to find out whether this contains only the chromosome or also contains plasmid by going to NCBI genome website with its NCBI GenRef assembly like so [https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_000005845.2/](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_000005845.2/) and if you scroll all the way down, it will have those information. 
+
+Also note that this is a `reference` genome (a green check next to it ✅), which I believe (I can be wrong) is a high-quality, representative DNA sequence that serves as a standard template for this particular speices. It's essentially a `master copy` of the genome that researchers use as a baseline for comparison. 
+
+Now, what would Ecoli with plasmid look like? Let's look at this other one. 
+
+
+``` r
+(sequence_w_plasmid <- Biostrings::readDNAStringSet("GCF_002853715.1_ASM285371v1_genomic.fna"))
+```
+
+![](biostring_plasmid.png)
+
+``` r
+names(sequence_w_plasmid)
+```
+
+
+```
+## [1] "NZ_CP024138.1 Escherichia coli strain 14EC020 chromosome, complete genome"         
+## [2] "NZ_CP024139.1 Escherichia coli strain 14EC020 plasmid p14EC020a, complete sequence"
+## [3] "NZ_CP024140.1 Escherichia coli strain 14EC020 plasmid p14EC020b, complete sequence"
+```
+
+Look at that! Chromosone first, followed by 2 plasmids! Very cool! 
+
+Now, let's download 10 ESBL Ecoli by filtering like so (by typing `esbl` on the `search within results` section. And then download the first 10, just like before. 
+
+![](filter_esbl.png)
+
+Alright, now we have 2 zip files, the first one contains regular Ecoli without plasmids, and the second zip file should contain the ones with ESBL gene. And we can then see if we can detect the ESBL genes (class A beta lactamse to be specific) in both groups! Next, we'll venture to [https://www.ncbi.nlm.nih.gov/pathogens/refgene/](https://www.ncbi.nlm.nih.gov/pathogens/refgene/) to take a look at the sequence for Class A Beta Lactamase.
+
+
+### How To Download Class A Beta Lactamase Sequences? {#classabla}
+Let's go to [Class A Beta Lactamase](https://www.ncbi.nlm.nih.gov/pathogens/refgene/#gene_family:(bla%20bla2a%20blaA%20blaAAK%20blaACI%20blaAER%20blaARL%20blaAST%20blaASU1%20blaAXC%20blaBBI%20blaBCL%20blaBEL%20blaBES%20blaBIC%20blaBKC%20blaBOR%20blaBRO%20blaC%20blaCAE%20blaCARB%20blaCBP%20blaCESS%20blaCGA%20blaCIA%20blaCKO%20blaCME%20blaCRH%20blaCRP%20blaCSP%20blaCTX-M%20blaDES%20blaERP%20blaF%20blaFAR%20blaFONA%20blaFPH%20blaFRI%20blaFTU%20blaGES%20blaGIL%20blaGMA%20blaGPC%20blaHBL%20blaHER%20blaIII%20blaIMI%20blaKBL%20blaKLUC%20blaKPC%20blaL%20blaL2%20blaLAP%20blaLEN%20blaLRA1%20blaLRA5%20blaLRG%20blaLUS%20blaLUT%20blaM%20blaMAB%20blaMUN%20blaOHIO%20blaOKP-A%20blaOKP-B%20blaOKP-C%20blaOKP-D%20blaORN%20blaOXY%20blaP%20blaPAD%20blaPAU%20blaPEN-A%20blaPEN-B%20blaPEN-E%20blaPEN-F%20blaPEN-G%20blaPEN-H%20blaPEN-I%20blaPEN-J%20blaPEN-L%20blaPEN-M%20blaPEN-N%20blaPEN-bcc%20blaPER%20blaPLA%20blaPME%20blaPSE%20blaPSV%20blaR39%20blaRAA%20blaRAHN%20blaRASA%20blaRATA%20blaRCP%20blaROB%20blaRSA1%20blaRSA2%20blaRTG%20blaRUB%20blaS%20blaSCO%20blaSED%20blaSFC%20blaSGM%20blaSHV%20blaSME%20blaTEL%20blaTEM%20blaTER%20blaTLA%20blaVCC%20blaVEB%20blaVHH%20blaVHW%20blaZ%20cblA%20cdiA%20cepA%20cfxA%20cfxA2%20cfxA3%20cfxA4%20cfxA5%20cfxA6%20hugA%20tla2)) 
+
+![](refgene.png)
+Download all FASTA.
+![](download_fasta.png)
+      
+      
+Once you download the zip. Go to data folder and there should be a `fna` file. That contains all of your DNA sequence for Class A Beta Lactamases! 
+
+It looks something like this.
+![](fasta.png)
+Wow, lots of ACTG! preceded by the name of the class A beta-lactamase. 
+
+### How To Detect ? {#detect}
+Now that we have both the Ecoli genome and the ESBL genetic sequence, how do we thatn detect these genetic sequences on our downloaded Ecoli genome sequences?
+
+1. Create A Function To Detect Sequence
+
+``` r
+search_ctx_m_reference <- function(detect, target) {
+  
+  results <- list()
+  
+  # Search forward exact
+  forward_exact <- vmatchPattern(subject = target, pattern = detect)
+  
+  # Search reverse complement
+  rev_comp_pattern <- reverseComplement(x = detect)
+  reverse_exact <- vmatchPattern(subject = target, pattern = rev_comp_pattern)
+  
+  
+  # Process results
+  for (i in 1:length(target)) {
+    seq_name <- names(target)[i]
+    matches <- c()
+    
+    # Forward exact matches
+    if (length(forward_exact[[i]]) > 0) {
+      positions <- start(forward_exact[[i]])
+      matches <- c(matches, paste("EXACT Forward match at position", positions))
+    }
+    
+    # Reverse exact matches
+    if (length(reverse_exact[[i]]) > 0) {
+      positions <- start(reverse_exact[[i]])
+      matches <- c(matches, paste("EXACT Reverse match at position", positions))
+    }
+
+    if (length(matches) > 0) {
+      results[[seq_name]] <- matches
+    } 
+    
+  }
+  
+  return(results)
+}
+```
+
+Notice the above function uses both forward and reverse match? Why do we need to do this? You need to search both forward and reverse complement directions because DNA is double-stranded with antiparallel strands (5' to 3' and 3' to 5'), and genes can be encoded on either strand - if you only search the forward 5' to 3' direction, you'll miss genes located on the reverse strand, which would appear as reverse complements in your genome sequence.
+
+
+2. Load all Class A Beta-Lactamases Sequences
+
+``` r
+(esbl <- readDNAStringSet("nucleotide.fna"))
+```
+
+![](esbl.png)
+
+Make sure you change the above FASTA file to the filename you downloaded [here](#bla). 
+
+3. Load Your Genome of Interest For Detection
+
+``` r
+subject <- readDNAStringSet("GCF_002853715.1_ASM285371v1_genomic.fna")
+
+for (i in 1:length(esbl)) {
+  result <- search_ctx_m_reference(detect = esbl[[i]], target = subject)
+  if (length(result)>0) {
+    for (j in 1:length(result)) {
+      if (length(result[[j]])>0) {
+    cat(paste0("Name: ", names(result[j]), "\n"))
+    cat(paste0("Match: ",result[j],"\n"))
+    cat(paste0("Number: ",i," - ",esbl[i] |> names(),"\n\n"))
+      }
+    }
+  }
+}
+```
+
+![](result.png)
+
+Look at our result! Wow, seriously? OXA-181 plasmid in Ecoli !? 😵‍💫 It's a tad odd for OXA to be in Class A beta lactamase. Let's take a look on NCBI. 
+
+![](ncbi.png)
+
+🤔 suppressed...!?! [Reasons](https://www.ncbi.nlm.nih.gov/sra/docs/sequence-data-processing/). OK, we'll somehow have to figure out how to filter out. Let's focus on the more well known Class A Beta-lactamase such as blaTEM, blaSHV, and blaCTX. Looking at a study from NEJM [mechanisms of disease The New b-Lactamases](https://www.nejm.org/doi/full/10.1056/NEJMra041359) table 1 showed enzymes in Class A Extended Spectrum Beta-lactamase are SHV (sulfhydryl reagent variable) (not 1), TEM (not 1 or 2), CTX-M, BES-1, GES/IBC family, PER-1, PER-2, SFO-1, TLA-1, VEB-1,
+and VEB-2. 
+
+
+``` r
+gene_condition <- "blaSHV|blaTEM|blaCTX-M|blaBES|blaGES|blaPER|blaSFO|blaTLA|blaVEB"
+non_esbl_pattern <- "TEM-[12]|SHV-1"
+
+esbl_sequences <- esbl[esbl |> names() |> str_detect(gene_condition) & 
+                         !esbl |> names() |> str_detect(non_esbl_pattern)]
+
+esbl_sequences |> names()
+```
+
+![](esbl_sequence.png)
+Nice! Now let's put this to the test for all of out our 2 groups. On a side note, with this I learnt that both SHV-1 and TEM-1/TEM-2 (TEM came from 	Temoneira, the patient infected with the first isolate expressing TEM-1) are the common early penicillinases and the mutations of the genes that produce them are what give rise to extended spectrum beta-lactamase. But these enzymes can be inhibited by beta-lactamase inhibitor, unless the genes developed resistance to the inhibitors called (Inhibitor Resistant TEM - IRT). Which is quite cool, because this explains why certain ESBL Ecoli can be treated with amox/clav + 3rd generation cephalosporin because of the beta lactamase inhibitor, assuming it's not a variant where it's inhibitor resistant. [source](https://academic.oup.com/jacamr/article/3/3/dlab092/6322891)
+
+
+``` r
+path <- "your/path/to/your/downloaded/data" 
+list_fna <- list.files(path = path, pattern = "*.fna", recursive = T)
+
+for (subject_i in 1:length(list_fna)) {
+  subject <- readDNAStringSet(paste0(path,list_fna[subject_i]))
+  for (i in 1:length(esbl_sequences)) {
+    result <- search_ctx_m_reference(detect = esbl_sequences[[i]], target = subject)
+    if (length(result)>0) {
+      for (j in 1:length(result)) {
+        if (length(result[[j]])>0) {
+          cat(paste0("Filename: ", subject_i, " ",list_fna[subject_i],"\n"))
+          cat(paste0("Name: ", names(result[j]), "\n"))
+          cat(paste0("Match: ",result[j],"\n"))
+          cat(paste0("Number: ",i," - ",esbl_sequences[i] |> names(),"\n\n"))
+        }
+      }
+    }
+  }
+  
+}
+```
+
+
+```
+## Filename: 1 GCA_014168755.1/GCA_014168755.1_ASM1416875v1_genomic.fna
+## Name: AP021948.1 Escherichia coli plasmid pWP2-S18-ESBL-08_2 DNA, complete genome, strain: WP2-S18-ESBL-08
+## Match: EXACT Forward match at position 63701
+## Number: 256 - NG_049032.1:101-976 Citrobacter amalonaticus Rio-2 pRio-2 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-8, complete CDS
+## 
+## Filename: 2 GCA_014168855.1/GCA_014168855.1_ASM1416885v1_genomic.fna
+## Name: AP022003.1 Escherichia coli DNA, complete genome, strain: WP3-W18-ESBL-08
+## Match: EXACT Reverse match at position 1043090
+## Number: 153 - NG_048973.1:1-876 Klebsiella pneumoniae blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-24, complete CDS
+## 
+## Filename: 3 GCA_014169115.1/GCA_014169115.1_ASM1416911v1_genomic.fna
+## Name: AP022070.1 Escherichia coli plasmid pWP4-W18-ESBL-09_1 DNA, complete genome, strain: WP4-W18-ESBL-09
+## Match: EXACT Reverse match at position 33416
+## Number: 54 - NG_048935.1:101-976 Escherichia coli blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-15, complete CDS
+## 
+## Filename: 4 GCA_014169175.1/GCA_014169175.1_ASM1416917v1_genomic.fna
+## Name: AP022098.1 Escherichia coli DNA, complete genome, strain: WP4-S18-ESBL-09
+## Match: EXACT Reverse match at position 1526530
+## Number: 43 - NG_048929.1:101-976 Escherichia coli ACH13 pOZ174 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-14, complete CDS
+## 
+## Filename: 5 GCA_014169395.1/GCA_014169395.1_ASM1416939v1_genomic.fna
+## Name: AP022159.1 Escherichia coli DNA, complete genome, strain: WP5-S18-ESBL-07
+## Match: EXACT Forward match at position 1929223
+## Number: 43 - NG_048929.1:101-976 Escherichia coli ACH13 pOZ174 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-14, complete CDS
+## 
+## Filename: 6 GCA_014169415.1/GCA_014169415.1_ASM1416941v1_genomic.fna
+## Name: AP022162.1 Escherichia coli plasmid pWP5-S18-ESBL-08_1 DNA, complete genome, strain: WP5-S18-ESBL-08
+## Match: EXACT Reverse match at position 21679
+## Number: 54 - NG_048935.1:101-976 Escherichia coli blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-15, complete CDS
+## 
+## Filename: 7 GCA_014169455.1/GCA_014169455.1_ASM1416945v1_genomic.fna
+## Name: AP022174.1 Escherichia coli plasmid pWP7-S17-ESBL-01_1 DNA, complete genome, strain: WP7-S17-ESBL-01
+## Match: EXACT Reverse match at position 25748
+## Number: 43 - NG_048929.1:101-976 Escherichia coli ACH13 pOZ174 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-14, complete CDS
+## 
+## Filename: 8 GCA_014169575.1/GCA_014169575.1_ASM1416957v1_genomic.fna
+## Name: AP022207.1 Escherichia coli DNA, complete genome, strain: WP7-S18-ESBL-09
+## Match: EXACT Forward match at position 4051650
+## Number: 43 - NG_048929.1:101-976 Escherichia coli ACH13 pOZ174 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-14, complete CDS
+## 
+## Filename: 9 GCA_014169855.1/GCA_014169855.1_ASM1416985v1_genomic.fna
+## Name: AP022287.1 Escherichia coli DNA, complete genome, strain: WP9-S17-ESBL-11
+## Match: EXACT Forward match at position 2059392
+## Number: 43 - NG_048929.1:101-976 Escherichia coli ACH13 pOZ174 blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-14, complete CDS
+## 
+## Filename: 10 GCA_014169915.1/GCA_014169915.1_ASM1416991v1_genomic.fna
+## Name: AP022298.1 Escherichia coli DNA, complete genome, strain: BEC1-S17-ESBL-09
+## Match: EXACT Forward match at position 4227935
+## Number: 54 - NG_048935.1:101-976 Escherichia coli blaCTX-M gene for extended-spectrum class A beta-lactamase CTX-M-15, complete CDS
+```
+
+Let's verify! We'll take a look at filename 10: GCA_014169915 (the last one). And look at the annotated gene and we see:
+
+![](ctx-m-15.png)
+
+There you go! CTX-M-15 indeed! 
+
+<br>
+
+
+### Let's Go All In and Assess ALL Available ESBL Ecoli in NCBI! {#allin}
+What if we download all Ecoli with `esbl` listed or labeled and see if we can detect ESBL genes! For simplicity, we're going to only detect EXACT match, without mismatches. Below is a minimal reproducible code for my own future reference.
+
+
+``` r
+## Find all FASTA
+path <- "your/path/to/your/downloaded/data" 
+list_fna <- list.files(path = path, pattern = "*.fna", recursive = T)
+
+## Create empty df
+df_esbl <- tibble(file=as.character(),assembly=as.character(),esbl_seq=as.character())
+
+
+## The main detection
+for (subject_i in 1:length(list_fna)) {
+  ## This is mainly for resuming, in case we stop it, so we don't have to restart from 1
+  if (list_fna[subject_i] %in% df_esbl$file) { 
+    cat(list_fna[subject_i],"\n")
+    next }
+  
+  subject <- readDNAStringSet(paste0(path,list_fna[subject_i]))
+  for (i in 1:length(esbl_sequences)) {
+    result <- search_ctx_m_reference(detect = esbl_sequences[[i]], target = subject)
+    if (length(result)>0) {
+      for (j in 1:length(result)) {
+        if (length(result[[j]])>0) {
+          cat(paste0("Filename: ", subject_i, " ",list_fna[subject_i],"\n"))
+          cat(paste0("Name: ", names(result[j]), "\n"))
+          cat(paste0("Match: ",result[j],"\n"))
+          cat(paste0("Number: ",i," - ",esbl_sequences[i] |> names(),"\n\n"))
+          df_esbl <- df_esbl |>
+            bind_rows(tibble(file=list_fna[subject_i],assembly=names(result[j]),esbl_seq=names(esbl_sequences[i])))
+          
+        }
+        
+      }
+    ## If we find something, let's stop matching for other genes  
+    break } 
+    
+    ## If we don't find anything, include it in the df so that we don't run through this again when resuming
+    if (i==length(esbl_sequences) & length(result)==0) {
+       df_esbl <- df_esbl |>
+         bind_rows(tibble(file=list_fna[subject_i],assembly="none",esbl_seq="none"))
+       print(paste0("filname: ", subject_i, " not detected"))
+     }
+  }
+  
+}
+```
+
+Phew, quite a length code above, huh? Yes, not optimal at all. Yes, it took a long time, ~8 hours? Yes it's a growing dataframe. Sorry Alec! Lol. Definitely lots to improve it, and I'm sure there is a better and optimized way of doing this. Let me know so I can learn! And also yes, some of my column names are not appropriate for the field, sorry again! At least I learnt from this. Below is what I found as definitions.
+
+`Sequence`: The sequence of the bases (often referred to by the first letters of their chemical names: A, T, C, and G) encodes the biological information that cells use to develop and operate. [source](https://www.genome.gov/genetics-glossary/DNA-Sequencing)
+
+`Contig`: A contig (as related to genomic studies; derived from the word “contiguous”) is a set of DNA segments or sequences that overlap in a way that provides a contiguous representation of a genomic region. [source](https://www.genome.gov/genetics-glossary/Contig).    
+
+`Assembly`: The term genome assembly can have two different meanings. It can (1) refer to a process in which researchers assemble genome sequences from smaller components, or it can (2) refer to the entire collection of sequences that represent a genome. [source](https://support.nlm.nih.gov/kbArticle/?pn=KA-03565)
+
+
+![](https://www.mdpi.com/ijms/ijms-25-07147/article_deploy/html/images/ijms-25-07147-g001.png)
+From: MDPI
+
+Alright, let's take a look at all of the Ecoli (with labeled ESBL) (`Total: 3280`) from NCBI nad see how many were we able to detect, and what is the distribution of the genes. With exact matching, we were able to detect `2769 (~84.4%)` of them. What about which kind? Let's take a look! 
+
+
+``` r
+df_esbl |>
+  filter(assembly != "none") |>
+  group_by(file) |>
+  mutate(n = row_number()) |>
+  filter(n == 1) |>
+  ungroup(file) |>
+  select(esbl_seq) |>
+  mutate(gene=str_extract(esbl_seq,"(?<=A beta-lactamase ).*?(?=, complete)")) |>
+  summarize(n = n(), .by="gene") |>
+  mutate(group = str_extract(gene, "^CTX-M|[A-Z]{3}")) |> 
+  ggplot(aes(x=reorder(gene,n),y=n, fill=group)) +
+  geom_col(color="black") +
+  coord_flip() +
+  facet_wrap(.~group, scales = "free_x") +
+  theme_bw() +
+  ggtitle("Frequency of ESBL Gene Detection Sorted Descending",subtitle =  "Faceted by Group") +
+  xlab("Gene")
+```
+
+
+![](esbl_distribution.png)
+
+Wow, lots of `CTX-M` (Cefotaxime-hydrolysing β-lactamase isolated in Munich) and `CTX-M-15 and 27` being the predominant! Very interesting! Besides `CTX-M`, the other groups we noted were `TEM` and `VEB`. It's kind of interesting we don't see `SHV`. Now if we tweak the code a bit to include `max.mismatch=1`, we further identified `330` with the distribution as shown below.
+
+![](esbl_distribution2.png)
+Look at that! More `SHV` and `TEM`! 
+
+> A note to myself, when we refer to genes for beta lactamase, we use the term blaCTX-M-55, blaTEM-2, blaSHV, with bla stands for beta lactamase. But when we're referring to the actual strain of enzyme (beta lactamase), we will use CTX-M-55, TEM-2, SHV-2 etc. 
+
+Wow, that was some fun way of learning AMR genes! Now I have a better understanding of the terminologies used for AMR. It was definitely fun to take the opportunity to learn `bioconductor` to explore AMR! Understanding how these genes are detected really solidify the names of ESBL genes. And also so many great articles that we have to refer to, I think that is a big part in building that association of memory to the specific resistance. 🙌
+
+### Answers To My Question {#answer}
+Now, let's answer our initial questions. 
+
+1. What genes control the production of extended spectrum beta lactamase (ESBL) in Escherichia coli (E. coli)? 
+
+``` r
+gene_condition <- "blaSHV|blaTEM|blaCTX-M|blaBES|blaGES|blaPER|blaSFO|blaTLA|blaVEB"
+non_esbl_pattern <- "TEM-[12]|SHV-1"
+```
+Remember the above code? `blaSHV (not 1), blaTEM (not 1 and 2), blaCTX-M, blaBES, blaGES, blaPER, blaSFO, blaTLA, blaVEB`, were the genes we used to try to detect from the ESBL Ecoli assemblies. 
+
+2. Do these genes have the same DNA sequence of beta lactamases across species and genus?      
+
+I'm going to say yes. Otherwise they would label it a different number of the family/group. But also, bear in mind, that there may be a threshold of mismatches that is allowed. What is the magic number though, that I am not sure.
+Also if we look at some of these genes, they actually came from a different genus of bacteria such as this. Let's look at our ESBL genes that is not from Ecoli (391/581) ~67.3%.
+
+``` r
+esbl_sequences[!str_detect(esbl_sequences |> names(), "Esch")] |> names()
+```
+![](plasmid.png)
+
+<br>
+
+### Acknowledgement {#ack}
+I have to thank John Blischak for the motivation and also the assistance in simple silly questions regarding genetics. I learnt a lot during this process and there is tons more to learn! 
+
+<br>
+
+## Opportunities for improvement {#opportunity}
+- you could use command lines to download the sequences using `dataset`. [See this](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/)
+- need more guidance on max.mismatch number and coverage
+- need to explore quality evaluation of a contig
+- need to perform some phylogenetic analysis and visualize the tree of these genes
+- explore alphafold in the future and potentially drug discovery
+- explore fpocket pocket analysis to assess their affinity towards certain beta lactam structures
+- next, learn genes for CRE
+- utilize parallel computing for faster assessment
+
+
+## Lessons learnt {#lessons}
+- prokaryotes contain circular chromosome +/- plasmids, almost all of Ecoli's class A beta lactamase genes are in plasmids
+- learnt how to download Ecoli sequence from [https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=562](https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=562)
+- learnt how to download class A beta lactamase gene sequences from [https://www.ncbi.nlm.nih.gov/pathogens/refgene/#](https://www.ncbi.nlm.nih.gov/pathogens/refgene/#)
+- Learnt how to use `biostring` to match DNA sequence pattern, transcribe and translate (not shown here but should be straight forward)
+- Learnt `max.mismatch` but need to know the norm in industry and FDA approved products
+- Learnt the terminologies, e.g, sequence, contigs, assembly. Gene = blaSOMETHING, beta-lactamase enzyme = SOMETHING.
+- A FASTA downloaded from NCBI could contain series of contigs. Some may be suppressed.
+- Major ESBL genes are CTX-M, TEM (not 1 or 2), SHV (not 1), how these names were derived.
+- Note to myself: Look at my own `bioconductor_notes.R` for the actual script (not available here)
+
+
+<br>
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
