@@ -42,7 +42,7 @@ But, how? There is so much to learn! Well, to make it somewhat clinically applic
 2. Do these genes have the same DNA sequence across species and genus?
 
 #### Disclaimer
-*I am not a bioinformatician and do not work with amr, the articles and method presented is my attempt to form a better memory association towards clinical amr and the genetic terminologies that are usually used by microbiologists. Please take this with a grain of salt. Verify the information presented. If you noted some error in this article, please let me know so that I can learn! Also, some of the analysis results were not run during rmarkdown knitting because that causes a significant delay, however, the results posted here should be reprodicuble. Please again let me know if they are not* 
+*I am not a bioinformatician and do not work with amr genes, the articles and method presented is my attempt to form a better memory association towards clinical amr and the genetic terminologies that are usually used by microbiologists. Please take this with a grain of salt. Verify the information presented. If you noted some error in this article, please let me know so that I can learn! Also, some of the analysis results were not run during rmarkdown knitting because that causes a significant delay, however, the results posted here should be reprodicuble. Please again let me know if they are not* 
 
 ## Objectives
 - [How To Download E. Coli Data?](#download)
@@ -250,6 +250,7 @@ esbl_sequences |> names()
 ![](esbl_sequence.png)
 Nice! Now let's put this to the test for all of out our 2 groups. On a side note, with this I learnt that both SHV-1 and TEM-1/TEM-2 (TEM came from 	Temoneira, the patient infected with the first isolate expressing TEM-1) are the common early penicillinases and the mutations of the genes that produce them are what give rise to extended spectrum beta-lactamase. But these enzymes can be inhibited by beta-lactamase inhibitor, unless the genes developed resistance to the inhibitors called (Inhibitor Resistant TEM - IRT). Which is quite cool, because this explains why certain ESBL Ecoli can be treated with amox/clav + 3rd generation cephalosporin because of the beta lactamase inhibitor, assuming it's not a variant where it's inhibitor resistant. [source](https://academic.oup.com/jacamr/article/3/3/dlab092/6322891)
 
+#### Repeat The Below For The 2 Groups
 
 ``` r
 path <- "your/path/to/your/downloaded/data" 
@@ -273,6 +274,10 @@ for (subject_i in 1:length(list_fna)) {
   
 }
 ```
+
+I ran the first group and got zero return. Woo hoo! 🙌
+
+Then I repeat the above code for the second group with ESBL and this came back
 
 
 ```
@@ -331,7 +336,7 @@ Let's verify! We'll take a look at filename 10: GCA_014169915 (the last one). An
 
 ![](ctx-m-15.png)
 
-There you go! CTX-M-15 indeed! 
+There you go! CTX-M-15 indeed! 👍
 
 <br>
 
