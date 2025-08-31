@@ -671,6 +671,7 @@ I would like to thank Jonathan Ryder and Joseph Marcus for their assistance in c
 - use this technique in simulated contact tracing (might use [evo2](https://github.com/ArcInstitute/evo2) for genome inferences)
 - learn how close does a bacteria need to be wither another in terms of node to be considered as similar to each other. ?1 node ?2 nodes. [read this](https://pmc.ncbi.nlm.nih.gov/articles/PMC10269621/)
 - Go through John Blishak's `differential expression analysis with llama in R` course
+- Will give [taxon2tree by Brian O'Meara](https://bomeara.github.io/taxon2tree/) a try
 
 ## Lessons Learnt {#lesson}
 - learnt the basic workflow of phylogenetic analysis
