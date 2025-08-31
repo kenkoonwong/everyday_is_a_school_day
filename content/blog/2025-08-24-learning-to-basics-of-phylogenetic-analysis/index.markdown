@@ -45,7 +45,7 @@ After that [last hands-on experience on Bioconductor](https://www.kenkoonwong.co
 
 Looks quite doable! Along the line, we may have some deeper dive to look at the machinery behind. Ultimately, we want to visualize beuatiful trees! 🌴 Like this. 
 
-![](feature.jpeg)
+![](figtree_phylo.jpeg)
 
 ## Objectives:
 - [What is phylogenetic analysis?](#phylo)
@@ -443,7 +443,7 @@ This is the default `plot` function. Efficient but needs some improvement.
 
 Now, if we use [FigTree](https://github.com/rambaut/figtree/releases), we can make into something like we saw upfront. 
 
-![](feature.jpeg)
+![](figtree_phylo.jpeg)
 To be quite frank. This looks quite pretty, but it doesn't really give me much information other than certain ecoli strains have clades and some clusters together. But without the names, we can't really say much and to put all these 10k+ names on the plot is just a group of meaningless mess. What if we sample these contigs, and revisit our topic of whether esbl and non-esbl tend to have their own clade or it doesn't matter because it's blaCTX-M, blaSHV, blaTEM are on plasmids, not chromosomes like what we're trying to assess here. 
 
 Let's dive a bit deeper. Let's only show the tip label of the ESBLs in red and see if there is a cluster of them.
