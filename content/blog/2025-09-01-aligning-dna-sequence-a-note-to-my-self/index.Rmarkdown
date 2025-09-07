@@ -424,16 +424,22 @@ cat("------------------\n\n")
 
 The above are the differences of the 2 strains and how our algorithm aligned them. Pretty neat!
 
+## Final Thoughts
+Wow, that was quite rewarding to go through the dynamic programming procedure. It was tedious but well worth the effort. I'm curious what other problems would benefit from this method? 🤔 Let me know if you have used this on non-bioinformatic related field! 
+
+<br>
 
 ## Opportunity for Improvement {#opportunity}
 - Learn more about local alignment, clustering, blast, etc
 - Learn how `DECIPHER` aligns
 - Learn how to make this more efficient
+- Next stop would be distance calculation after alignment, and then growing tree 🌲
 
 ## Lessons Learnt {#lessons}
 - Learnt the basics of DNA sequence alignment
 - Coded the algorithm from scratch really helped me understand the procedure
 
+<br>
 
 If you like this article:
 - please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
