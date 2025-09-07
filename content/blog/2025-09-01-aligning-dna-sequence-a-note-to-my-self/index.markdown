@@ -1,5 +1,5 @@
 ---
-title: DNA Sequence Alignment With Needleman-Wunsch Algorithm From Scratch - A Note To My Self
+title: Building DNA Sequence Alignment With Needleman-Wunsch Algorithm From Scratch - A Note To My Self
 author: Ken Koon Wong
 date: '2025-09-07'
 slug: dynamic-programming
@@ -9,12 +9,14 @@ categories:
 - alignment
 - dynamic programming
 - bioconductor
+- Needleman-Wunsch
 tags: 
 - r
 - R
 - alignment
 - dynamic programming
 - bioconductor
+- Needleman-Wunsch
 excerpt: Ever wondered how DNA alignment actually works under the hood? 🧬 We coded the Needleman-Wunsch algorithm from scratch, working through scoring matrices by hand with simple examples like "CAT" vs "CT" before testing on real E. coli sequences. Pretty neat to see the magic happen! ✨
 ---
 
