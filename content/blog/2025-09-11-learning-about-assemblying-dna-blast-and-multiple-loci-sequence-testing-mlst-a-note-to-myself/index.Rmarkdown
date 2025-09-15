@@ -1,0 +1,504 @@
+---
+title: Learning About Assemblying DNA, BLAST, and Multiple Loci Sequence Testing (MLST)
+  - A Note To Myself
+author: Ken Koon Wong
+date: '2025-09-15'
+slug: blast
+categories: 
+- r
+- R
+- assemblying dna
+- blast
+- mlst
+- pubmlst
+- neis
+- serogroup
+- neisseria meningitidis
+- bioinformatics
+tags: 
+- r
+- R
+- assemblying dna
+- blast
+- mlst
+- pubmlst
+- neis
+- serogroup
+- neisseria meningitidis
+- bioinformatics
+excerpt: We learnt how to assemble DNA fragments from a recently published *N. meningitidis* outbreak study using SKESA 🧬, practiced using BLAST for species identification and MLST for strain typing, and explored how serogroups are determined using specialized Python tools for capsule characterization 🔬 - such a fun and exciting hands-on introduction to genomic analysis!
+---
+
+> We learnt how to assemble DNA fragments from a recently published *N. meningitidis* outbreak study using SKESA 🧬, practiced using BLAST for species identification and MLST for strain typing, and explored how serogroups are determined using specialized Python tools for capsule characterization 🔬 - such a fun and exciting hands-on introduction to genomic analysis!
+
+![](dna_cartoon.jpeg)
+
+## Motivations
+We've learnt a few of the basics of [AMR gene detection](https://www.kenkoonwong.com/blog/amr/), [Phylogenetic analysis](https://www.kenkoonwong.com/blog/phylo/), and [the fundamental of alignment](https://www.kenkoonwong.com/blog/dynamic-programming/) for the past month or so. Lately there is a great article on [Outbreak of Neisseria meningitidis Conjunctivitis in Military Trainees — Texas, February–May 2025](https://www.cdc.gov/mmwr/volumes/74/wr/mm7433a1.htm) by SJ Ching et al, with senior author, Joseph E Marcus, where they found 41 cases of N. meningitidis conjunctivitis caused by an unencapsulated (nongroupable) strain identified by whole genome sequencing (WGS) occurred in young, healthy military trainees living in a communal setting. They also uploaded [WGS fasta](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR35265268&display=metadata) to NCBI and [PubMLST](https://pubmlst.org/bigsdb?page=info&db=pubmlst_neisseria_isolates&id=175335). Let's take a look! 
+
+#### Disclaimer:
+*I am not a bioinformatician and do not work with genes directly. These are notes to myself as I learn the basics. Please take this with a grain of salt. Verify the information presented. If you noted some error in this article, please let me know so that I can learn! Also, these codes were not run during rmarkdown knitting because of significant delay for each knitting, however, the results posted here should be reprodicuble. Please again let me know if they are not* 
+
+## Game Plan
+This was our first learning thought process.  
+
+1. Inspect the [sequence from NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR35265268&display=metadata)
+2. Run 16S rRNA to find the closest genus and species and see if we can identify it.
+3. Learn to run BLAST and examine results
+4. Learn to run MLST and examine results
+
+And eventually, we met lots of obstacles and learnt a lot from the process. Below are the actual learning objectives.
+
+## Objectives
+- [NCBI Sequence Read Archive](#ncbi)
+- [Assemble DNA Sequence](#assemble)
+  - [What is it?](#what)
+  - [How can we do this?](#how)
+  - [Extract 16s rRNA from Assembled Sequence](#16s)
+- [BLAST it!](#blast)
+  - [Using it in Terminal](#terminal_blast)
+  - [Using it in R](#rcode)
+  - [Blast with Nucleotide database](#nuc)
+  - [Blast with Whole Genome](#wgs)
+- [What is MLST?](#mlst)
+  - [Using it in Terminal](#terminal_mlst)
+  - [Using it in R](#rcode_mlst)
+- [Let's Look At Encapsulation Gene & penA](#gene)
+- [Acknowledgements](#ack)
+- [Opportunity for improvement](#oportunity)
+- [Lessons Learnt](#lessons)
+
+## NCBI Sequence Read Archive {#ncbi}
+Alright, let's inspect the [sequence from NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR35265268&display=metadat)
+
+![](ncbi.png)
+
+Now, let's download the fasta. Wow, such a big file! `1.1 Gbases` which translates to about `1.41 Gbytes` 😵‍💫 Why is it such a large file? Let's explore.
+
+```{r,eval=F}
+(nm1 <- Biostrings::readDNAStringSet("/path/to/SRR35265268.fasta"))
+```
+
+![](ncbi_fasta.png)
+
+Wow! `3682904` in length and `301` in width !?!?! Now I know I'm new to this, but this looks very odd from the whole genome chromosomes we got from NCBI. Why is that? Let's explore. 
+
+![](illumina.png)
+
+Looks like this was from [Illumina MiSeq](https://www.illumina.com/systems/sequencing-platforms/miseq-i100.html) and their max read length is 300bp? Oh interesting! 
+
+Alright, will our usual workflow even work? Let's see if we can extract 16s rRNA sequence from this raw sequence. 
+
+```{r, eval=F}
+system("barrnap -threads 90 SRR35265268.fasta")
+```
+
+![](barrnap_0.png)
+
+OK, that makes sense. Typical 16S rRNA sequence is around 1500bp and each of our contig is only 300bp. No wonder `barrnap` can't find 5s, 16s, or 23s. Now what? Do we then need to assemble this raw sequence !?! 🤔 But, we've never done this before. Alright, let's give it a few go!
+
+<br>
+
+## Assemble DNA Sequence {#assemble}
+### What is it? {#what}
+DNA sequence assembly is the computational process of reconstructing complete genomes from millions of short, overlapping DNA fragments produced by sequencing technologies. Since sequencing machines can only read small pieces of DNA at a time, assembly algorithms analyze overlaps between these fragments to piece them together like a jigsaw puzzle, ultimately creating longer contiguous sequences that represent the original DNA molecule.
+
+### How can we do this? {#how}
+There are a few DNA assemblers available and we can give them a try. These are [spades](https://github.com/ablab/spades), [megahit](https://github.com/voutcn/megahit), [skesa](https://github.com/ncbi/SKESA). After multiple trials, [skesa](https://github.com/ncbi/SKESA) is our winner! 🥇 We tried spades, but it seemed to take a long time. Tried megahit and couldn't get it running. And ultimately `skesa` ran smoothly and fast, blazing fast within seconds.
+
+SKESA (Strategic Kmer Extension for Scrupulous Assemblies) is a de novo genome assembler developed by NCBI. 
+
+#### Terminal
+```{bash, eval=F}
+conda install bioconda::skesa
+skesa --reads SRR35265268.fasta --contigs_out SRR35265268_assemble.fasta
+```
+
+Wow, that took less than a minute! Awesome, let's inspect! 
+
+#### R
+```{r, eval=F}
+(nm2 <- Biostrings::readDNAStringSet("/path/to/SRR35265268_assemble.fasta"))
+```
+
+![](assemble.png)
+Look at that! From `3682904` in length to `117` and `301` in width to some with 5 digits! Great! Now here is the part that I'm not quite sure how to evaluate the quality control where this is acceptable in the genome realm. Very interested in this question. If you know the answer and have a reference, please let me know!
+
+### Extract 16s rRNA from Assembled DNA {#16s}
+OK, let's assess this with `barrnap` and then see if we can use NCBI website to briefly give us an idea of what species and genus this is.
+
+```{r, eval=F}
+system("barrnap -threads 90 SRR35265268_assemble.fasta > SRR35265268_16s.gff") 
+```
+
+```{r, eval=F}
+(nm_16s_df <- ape::read.gff("SRR35265268_16s.gff") |>
+      as_tibble() |>
+      filter(str_detect(attributes, "16S"))) 
+
+seq_nm2 <- subseq(nm2[109], start = nm_16s_df[[1, "start"]], end = nm_16s_df[[1, "end"]])
+(reverseComplement(seq_nm2)) 
+```
+
+![](nm_16s.png)
+
+![](nm_16s_2.png)
+
+Note that the above, we used `barrnap` to extract 16s and output to gff file. then use `ape` to read gff file and we extract the actual DNA sequence from the assembled DNA. Note that because the strand is -, hence we have to reverse it. Also note that because the extracted 16s was found on `contig_109` hence we used `nm2[109]`. Alright, let's copy and paste this with `clipr::write_clip(reverseComplement(seq_nm2) |> as.character())`, where it will copy the character of the reversed sequence into system, so we don't have to use mouse to highlight then copy. This is very helpful when we have to copy very long sequence that is already in our variable.
+
+<br>
+
+## BLAST it! {#blast}
+Now that we have our 16s, let's BLAST it! 
+
+1. We go to [NCBI Blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi), select `blastn` since we're looking at nucleotides. Paste the 16s sequence on the query. Select 16S, then `blast`! 
+
+> Side note, BLAST stands for Basic Local Alignment Search Tool. Notice that previously, we looked into `Global alignment`, but this is `Local alignment`. We'll get into the method next time, it's really fascinating, similar to global method but instead of starting from right lower corner, we start from the highest score and traceback! 
+
+![](blast1.png)
+
+2. Then wait for result, and we sort by `percent identity`. Yes! `Neisseria meningitidis` as our first! very cool!
+
+![](blast2.png)
+
+#### Now Let's Use Some Command Lines 
+[This is BLAST manual](https://www.ncbi.nlm.nih.gov/books/NBK279690/)
+
+#### Terminal
+```{bash, eval=F}
+# Installation
+brew install blast
+
+# Show all database available to download
+update_blastdb.pl --showall
+
+# Download database
+mkdir blast_db
+cd blast_db
+
+## Download 16s ribosome db
+update_blastdb.pl --decompress 16S_ribosomal_RNA
+
+## Download partial nucleotide of prokaryote
+update_blastdb.pl --decompress nt_prok 
+
+## Download whole genome of prokaryotes
+update_blastdb.pl --decompress ref_prok_rep_genomes
+```
+
+The above database downloads are based on your preference. Let's get all of them and see what we get for each database.
+
+### Using BLAST in Terminal {#terminal_blast}
+```{bash, eval=F}
+blastn \
+  -query SRR35265268_assemble.fasta \
+  -db blast_db/16S_ribosomal_RNA \
+  -outfmt 6 \
+  -out result_16s.txt
+```
+
+### R {#rcode}
+```{r, eval=F}
+library(tidyverse)
+
+colnames <- c("qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore")
+
+df <- read_tsv("/path/to/result_16s_2.txt", col_names = colnames) |>
+  arrange(desc(pident))
+
+top10seqid <- df |> head(10) |> pull(sseqid)
+
+system(paste0("blastdbcmd -entry \"",paste0(top10seqid,collapse=","),"\" -db /path/to/blast_db/16S_ribosomal_RNA -outfmt \"%a %t\""))
+```
+
+This is what `df` looks like:
+![](blastdbcmd1.png)
+
+This is what `blastdbcmd` retrieved:
+![](blastdbcmd2.png)
+Awesome! Same result as the one we ran on NCBI website. Good that it matches. Now, let's evaluate `nucleotide` and `whole genome`. 
+
+### Nucleotide {#nuc} 
+
+<details>
+<summary>Code</summary>
+```{r, eval=F}
+system("blastn -query /path/to/SRR35265268_assemble.fasta -db /path/to/blast_db/nt_prok -outfmt 6 -out result_nt.txt")
+
+df <- read_tsv("/path/to/result_nt.txt", col_names = colnames) 
+
+df_summarize <- df |>
+  group_by(sseqid) |>
+  summarize(n = n(),
+            percent_contig = n_distinct(qseqid)/length(nm2)) |>
+  arrange(desc(percent_contig)) 
+
+top10seqid <- df_summarize |> head(10) |> pull(sseqid)
+
+result_blastdbcmd <- system(paste0("blastdbcmd -entry \"",paste0(top10seqid,collapse=","),"\" -db /path/to/blast_db/nt_prok -outfmt \"%a %t\""), intern=T)
+
+lookup_table <- tibble(sseqid = top10seqid, name = result_blastdbcmd) 
+
+df_summarize |>
+  left_join(lookup_table, by = "sseqid")
+```
+</details>
+
+![](blastdbcmd1_nt.png)
+Wow, all `Neisseria meningitidis`, and whole genome too! Notice that the percent_contig coverage is also REALLY high! What this means is that, when grouped by the `ssqeid` the unique nucleotide from NCBI, the percentage of distinct contigs from the study sample passed the BLAST detection threshold. 1 means 100%. 
+
+### Whole Genome {#wgs}
+
+<details>
+<summary>Code</summary>
+```{r, eval=F}
+system("blastn -query /path/to/SRR35265268_assemble.fasta -db /path/to/blast_db/ref_prok_rep_genomes -outfmt 6 -out result_wgs.txt")
+
+df <- read_tsv("result_wgs.txt", col_names = colnames) 
+
+df_summarize <- df |>
+  group_by(sseqid) |>
+  summarize(n = n(),
+            percent_contig = n_distinct(qseqid)/length(nm2)) |>
+  arrange(desc(percent_contig)) 
+
+top10seqid <- df_summarize |> head(10) |> pull(sseqid)
+
+result_blastdbcmd <- system(paste0("blastdbcmd -entry \"",paste0(top10seqid,collapse=","),"\" -db /path/to/blast_db/ref_prok_rep_genomes -outfmt \"%a %t\""), intern=T)
+
+lookup_table <- tibble(sseqid = top10seqid, name = result_blastdbcmd) 
+
+df_summarize |>
+  left_join(lookup_table, by = "sseqid")
+```
+</details>
+
+![](blastdbcmd1_wgs.png)
+Very intersting, isn't it? The only one with high percentage contig coverage `>90%` is N meningitidis. But other species with the same genus came up as well. Now the curios thing is, what is the difference between `nt` and `ref_prok_rep_genomes`? I was told that `nt` contains all nucleotide sequences in GenBank, including partial sequences, genes, and complete genomes, and `ref_prok_rep_genomes` is a curated subset containing only complete reference genomes for prokaryotes (one representative per species typically). But which genome will be chosen to be the representative? 🤷‍♂️
+
+Next, let's venture to something I've never heard of until this article, called MLST! Apparently this is a method to characterize isolates of bacterial species using the sequences of internal fragments of multiple (usually seven) housekeeping genes. Let's go!
+
+<br>
+
+## What is MLST? {#mlst}
+MLST stands for Multi-Locus Sequence Typing. It is a method used to characterize bacterial strains based on the sequences of multiple housekeeping genes. Housekeeping genes are essential genes that are typically conserved across different strains of a species and are involved in basic cellular functions. [PubMLST](https://pubmlst.org/) is a great database for MLST. This is a great technique for identifying clonal group. The 7 housekeeping genes for N meningitidis are `abcZ, adk, aroE, fumC, gdh, pdhC, pgm`. You can use the website and upload a fasta and it can give you more insight as to how closely related your sequence is to the database, but you can also use command line wiht `bioconda::mlst`.
+
+### Terminal {#terminal_mlst}
+```{bash, eval=F}
+# installation
+conda install bioconda::mlst
+
+# run mlst
+mlst SRR35265268_assemble.fasta --scheme "neisseria"
+```
+
+![](mlst.png)
+
+Look at that! `abcZ(8)	adk(10)	aroE(5) fumC(~218)	gdh(5)	pdhC(3)	pgm(8)`. What does the `~` mean? It means `>= --minid` which is set at `95` default. Now we know that from [this](https://pubmlst.org/bigsdb?db=pubmlst_neisseria_isolates&page=info&id=175335&function=scheme_display&group_id=1) the `fumC` is `1457`, a novel gene! Initially the `sequence typing (ST)` was missing , with the help of Joseph Marcus et al, looking at [search typing by profiles](https://pubmlst.org/bigsdb?db=pubmlst_neisseria_seqdef&l=1&page=profiles) we're able to see that it's closely related to `ST-32 complex` which is now listed as such. 
+
+![](profile.png)
+
+### R {#rcode_mlst}
+```{r, eval=F}
+current_path <- Sys.getenv("PATH")
+new_path <- paste("/path/to/miniforge3/bin:/path/to/miniforge3/condabin", current_path, sep=":")
+Sys.setenv(PATH = new_path)
+(nm_mlst <- system("mlst SRR35265268_assemble.fasta --scheme \"neisseria\"", intern = T) |> 
+  str_split("\t") |> 
+  unlist() |> 
+  _[4:10]) 
+```
+
+![](mlst_r.png)
+
+Now, with the above we can probably craete some function and have it run in R and capture the output! We won't do that right now. The above is a note for me that sometimes when we install via conda, the path may not be the same in R compared to terminal, hence it's a good idea to go to terminal and `echo $PATH`, then fill in the gaps in R like the above, if R cannot recognize the application. 
+
+Alright, let's run an isoalte from PubMLST and see if we can get the same MLST! [this one](https://pubmlst.org/bigsdb?db=pubmlst_neisseria_isolates&page=info&id=10&function=scheme_display&group_id=1)
+
+<details>
+<summary>Code</summary>
+```{r, eval=F}
+(nm_mlst <- system("mlst new.fasta --scheme \"neisseria\"", intern = T) |> 
+  str_split("\t") |> 
+  unlist() |> 
+  _[4:10]) 
+
+```
+</details>
+
+![](mlst_2.png)
+
+Alright, it matches! Awesome! A note to myself, to find the `typing` of the isolate, click on `typing` a subfolder of `all loci` to reveal the MLST. 
+
+<br>
+
+## Let's look at Encapsulation Gene & penA {#gene}
+Since the article stated that the isolates were nongroupable, without the presence of `csaB, csb, csc, csw, and csy` genes associated with encapsulation, and the presence of `penA`. Let's see if we can replicate that result! 
+
+I tried looking for these capsule genes on NCBI but i'm having no luck. I wonder if it's because the nomenclature used are slightly different. With that in mind, let's look at PubMLST and choose a few invasive strains and check their capsule loci. 
+
+![](mlst_capsule.webp)
+Alright, it looks like for serogroup B, C, W, Y, we need to get those sequences. We need to also go to a serogroup A to get the sequence that encode those. Then download these fasta and see if we can find it on the current assembled sequence.
+
+```{r, eval=F}
+library(RCurl)
+
+# Serogroup 
+serogroup_A <- c("NEIS2157", "NEIS2158", "NEIS2159", "NEIS2160")
+serogroup_B <- c("NEIS0054", "NEIS0053", "NEIS0052", "NEIS2161", "NEIS0049", "NEIS0055")
+serogroup_C <- c("NEIS0054", "NEIS0053", "NEIS0052", "NEIS0051", "NEIS0050", "NEIS0049")
+serogroup_W <- c("NEIS0054", "NEIS0053", "NEIS0052", "NEIS2162", "NEIS2164", "NEIS0049")
+serogroup_Y <- c("NEIS0054", "NEIS0053", "NEIS0052", "NEIS2163", "NEIS2164", "NEIS0049")
+all_loci <- c(serogroup_A, serogroup_B, serogroup_C, serogroup_W, serogroup_Y)
+
+# download fasta
+download_locus <- function(locus) {
+  url <- paste0("https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/", locus, "/alleles_fasta")
+  fasta <- getURL(url)
+  writeLines(fasta, paste0(locus, ".fasta"))
+  cat("Downloaded:", locus, "\n")
+}
+
+for (locus in all_loci) {
+  download_locus(locus)
+  Sys.sleep(0.5)
+}
+
+# Merge all files
+all_fasta <- character()
+for (locus in all_loci) {
+  fasta_content <- readLines(paste0(locus, ".fasta"))
+  all_fasta <- c(all_fasta, fasta_content)
+}
+
+writeLines(all_fasta, "capsule.fasta")
+
+# create database
+system("makeblastdb -in capsule.fasta -dbtype nucl -out /path/to/blast_db/capsule_db")
+
+# run blast
+system("blastn -query SRR35265268_assemble.fasta -db blast_db/capsule_db -fmtout 6 -o result_mlst.txt")
+
+```
+
+![](neis_raw.png)
+
+Very intersting. It looks like `NEIS0049`, `NEIS0050`, `NEIS0053` were detected, matches 3 of 6 loci of serotype C. But we know that this is a non-serotypable. Not sure what the threshold is to be considered as a serotype? How were they were able to classify this as capsule null locus (`cnl`). Wait a minute... why do I see this so common?
+
+![](ntopaz.png)
+Ohhhhhh... this is a [python package created by Nadav Topaz](https://github.com/ntopaz/characterize_neisseria_capsule) where we can predict the serogroup!!! Awesome!!! And I thought I had to hand curate all these fasta and write condition and threshold to predict the serogroup. Awesome! 
+
+#### Terminal
+```{bash, eval=F}
+git clone https://github.com/ntopaz/characterize_neisseria_capsule.git
+cd characterize_neisseria_capsule
+python build_neisseria_dbs.py
+
+# transfer the fasta file to a new fasta directory in characterize_neisseria_capsule
+python characterize_neisseria_capsule.py -d fasta -o results
+cat results/serogroup/serogroup_results.json
+```
+
+![](serogroup.png)
+
+Alright! NG non-groupable, and cnl! Looking at the python script, it looks like the coverage needs to be at least 30%, otherwise it's considered as false positive. What's converage? It's length of nucleotide matched divided by the length of the reference sequence (e.g., If sample gene is ACTACA, reference gene is ACTCAGGGAAAC, that would be 5/12). And also all the essential genes (of the serogroup) need to be detected in order to be classified as that serogroup i think. Let's pick another invasive isolate and see if that's true. 
+
+Let's take a look at [this](https://pubmlst.org/bigsdb?page=info&db=pubmlst_neisseria_isolates&id=175394) that has serogroup Y. 
+
+![](serogroupy.png)
+
+Alright! All 6 essential genes are present! 
+
+Let's look at another one on PubMLST, [this](https://pubmlst.org/bigsdb?page=info&db=pubmlst_neisseria_isolates&id=175393), go all the way down and click on `capsule`. 
+
+![](serogroupw.png)
+
+Wait a minute, why does this only have 5 of 6 detected and still classified as `W` !?!?! 🤔 Let's download fasta and inspect locally. 
+```{r, eval=F, echo=F}
+(read_tsv("/path/to/characterize_neisseria_capsule/results/serogroup/serogroup_predictions_1757889043.5628579.tab"))
+```
+
+![](serogroupw_char.png)
+
+It is true that `NEIS2164` which is `cssF` is not detected, but this package labeled it as `non-essential`. Maybe classification has changed !? 🤷‍♂️ If you know the answer, please let me know!
+
+Let's look at a few other ones chosen! Let's choose all serogroups and including cnl.
+```{r, eval=F, echo=F}
+library(tidyverse)
+df <- read_tsv("/path/to/characterize_neisseria_capsule/results/serogroup/serogroup_predictions_1757901042.631066.tab") 
+```
+
+![](serogroup_table.png)
+This is really amazing! Also interesting that this package makes it quite strict where if there is stop codon in the sequence, it will list it as `NG`. 
+
+Next, let's look at `penA`. It's interesting that it was challenging for me to search for these genes or common namees on NCBI. Eventually I still have to go back to PubMLST. When we look at their antibiotic resistance scheme for N meningitidis, we see these. 
+
+|Loci|Common Name|Product|Comment|
+|--|--|--|--|
+|gyrA|||[Target gene for cipro susceptiblity](https://pubmed.ncbi.nlm.nih.gov/23357770/)| 
+|NEIS0123||DNA-directed RNA polymerase subunit a||
+|NEIS0414|ponA|Penicillin binding protein (PBP) 1||
+|NEIS1320||DNA gyrase subunit A||
+|NEIS1525|parC|DNA topoisomerase IV subunit A||
+|NEIS1600|parC|DNA topoisomerase IV subunit B||
+|NEIS1609|folP|dihydropteroate synthetase|?sulfonamide MIC|
+|NEIS1635|mtrR|transcriptional regulator||
+|NEIS1753|penA|PBP2||
+|NEIS3240|blaROB-1|Beta-lactamase||
+|penA||||
+|rpoB|||?rifampin|
+
+Alright, let's inspect `penA` and `NEIS1753` locally.
+
+<details>
+<summary>Code</summary>
+```{r,eval=F}
+download_locus("penA")
+download_locus("NEIS1753")
+
+# create blast database with your reference fasta
+system("makeblastdb -in \"penA.fasta NEIS1753.fasta\" -dbtype nucl -out /path/to/blast_db/penA")
+
+# blast
+system("blastn -query /path/to/SRR35265268_assemble.fasta -db /path/to/blast_db/penA -outfmt 6 -out pena_result.txt") 
+(result_pena <- read_tsv("pena_result.txt", col_names = colnames))
+```
+</details>
+
+![](pena.png)
+
+wow, 100% match with NEIS1753 1494!!! 🙌
+
+Looking at the study's isolate, it also seems like it contains other antimicrobial resistance genes.
+
+![](abx_res.png)
+
+## Acknowledgement and Final Thought {#ack}
+I'dl like to thank both Joseph Marcus and Jonathan Ryder in humoring my excitement when the fasta was available for downloading! Learnt a lot from this hands-on assessment. There you have it! We assembled DNA, learnt BLAST & MLST, inspected quite a few serogroup N meningitidis. Have a better understanding on how all these serogroup gets typed! ❤️
+
+<br>
+
+## Opportunity for improvement {#oportunity}
+- what is a proper/accepted thresholds of GC content, width of contig, etc for quality control?
+- probably a good idea to create a searchable/interactive table of `NEIS****` loci, common names, aliases, so it's easier to search! I had a hard to finding these nomenclature.
+- there are R packages for mlst, can probably use that out of the box instead of using `system`. but good to use the original tools
+- learn the common thresholds for each species/bacteria
+- learn and document BLAST algorithms
+- learn [`kraken2`](https://github.com/DerrickWood/kraken2)
+- learn [`SRST2`](https://github.com/katholt/srst2)
+- learn other packages for assemblying DNA
+
+## Lessons Learnt {#lessons}
+- `clipr::write_clip()` is so helpful in copying whatever value in R to system. For example `seq1 <- "your long contig you want to copy where hightlighting the entire contigs is a nightmare"` then `clipr::write_clip(seq1)`. Now you can paste!
+- learnt about `_[1]`
+- make sure `path` of terminal is the same as `path` in R
+- learnt `skesa`, `blastn`, `makeblastdb`, `blastdbcmd`
+- learnt to navigate `PubMLST`
+- learnt `NEIS***` loci and its common names
+
+<br>
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
