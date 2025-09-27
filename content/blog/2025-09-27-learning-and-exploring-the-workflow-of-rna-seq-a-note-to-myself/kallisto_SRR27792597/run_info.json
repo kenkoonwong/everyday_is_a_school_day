@@ -1,0 +1,14 @@
+{
+	"n_targets": 3570,
+	"n_bootstraps": 0,
+	"n_processed": 51516118,
+	"n_pseudoaligned": 45466378,
+	"n_unique": 36230817,
+	"p_pseudoaligned": 88.3,
+	"p_unique": 70.3,
+	"kallisto_version": "0.51.1",
+	"index_version": 13,
+	"k-mer length": 31,
+	"start_time": "Fri Sep 26 22:44:16 2025",
+	"call": "kallisto quant -i transcriptome.idx -o kallisto_SRR27792597 --threads 8 SRR27792597_1.fastq SRR27792597_2.fastq"
+}
