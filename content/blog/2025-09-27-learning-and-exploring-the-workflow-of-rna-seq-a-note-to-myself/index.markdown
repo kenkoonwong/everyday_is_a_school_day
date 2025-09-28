@@ -15,6 +15,7 @@ categories:
 - gsea
 - fgsea
 - uniprot
+- clusterprofiler
 tags: 
 - r
 - R
@@ -27,6 +28,7 @@ tags:
 - gsea
 - fgsea
 - uniprot
+- clusterprofiler
 excerpt: Learned RNA-seq workflow using C. difficile data from a published study 🧬. Processed raw reads through fastp → kallisto → DESeq2 -> GSEA pipeline. Results matched the original paper's findings, with clear differential expression between mucus and control conditions 📊.
 ---
 
@@ -357,6 +359,8 @@ res |>
 If we look at figure 2A, it again looks very similar! To interpret the volcano plot, we basically look at the the top right and top left of the plot. These are the ones that are significantly differentially expressed. The top right are the upregulated genes, whereas the top left are the downregulated genes. We can see that `gene-CDR20291_1626` is the most upregulated gene, whereas `gene-CDR20291_3145` is the most downregulated gene. 🙌 
 
 Looking at NCBI, looks like `1626` is a [putative sodium/phosphate cotransporter [Clostridioides difficile R20291]](https://www.ncbi.nlm.nih.gov/protein/CBE04326.1/). And `3145` is [probable protease](https://www.ncbi.nlm.nih.gov/protein/CBE07000.1/). What this means is that Cdiff when exposed to mucus when compared to control, the putative sodium/phosphate cotransporter expressed gene was found more (in mucus group), whereas the probable protease expressed gene was found less (in mucus group). 
+
+Now, how can we then look at these information in a higher functiona level? In comes `Gene set Enrichment Analysis`!
 
 ## Gene Set Enrichment Analysis {#gsea}
 
