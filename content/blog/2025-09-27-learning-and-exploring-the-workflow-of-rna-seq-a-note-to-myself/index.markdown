@@ -12,6 +12,9 @@ categories:
 - fastp
 - sra-tools
 - bioconductor
+- gsea
+- fgsea
+- uniprot
 tags: 
 - r
 - R
@@ -21,10 +24,13 @@ tags:
 - fastp
 - sra-tools
 - bioconductor
-excerpt: Learned RNA-seq workflow using C. difficile data from a published study 🧬. Processed raw reads through fastp → kallisto → DESeq2 pipeline. Results matched the original paper's findings, with clear differential expression between mucus and control conditions 📊.
+- gsea
+- fgsea
+- uniprot
+excerpt: Learned RNA-seq workflow using C. difficile data from a published study 🧬. Processed raw reads through fastp → kallisto → DESeq2 -> GSEA pipeline. Results matched the original paper's findings, with clear differential expression between mucus and control conditions 📊.
 ---
 
-> Learned RNA-seq workflow using C. difficile data from a published study 🧬. Processed raw reads through fastp → kallisto → DESeq2 pipeline. Results matched the original paper's findings, with clear differential expression between mucus and control conditions 📊.
+> Learned RNA-seq workflow using C. difficile data from a published study 🧬. Processed raw reads through fastp → kallisto → DESeq2 -> GSEA pipeline. Results matched the original paper's findings, with clear differential expression between mucus and control conditions 📊.
 
 ![](deseq2.png)
 
@@ -49,6 +55,7 @@ gene expression, metabolism, and biofilm formation](https://journals.asm.org/doi
   - [PCA](#pca)
   - [DESeq2](#deseq2)
   - [Volcano plot](#volcano)
+  - [Gene Set Enrichment Analysis](#gsea)
 - [Opportunities for improvement](#opportunity)
 - [Lessons Learnt](#lessons)
   
@@ -351,11 +358,103 @@ If we look at figure 2A, it again looks very similar! To interpret the volcano p
 
 Looking at NCBI, looks like `1626` is a [putative sodium/phosphate cotransporter [Clostridioides difficile R20291]](https://www.ncbi.nlm.nih.gov/protein/CBE04326.1/). And `3145` is [probable protease](https://www.ncbi.nlm.nih.gov/protein/CBE07000.1/). What this means is that Cdiff when exposed to mucus when compared to control, the putative sodium/phosphate cotransporter expressed gene was found more (in mucus group), whereas the probable protease expressed gene was found less (in mucus group). 
 
+## Gene Set Enrichment Analysis {#gsea}
+
+#### Step 1: Download Cdiff Genetic Ontology 
+Click on [this](https://www.uniprot.org/uniprotkb?query=CDR20291) and click on ALL and download `tsv`. Make sure to include `genetic ontology`. I found (UniProt)[https://www.uniprot.org/] to be very user friendly in getting the `Genetic Ontology` description. 
+
+
+#### Step 2: Create tables 
+
+``` r
+library(tidyverse)
+
+cdiff <- read_tsv("uniprotkb_CDR20291_2025_09_28.tsv")
+
+(go_activity <- cdiff |> 
+  dplyr::select(`Gene Ontology (GO)`) |>
+  separate_longer_delim(`Gene Ontology (GO)`, delim = ";") |>
+  mutate(GO_raw = str_trim(`Gene Ontology (GO)`)) |>
+  distinct() |>
+  mutate(activity = str_extract(GO_raw, ".*(?= \\[GO)")) |>
+  mutate(GO = str_extract(GO_raw, "(?<= \\[).*(?=\\])")) |>
+  dplyr::select(GO, activity) |>
+  drop_na())
+
+(go_gene <- cdiff |>
+  mutate(gene = str_extract(`Gene Names`,"CDR.*")) |> 
+  mutate(go = map(.x=`Gene Ontology (GO)`, .f=~str_extract_all(.x, "(?<=\\[).*?(?=\\])") |> _[[1]])) |>
+  dplyr::select(gene, go) |>
+  unnest(go) |>
+  select(go, gene) |>
+  drop_na())
+
+res_tibble <- tibble(res) |>
+  mutate(row = str_extract(row, "(?<=gene-).*")) |>
+  drop_na()
+```
+
+![](go_activity.png)
+
+<p align="center">
+  <img src="go_gene.png" alt="image" width="40%" height="auto">
+</p>
+
+### Step 3: GSEA 
+
+``` r
+### GSEA
+library(clusterProfiler)
+
+gene_ranks <- setNames(sign(res_tibble$log2FoldChange) * 
+                         (-log10(pmax(res_tibble$padj, 1e-300))),
+                       res_tibble$row)
+
+# Sort in decreasing order
+gene_ranks <- sort(gene_ranks, decreasing = TRUE)
+
+# Run GSEA using your custom C. diff GO database
+gsea_results <- GSEA(geneList = gene_ranks,
+                     TERM2GENE = go_gene,
+                     TERM2NAME = go_activity,
+                     pvalueCutoff = 0.25,
+                     pAdjustMethod = "BH")
+```
+
+Also, notice that we have to use `pmax` when calculating the rank because when p value is too small, the log of it will ne `inf`. Notice we decreased the `pvaluecutoff` to discover more functional categories.  
+
+#### Step 4: Visualize
+
+
+``` r
+library(ggplot2)
+
+tibble(
+  pathway = gsea_results@result$Description,
+  NES = gsea_results@result$NES
+) |>
+  mutate(fill = case_when(
+    NES > 0 ~ "positive",
+    NES < 0 ~ "negative"
+  )) |>
+ggplot(aes(x = NES, y = reorder(pathway, NES), fill = fill)) +
+  geom_col(color = "black") +
+  labs(x = "Normalized Enrichment Score", y = "Functional Categories") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+![](gsea.png)
+Wow, now this is useful I think. The most significant ones were `structural constituent of ribosome` and `rRNA binding` functions were downregulated in mucus group when compared to control when we use pval of 0.05. However, as the above plot showed, if pval set as 0.25, then we see all these other categories. Very interesting to see `resnponse to antibiotics` function were downregulated in mucus group! 
+
+Now, mind you, the above is not the same database as the article. The article uses KEGG, a different pathway than us.
+<br>
+
 ## Opportunities for improvement {#opportunity}
 - I should probably rewrite the above to a script and with function so that in the future we can easily reproduce any DE analysis
 - include `esearch` or `entrez` to get accession metadata for more accurate label
 - include `heatmap`
-- pathway analysis. Yes, we can DE analyze these genes, but what do they actually mean? Do they use nutrients differently etc.
+
 
 
 ## Lessons Learnt {#lessons}
@@ -363,6 +462,7 @@ Looking at NCBI, looks like `1626` is a [putative sodium/phosphate cotransporter
 - took me a while to find the right `reference` isolate. Found in on their supplement material and got the right one. For future reference, don't assume they use the popular refseq, look through their procedure and get that specifically.
 - learnt from raw RNA-seq QC
 - learnt to interpret volcano plot
+- learnt GSEA
 
 
 If you like this article:
