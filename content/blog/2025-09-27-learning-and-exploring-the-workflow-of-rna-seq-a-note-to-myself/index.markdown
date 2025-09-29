@@ -110,14 +110,6 @@ fasterq-dump --progress --threads 4 SRR27792604
 Now, repeat the above for the other `SRRs` and you'll get all the raw sequences in `fastq` format. With our practice, we'll only download `SRR27792597`,`SRR27792603`,`SRR27792598`, and`SRR27792604`. Two mucus and two controls. It will take sometime, which is why i like the `--progress` parameter. Alright, after we've downloaded the sequences, let's move on to our official workflow. 
 
 
-``` r
-files <- c("kallisto_SRR27792597/abundance.h5",
-           "kallisto_SRR27792603/abundance.h5", 
-           "kallisto_SRR27792598/abundance.h5",
-           "kallisto_SRR27792604/abundance.h5")
-```
-
-
 ## The Workflow {#workflow}
 > TL;DR Quality control (fastp) -> Create transcriptome reference (kallisto) -> Assemble Raw Sequence (kallisto) -> Analyse (PCA & DESeq2)
 
@@ -211,7 +203,7 @@ vsd <- vst(dds, blind = FALSE)
 plotPCA(vsd, intgroup = "condition")
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" />
 
 Wow, it looks like the treatment and control are separated quite well! Let's dive straight into differential expression analysis. If we look at figure 2B on the article, it looks very similar, even though we haven't include the full sequences.
 
@@ -224,7 +216,7 @@ library(tidyverse)
 dds <- DESeq(dds)
 
 # Get results
-res <- results(dds, alpha = 0.01, tidy = T)
+res <- results(dds, tidy = T)
 
 # View summary
 summary(res)
@@ -354,7 +346,7 @@ res |>
   theme(legend.position = "none")
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 
 If we look at figure 2A, it again looks very similar! To interpret the volcano plot, we basically look at the the top right and top left of the plot. These are the ones that are significantly differentially expressed. The top right are the upregulated genes, whereas the top left are the downregulated genes. We can see that `gene-CDR20291_1626` is the most upregulated gene, whereas `gene-CDR20291_3145` is the most downregulated gene. 🙌 
 
