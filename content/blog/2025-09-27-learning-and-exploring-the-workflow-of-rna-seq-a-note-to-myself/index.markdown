@@ -309,6 +309,108 @@ res |>
 
 Interesting thing about the pvalue, we need to look at adjust pval instead because we are doing multiple comparison. Adjust pvalue is via `Benjamini-Hochberg` method. This adjust the multiplicity of comparison. 
 
+## QC plots {#qcplot}
+Thanks to [John Blischak](https://jdblischak.com/) feedback on incorporating these QC plots. We're going to assess our first plot
+
+#### MA plot
+
+``` r
+plotMA(dds)
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+
+An MA plot shows fold change (y-axis) versus average expression (x-axis) for each gene, with blue indicating significance. A good plot should be symmetric around y=0 with a trumpet shape (more variance at low expression), and our plot looks healthy with no signs of bias or technical problems.
+
+Now, if you're like me, I had a hard time trying to understand how this plot was created. Let's `ggplot` this. 
+
+<details>
+<summary>code</summary>
+
+``` r
+library(tidyverse)
+
+res |>
+  drop_na() |>
+  mutate(sig = case_when(
+    padj < 0.05 ~ 1,
+    TRUE ~ 0
+  ) |> as.factor()) |>
+  ggplot(aes(x=log10(baseMean),y=log2FoldChange, color=sig)) +
+  geom_point(alpha=0.5, size=0.5) +
+  ylim(c(-3,3)) +
+  geom_hline(yintercept = 0) +
+  scale_color_manual(values=c("grey","blue")) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+Wow, when you try to recreate it is when you truly understand what these plots represent. Learnt that the mean of normalized count is actually in log10! 
+</details>
+
+
+#### Dispersion Plot 
+
+``` r
+plotDispEsts(dds)
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" />
+
+The dispersion plot shows how DESeq2 estimates gene variability (y-axis) across expression levels (x-axis), where black dots are initial per-gene estimates, the red curve is the fitted trend, and blue dots are final shrunken estimates used for testing. You want to see black dots scattered around the red trend with blue dots pulled toward it, indicating successful information sharing across genes - if most genes are far from the trend or the curve doesn't fit well, it suggests problems with your experimental design or data quality.
+
+<details>
+<summary>code</summary>
+
+``` r
+mcols(dds) |> 
+  as_tibble() |>
+  ggplot(aes(x = log10(baseMean))) +
+  geom_point(aes(y = dispGeneEst), size = 0.5, alpha = 0.5) +  # Black: gene estimates
+  geom_point(aes(y = dispFit), color = "red", size = 0.8) +    # Red: fitted trend
+  geom_point(aes(y = dispersion), color = "blue", size = 1) +  # Blue: final values
+  scale_y_log10() + 
+  labs(x = "mean of normalized counts", 
+       y = "dispersion") +
+  theme_minimal()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+Notice how the dispersion is also log transformed with `scale_y_log10`? 
+</details>
+
+#### Sparsity Plot
+
+``` r
+plotSparsity(dds)
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+
+The sparsity plot shows whether gene counts are evenly distributed across samples (y-axis) versus concentrated in just one or two samples, plotted against total expression level (x-axis). You want most genes clustered around 0.25-0.4 on the y-axis (indicating even distribution)
+
+<details>
+<summary>code</summary>
+
+``` r
+count <- counts(dds, normalized=F)
+
+as_tibble(count) |>
+  rowwise() |>
+  mutate(sum_all = sum(across(everything())),
+         max = max(mucus_rep1,control_rep1,mucus_rep2,control_rep2)) |>
+  mutate(max_over_sum_all = max / sum_all) |>
+  ggplot(aes(x=log10(sum_all),y=max_over_sum_all)) +
+  geom_point(alpha=0.5) +
+  theme_minimal() +
+  ylim(0,1)
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+</details>
+
+
 ## Volcano plot {#volcano}
 
 ``` r
@@ -346,7 +448,7 @@ res |>
   theme(legend.position = "none")
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" />
 
 If we look at figure 2A, it again looks very similar! To interpret the volcano plot, we basically look at the the top right and top left of the plot. These are the ones that are significantly differentially expressed. The top right are the upregulated genes, whereas the top left are the downregulated genes. We can see that `gene-CDR20291_1626` is the most upregulated gene, whereas `gene-CDR20291_3145` is the most downregulated gene. 🙌 
 
@@ -445,6 +547,10 @@ Wow, now this is useful I think. The most significant ones were `structural cons
 
 Now, mind you, the above is not the same database as the article. The article uses KEGG, a different pathway than us.
 <br>
+
+## Acknowledgement 
+Thanks again to [John Blischak](https://jdblischak.com/) feedback, we learnt a missing step that is important, that is to assess our DESeq2 object with QC plots. 
+
 
 ## Opportunities for improvement {#opportunity}
 - I should probably rewrite the above to a script and with function so that in the future we can easily reproduce any DE analysis
