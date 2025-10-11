@@ -575,6 +575,12 @@ if (length(mut_combo_seq)==1) {
     select(-1) |>
     summarize(across(everything(), sum)) |>
     pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -784,6 +790,12 @@ if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")
     select(-Rule,-Rule_x) |>
     summarize(across(everything(), sum)) |>
     pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+        mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -803,6 +815,7 @@ if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")
 
 # Generate combinations of size 2, 3, and 4
 if (m > length(mut_combo_seq)) { m <- length(mut_combo_seq) }
+if (n > length(mut_combo_seq)) { n <- length(mut_combo_seq) }  
 all_combinations <- map(n:m, ~create_combinations(mut_combo_seq, .x)) |> 
   unlist()
 
@@ -818,6 +831,12 @@ mut_score_sum <- mut_score |>
   select(-1) |>
   summarize(across(everything(), sum)) |>
   pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+  mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -1005,6 +1024,97 @@ jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance
 ![](final5_sierra.png)
 
 That was `AF443091.1`. And 5 of 5 correct ✅ !  Hurray !!!!
+
+```{r,eval=F, echo=F}
+# recreate hiv_genotype
+hiv_genotype_df <- function(sample="KJ849778.1") {
+class_group <- c("HIV_RT","HIV_PR","HIV_INT")
+df_algo <- tibble(ART=as.character(),score=as.numeric(),levels=as.numeric(),interpretation=as.character())
+for (class in class_group) {
+  mutations <- extract_align(sample, class)
+  if (class == "HIV_RT") {
+    df_algo <- df_algo |> rbind(load_hivdb("NRTI",mutations), load_hivdb("NNRTI",mutations))
+  }
+  if (class == "HIV_PR") {
+    df_algo <- df_algo |> rbind(load_hivdb("PI",mutations))
+  }
+  if (class == "HIV_INT") {
+    df_algo <- df_algo |> rbind(load_hivdb("INSTI",mutations))
+  } 
+}
+return(df_algo)
+}
+
+results <- tibble(sum_score_diff=as.numeric(),sum_levels_diff=as.numeric(), sample=as.character())
+results <- both |> filter(ART == "")
+sample_all <- all_hiv_sample |> filter(pident < 100) |> distinct(qseqid) |> pull()
+
+results <- results |> filter(!sample %in% sample_correct)
+sample_correct <- results |> filter(ART == "ATV_r") |> pull(sample)
+
+for (sample_i in sample_correct) {
+# for (sample_i in sample_all[490:length(sample_all)]) {
+
+df_our_own <- hiv_genotype_df(sample_i)
+df_our_own_drug <- df_our_own$ART
+# run sierrapy input fasta
+
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample_i)] |> writeXStringSet("hiv_test.fasta")
+
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+
+test_output <- jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+
+df_sierra2 <- bind_rows(tibble(test_output[[1]]), tibble(test_output[[2]]), tibble(test_output[[3]])) 
+df_drugname <- df_sierra2$drug$displayAbbr
+df_sierra <- df_sierra2 |> 
+  select(levels=level,score, interpretation=text) |>
+  mutate(ART = df_drugname,
+         interpretation = tolower(interpretation)) |>
+  filter(ART %in% df_our_own_drug)
+
+both <- df_our_own |>
+  left_join(df_sierra, by = "ART") |>
+  mutate(score_diff = score.x - score.y,
+         levels_diff = levels.x - levels.y)
+
+both_summarize <- both |>
+  summarize(sum_score_diff = sum(score_diff),
+            sum_levels_diff = sum(levels_diff))
+
+# results <- results |>
+#   bind_rows(both_summarize |> mutate(sample = sample_i))
+results <- results |>
+  bind_rows(both |> mutate(sample = sample_i))
+
+Sys.sleep(3)
+}
+```
+
+```{r,eval=F,echo=F}
+count <- results |>
+  group_by(sample) |>
+  summarize(sum_levels_diff = sum(levels_diff)) |>
+  group_by(sum_levels_diff) |>
+  summarize(n = n()) |>
+  drop_na(sum_levels_diff) 
+
+count |> 
+  mutate(good = case_when(
+  sum_levels_diff == 0 ~ 1,
+  TRUE ~ 0
+)) |>
+  group_by(good) |>
+  summarize(sum = sum(n)) |>
+  mutate(prop = sum*100/sum(sum))
+
+load("hiv_ownalgo_sierra.rda")
+```
+
+We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494), removed 16 due to NA (either our algo or Sierra returned NA). Found 89.5% full agreement (n=428), full agreement meaning 0 deviation of level of any ART from both algorithm. Not too shabby at all! Definitely not good enough for clinical interpretation. I suspect this is mainly alignment and also code related. 
+
 
 ## Final Thoughts {#thoughts}
 Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  

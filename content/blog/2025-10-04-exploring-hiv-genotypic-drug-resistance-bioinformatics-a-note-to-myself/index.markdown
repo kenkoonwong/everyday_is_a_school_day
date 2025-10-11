@@ -589,6 +589,12 @@ if (length(mut_combo_seq)==1) {
     select(-1) |>
     summarize(across(everything(), sum)) |>
     pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -800,6 +806,12 @@ if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")
     select(-Rule,-Rule_x) |>
     summarize(across(everything(), sum)) |>
     pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+        mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -819,6 +831,7 @@ if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")
 
 # Generate combinations of size 2, 3, and 4
 if (m > length(mut_combo_seq)) { m <- length(mut_combo_seq) }
+if (n > length(mut_combo_seq)) { n <- length(mut_combo_seq) }  
 all_combinations <- map(n:m, ~create_combinations(mut_combo_seq, .x)) |> 
   unlist()
 
@@ -834,6 +847,12 @@ mut_score_sum <- mut_score |>
   select(-1) |>
   summarize(across(everything(), sum)) |>
   pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+  mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
     mutate(levels = case_when(
       score <= 9 ~ 1,
       score >= 10 & score <= 14 ~ 2,
@@ -1031,6 +1050,13 @@ jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance
 ![](final5_sierra.png)
 
 That was `AF443091.1`. And 5 of 5 correct ✅ !  Hurray !!!!
+
+
+
+
+
+We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494), removed 16 due to NA (either our algo or Sierra returned NA). Found 89.5% full agreement (n=428), full agreement meaning 0 deviation of level of any ART from both algorithm. Not too shabby at all! Definitely not good enough for clinical interpretation. I suspect this is mainly alignment and also code related. 
+
 
 ## Final Thoughts {#thoughts}
 Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  
