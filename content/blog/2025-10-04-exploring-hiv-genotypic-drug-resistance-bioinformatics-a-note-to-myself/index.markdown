@@ -1,0 +1,1059 @@
+---
+title: My Attempt To Reproduce Stanford HIVdb Sequence and Mutation Analysis From Scratch
+author: Ken Koon Wong
+date: '2025-10-10'
+slug: hiv-genotype
+categories: 
+- r
+- R
+- stanford
+- hivdb
+- hiv
+- genotype
+- resistance
+- mutation
+- bioconductor
+- DECIPHER
+- sierrapy
+- sierra
+tags: 
+- r
+- R
+- stanford
+- hivdb
+- hiv
+- genotype
+- resistance
+- mutation
+- bioconductor
+- DECIPHER
+- sierrapy
+- sierra
+excerpt: "Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it"
+---
+
+> Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it
+
+![](hiv.jpg)
+
+## Motivations:
+We've all learnt and memorize what those letters and numbers mean when it comes to antiretroviral resistance. Since we've been exploring genomics lately, let's take another look at HIV genotype. [Stanford University HIVdb](https://hivdb.stanford.edu/) is an amazing resource! I've always been confused with all these letters and have difficulty understanding how to even check for genotype resistance because all these numbers and letters are quite confusing and intimidating. Let's put on our bioconductor hat and revisit this topic and see if we can at least get a better understanding on what these letters and numbers mean. Better yet, use this opportunity to try to reproduce the algorithm that tells us the susceptibility of the ART! Hang tight on this one, it's going to be a bumpy road!
+
+## Objectives
+- [Find HIV reference gene](#ref)
+- [Find Resistance](#resistance)
+- [Workflow](#workflow)
+  - [Identify](#segment)
+  - [Translate](#translate)
+  - [Align](#align)
+  - [Stanford's Sierrapy](#stanford)
+  - [Trial 1](#trial1)
+  - [Trial 2](#trial2)
+  - [Trial 3](#trial3)
+  - [Trial 4](#trial4)
+  - [Trial 5](#trial5)
+- [Final Thoughts](#thoughts)
+- [Opportunities for improvement](#opportunity)
+- [Lessons Learnt](#lessons)
+
+
+## Find HIV Reference Gene {#ref}
+From most of the searching, the reference gene appears to be [HXB2](https://www.ncbi.nlm.nih.gov/nuccore/K03455.1/). We know that pol gene encodes protease (PR), reverse transcriptase (RT) and integrase (IN). Below is directly from NCBI. [source](https://www.ncbi.nlm.nih.gov/gene/155348). You can click on it and hover over those regions to see what they are.
+
+![](pol.png)
+Take note that all these genes reside in specific position. So the trick is to use a reference, in our case HXB2, locate these 3 genes (RT, PR, IN), then extract them and make them into a database. Some reference is pretty good at letting you know where these positions are, some don't! As for our reference, it didn't really say either! We'll have to look around reference and see if we can get those position.
+
+
+``` r
+library(Biostrings)
+library(DECIPHER)
+library(tidyverse)
+
+## We downloaded a bunch of HIV genomes, including the reference known as K03455 (aka HXB2)
+(all_hiv_genome <- readDNAStringSet("all_hiv_whole_genome.fasta"))
+```
+
+![](all_fasta.png)
+Wow, look at that. HIV genome is only around 9000bp! Whereas bacteria such as Ecoli it was about 4 Mb. 
+
+
+``` r
+## load reference
+hxb2_idx <- grep("K03455", names(all_hiv_genome), ignore.case = TRUE)
+hxb2_genome <- all_hiv_genome[hxb2_idx]  
+
+## locate the genes
+rt_sequence <- subseq(hxb2_genome, start = 2550, end = 4229)
+pi_sequence <- subseq(hxb2_genome, start = 2253, end = 2549)
+int_sequence <- subseq(hxb2_genome, start = 4230, end = 5093)
+
+# Rename sequences with informative names
+names(pi_sequence) <- "HIV_PR"
+names(rt_sequence) <- "HIV_RT"
+names(int_sequence) <- "HIV_INT"
+
+# Combine all three into one DNAStringSet
+pol_regions <- c(pi_sequence, rt_sequence, int_sequence)
+
+# Write to a single FASTA file
+writeXStringSet(pol_regions, "hiv_pol_regions.fasta")
+
+# make it into blast database
+system("makeblastdb -in hiv_pol_regions.fasta -dbtype nucl -out /path/to/hiv/hiv_pol_db -parse_seqids")
+```
+
+With the above we're basically setting up a databse for the reference pol gene of PR, RT, and IN. We will then find a genome of interest and use blast to identify where these genes are located on the sample sequence like so.
+
+
+
+``` r
+## use blast to find where these genes positions are
+system('blastn -query all_hiv_whole_genome.fasta -db /path/to/hiv/hiv_pol_db -word_size 7 -evalue 0.0000001 -outfmt 6 -out hiv_sample_blast_results.txt')
+
+## read it
+colnames <- c("qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore")
+
+(all_hiv_sample <- read_tsv("hiv_sample_blast_results.txt", col_names = colnames))
+```
+
+![](blast_result.png)
+
+Notice `sseqid` section, we have `HIV_RT`, `HIV_INT`, `HIV_PR`. We just need to filter these genes, extract the genes via their positions `qstart` and `qend`. Let's take a look at `U63632.1`
+
+
+``` r
+sample1 <- all_hiv_sample |>
+  filter(str_detect(qseqid, "U63632.1")) |> 
+  filter(sseqid == "HIV_RT") |> 
+  select(qseqid, qstart, qend)
+```
+
+OK, how do we go from here to knowing what's mutated? 
+
+## Find The Resistance {#resistance}
+All those letters, `M184V`, `K65R` etc, the letters and numbers must mean something right? You're right! The numbers are position, but what about the letters? They don't really look like ATCG, do they? They're amino acids! For example, the `M` on `M184` stands for Methionine, the `V` stands for Valine. So `M184V` means at position 184, Methionine has mutated to Valine. Similarly, `K65R` means at position 65, Lysine has mutated to Arginine. 
+
+Amino acids and their letters:     
+`A`: Alanine, `C`: Cysteine, `D`: Aspartic Acid, `E`: Glutamic Acid, `F`: Phenylalanine, `G`: Glycine, `H`: Histidine, `I`: Isoleucine, `K`: Lysine, `L`: Leucine, `M`: Methionine, `N`: Asparagine, `P`: Proline, `Q`: Glutamine, `R`: Arginine, `S`: Serine, `T`: Threonine, `V`: Valine, `W`: Tryptophan, `Y`: Tyrosine
+
+his also means that our translated RT reference HIV gene HXB2 at position 184, we should expect the amino acid to be M. Let's take a look
+
+
+``` r
+(rt_t <- translate(rt_sequence))
+```
+
+![](aa.png)
+
+Wow! We're used to seeing DNA sequence colors but now take a look at the different amino acid colors! How pretty! Now let's look at position 184.
+
+
+``` r
+subseq(rt_t, 184,184)
+```
+
+![](rt_t_184.png)
+
+Alright! `M` indeed! Now, let's go through the workflow of using this information to run through our sample
+
+## Workflow {#workflow}
+> TL;DR Extract region -> Align Translation of AA with Reference & Assess Mutation -> Calculate Mutation Score
+
+### Identify/Extract Regions {#segment}
+
+``` r
+sample1 <- all_hiv_sample |>
+  filter(str_detect(qseqid, "U63632.1")) |> 
+  filter(sseqid == "HIV_RT") |> 
+  select(qseqid, qstart, qend)
+
+sample_rt <- subseq(
+  all_hiv_genome[str_detect(names(all_hiv_genome), sample1$qseqid)],
+  start = sample1$qstart,
+  end = sample1$qend
+)
+```
+
+We've done this process above, but for other genes, we'd need to write a function to change `HIV_RT` to the others.
+
+### Translate {#translate}
+Just for demonstration purposes:
+
+
+``` r
+#### Take note, this entire code chunk is not needed !!! 
+seq_length <- sample1$qend - sample1$qstart + 1
+adjusted_length <- seq_length - (seq_length %% 3)
+
+sample_rt <- subseq(
+  all_hiv_genome[str_detect(names(all_hiv_genome), sample1$qseqid)],
+  start = sample1$qstart,
+  end = sample1$qstart + adjusted_length - 1
+)
+
+(sample_rt_t <- translate(sample_rt, if.fuzzy.codon = "solve"))  
+```
+
+![](translate_sample.png)
+The reason we had to adjust length, sometimes, is that the sequence may not be perfectly divisible by 3. Since codons are groups of 3 nucleotides, any extra nucleotides that don't form a complete codon would lead to an incomplete translation. By adjusting the length to be divisible by 3, we ensure that the translation process can proceed without any issues. During translation process, we could also use `solve` to handle any fuzzy codons that may arise due to sequencing errors or ambiguities in the nucleotide sequence. This ensures that the translation process can still proceed even if there are some uncertainties in the input sequence. 
+
+But in reality, we can align them directly from our DNA sequence with the help of DECIPHER, it will align the translated AA! 
+
+### Align Translation & Assess Mutation {#align}
+
+``` r
+# this automatically translate aligned seq into aligned AA, sweet !!! 
+alignseq <- AlignTranslation(c(rt_sequence,sample_rt), type="AAStringSet")
+
+# turn alignment into matrix
+align_matrix <- as.matrix(alignseq)
+
+# extract alignment on both ref and sample
+ref_seq <- align_matrix[1,]
+sample_seq <- align_matrix[2,]
+
+# find position where there is mutation
+mutation_positions <- which(ref_seq != sample_seq & ref_seq != "-" & sample_seq != "-")
+
+# load into dataframe
+mutations <- data.frame(
+  position = mutation_positions,
+  reference = ref_seq[mutation_positions],
+  sample = sample_seq[mutation_positions],
+  mutation = paste0(ref_seq[mutation_positions], mutation_positions, sample_seq[mutation_positions])
+) |>
+  mutate(position_replace = paste0(position,sample))
+
+mutations$mutation
+```
+
+![](mutation.png)
+
+Lots of mutations. HIV viruses are notorious for SNPs which may or may not be clinically significant. And with just a single nucleotide mutation, as you can see the translated amino acid could be different from reference. OK, since we know how to change for mutations, how do we know if this is the same as Stanford HIVdb? Let's copy and paste the entire genome of this sample and paste it [here](https://hivdb.stanford.edu/hivdb/by-sequences/)
+
+
+``` r
+## easy way of copying to system so we can paste on Stanford website (link above)
+all_hiv_genome[str_detect(names(all_hiv_genome),"U63632.1")] |> as.character() |> clipr::write_clip()
+```
+
+![](stanford.png)
+
+Not too shabby! The one mutation that is significant is `M348I`. We were able to capture that, not too shabby! Now, how do we go from here to the inferred susceptibility of NRTIs and NNRTIs? In come the mutation score algorithm!
+
+### Calculate Mutation Score
+
+This part is very interesting. My initial trial was using their [genotype-phenotype DRMcv model]((https://hivdb.stanford.edu/download/GenoPhenoDatasets/DRMcv.R) but I couldn't reproduce most of the results. And realized that [Stanford HIVdb Sequance Analysis](https://hivdb.stanford.edu/hivdb/by-sequences/) uses [another algorithm](https://hivdb.stanford.edu/page/release-notes/). And this algorithm, at least for the final product, is more straight forward than trying to use a model to reproduce a prediction, which was what the DRMcv was using `glmnet` and `lasso`. There is also [extensive documentation](https://cms.hivdb.org/prod/downloads/release-notes/genotypic-resistance-test-interpretation-system-oct2019.pdf). All of the `csv` files below were obtained from the links provided from the documentation. Let's code!
+
+<details>
+<summary>code</summary>
+
+``` r
+load_hivdb <- function(dataset, mutations){
+  
+if (dataset=="NRTI") {  
+mut_score <- read_csv("hivdb_nrti_single.csv")
+mut_score_combo <- read_csv("hivdb_nrti_combo.csv")
+n <- 2
+m <- 4
+}
+
+if (dataset=="NNRTI") {
+  mut_score <- read_csv("hivdb_nnrti_single.csv")
+  mut_score_combo <- read_csv("hivdb_nnrti_combo.csv")
+  n <- 2
+  m <- 2
+}  
+  
+if (dataset=="PI") {
+    mut_score <- read_csv("hivdb_pi_single.csv")
+    mut_score_combo <- read_csv("hivdb_pi_combo.csv")
+    n <- 2
+    m <- 3
+}  
+  
+if (dataset=="INSTI") {
+  mut_score <- read_csv("hivdb_insti_single.csv")
+  mut_score_combo <- read_csv("hivdb_insti_combo.csv")
+  n <- 2
+  m <- 3
+  
+}
+
+mut_interest <- c()
+for (mut_i in mut_score |> pull(Rule)) { 
+    add_mut <- F
+    add_mut <-  mut_i %in% (mutations |> pull(mutation))
+    if (add_mut) {
+      mut_interest <- c(mut_interest, mut_i)
+    }
+    
+}
+
+if (length(mut_interest)==0) {
+  return(mut_score |> 
+           slice_sample(n = 0) |>  # Get 0 rows but keep structure
+           select(-1) |> 
+           summarise(across(everything(), ~0)) |>
+            pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+            mutate(levels = case_when(
+              score <= 9 ~ 1,
+              score >= 10 & score <= 14 ~ 2,
+              score >= 15 & score <= 29 ~ 3,
+              score >= 30 & score <= 59 ~ 4,
+              score >= 60 ~ 5
+            )) |>
+            mutate(interpretation = case_when(
+              levels == 1 ~ "susceptible",
+              levels == 2 ~ "potential low-level resistance",
+              levels == 3 ~ "low-level resistance",
+              levels == 4 ~ "intermediate resistance",
+              levels == 5 ~ "high-level resistance"
+            )))
+}
+
+mut_combo_vec <- mut_score_combo |> 
+  pull(combination_rule) |>
+  paste(collapse = " + ") |>
+  str_split(" \\+ ") |> 
+  unlist() |>
+  unique()
+
+mut_combo_idx <- mut_combo_vec %in% (mutations |> pull(mutation))
+
+# Function to sort mutations by position number
+sort_mutations <- function(mutation_string) {
+  # Split the string by " + "
+  positions <- str_extract(mutation_string, "\\d+") |> as.numeric()
+  
+  # Sort mutations by their positions
+  sorted_mutations <- mutation_string[order(positions)]
+  
+  return(sorted_mutations)
+}
+
+mut_combo_seq <- sort_mutations(mut_combo_vec[mut_combo_idx])
+
+# Function to create combinations of a given size
+create_combinations <- function(mutations_, size) {
+  combn(mutations_, size, FUN = function(x) paste(x, collapse = " + "), simplify = TRUE)
+}
+
+if (length(mut_combo_seq)==1) { 
+  mut_score_sum <- mut_score |>
+    filter(Rule %in% mut_interest) |>
+    select(-1) |>
+    summarize(across(everything(), sum)) |>
+    pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+  
+  } else {
+
+# Generate combinations of size 2, 3, and 4
+all_combinations <- map(n:m, ~create_combinations(mut_combo_seq, .x)) |> 
+  unlist()
+
+# filter from mut_score_combo
+mut_score_combo_df <- mut_score_combo |>
+  filter(combination_rule %in% all_combinations) |>
+  rename(Rule = combination_rule)
+
+# sum single + combo
+mut_score_sum <- mut_score |>
+  filter(Rule %in% mut_interest) |>
+  bind_rows(mut_score_combo_df) |>
+  select(-1) |>
+  summarize(across(everything(), sum)) |>
+  pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+}
+
+return(mut_score_sum)
+}
+
+(nrti <- load_hivdb("NRTI", mutations))
+(nnrti <- load_hivdb("NNRTI", mutations))
+```
+</details>
+
+<p align="center">
+  <img src="nrti_mut.png" alt="image" width="60%" height="auto">
+</p>
+
+<p align="center">
+  <img src="nnrti_mut.png" alt="image" width="60%" height="auto">
+</p>
+
+Wow, long code but we were able to reproduce the same score as Stanford HIVdb! Not too shabby. Take note that if certain mutations exist together, there is another table that shows additional penalty score! For example, if our sequence contain `M41L + T215FY` mutation, the total mutation score for TDF is `5+10+10=25`, it's not just `5+10`. [see here for full table](https://hivdb.stanford.edu/dr-summary/mut-scores/NRTI/). 
+
+Now, we just need to repeat this for PR and IN, write it in a pipeline and there you have it! Let's look at their official web service via `sierrapy` and then see if we can reproduce with our algorithm!
+
+<br>
+
+### Stanford Sierrapy {#stanford}
+Let's explore a much simpler and expert-driven approach. Let's try Stanford HIVdb's SierraPy, their python equivalent. This uses their web service, hence will need internet and also need to send sequence as well. Very fast. 
+
+
+``` bash
+# install
+pip install sierrapy
+```
+
+
+``` r
+# write fasta of sample of interest, let's take a look at KJ849778.1
+all_hiv_genome[all_hiv_genome |> names() |> str_detect("KJ849778.1")] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+
+![](sierrapy.png)
+
+Alright. 🤔 with 3 lines of code after you have an assembled HIV whole genome, Sierra web service via [`Sierrapy`](https://github.com/hivdb/sierra-client/tree/master/python) will provide you the susceptibility interpretation within seconds! The json also provides you with the alignments as well! You do need internet for this thought, if you're looking for local interpretation then can look into [`Sierra Local`](https://github.com/PoonLab/sierra-local). There are lots of ways to get to this without having the have heavy codes like we did! lol, but it's great to know how it works under the hood! 
+
+Now, since we know what Stanford HIVdb shows, let's see if our algorithm will return the same result!
+
+<details>
+<summary>code</summary>
+
+``` r
+extract_align <- function(sample,class) {
+  
+if (!exists("hxb2_genome")) { stop("you need load/enter hxb2_genome") } 
+  
+sample1 <- all_hiv_sample |>
+  filter(str_detect(qseqid, sample)) |> 
+  filter(sseqid == class) |> 
+  select(qseqid, qstart, qend)
+
+sample_rt <- subseq(
+  all_hiv_genome[str_detect(names(all_hiv_genome), sample1$qseqid)],
+  start = sample1$qstart,
+  end = sample1$qend
+)
+
+
+## locate the genes
+if (class == "HIV_RT") { rt_sequence <- subseq(hxb2_genome, start = 2550, end = 4229) }
+if (class == "HIV_PR") { rt_sequence <- subseq(hxb2_genome, start = 2253, end = 2549) }
+if (class == "HIV_INT") { rt_sequence <- subseq(hxb2_genome, start = 4230, end = 5093) }
+
+# this automatically translate aligned seq into aligned AA, sweet !!! 
+alignseq <- AlignTranslation(c(rt_sequence,sample_rt), type="AAStringSet", verbose = F)
+
+# turn alignment into matrix
+align_matrix <- as.matrix(alignseq)
+
+# extract alignment on both ref and sample
+ref_seq <- align_matrix[1,]
+sample_seq <- align_matrix[2,]
+
+# find position where there is mutation
+mutation_positions <- which(ref_seq != sample_seq & ref_seq != "-" & sample_seq != "-")
+
+# load into dataframe
+mutations <- data.frame(
+  position = mutation_positions,
+  reference = ref_seq[mutation_positions],
+  sample = sample_seq[mutation_positions],
+  mutation = paste0(ref_seq[mutation_positions], mutation_positions, sample_seq[mutation_positions])
+) |>
+  mutate(position_replace = paste0(position,sample))
+
+return(mutations)
+}
+
+load_hivdb <- function(dataset, mutations){
+  
+if (dataset=="NRTI") {  
+mut_score <- read_csv("hivdb_nrti_single.csv")
+mut_score_combo <- read_csv("hivdb_nrti_combo.csv")
+n <- 2
+m <- 4
+}
+
+if (dataset=="NNRTI") {
+  mut_score <- read_csv("hivdb_nnrti_single.csv",show_col_types = FALSE)
+  mut_score_combo <- read_csv("hivdb_nnrti_combo.csv",show_col_types = FALSE)
+  n <- 2
+  m <- 2
+}  
+  
+if (dataset=="PI") {
+    mut_score <- read_csv("hivdb_pi_single.csv",show_col_types = FALSE)
+    mut_score_combo <- read_csv("hivdb_pi_combo.csv",show_col_types = FALSE)
+    n <- 2
+    m <- 3
+}  
+  
+if (dataset=="INSTI") {
+  mut_score <- read_csv("hivdb_insti_single.csv",show_col_types = FALSE)
+  mut_score_combo <- read_csv("hivdb_insti_combo.csv",show_col_types = FALSE)
+  n <- 2
+  m <- 3
+  
+}
+
+mut_interest <- c()
+for (mut_i in mut_score |> pull(Rule)) { 
+    add_mut <- F
+    add_mut <-  mut_i %in% (mutations |> pull(mutation))
+    if (add_mut) {
+      mut_interest <- c(mut_interest, mut_i)
+    }
+    
+}
+
+if (length(mut_interest)==0) {
+  return(mut_score |> 
+           slice_sample(n = 0) |>  # Get 0 rows but keep structure
+           select(-1) |> 
+           summarise(across(everything(), ~0)) |>
+            pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+            mutate(levels = case_when(
+              score <= 9 ~ 1,
+              score >= 10 & score <= 14 ~ 2,
+              score >= 15 & score <= 29 ~ 3,
+              score >= 30 & score <= 59 ~ 4,
+              score >= 60 ~ 5
+            )) |>
+            mutate(interpretation = case_when(
+              levels == 1 ~ "susceptible",
+              levels == 2 ~ "potential low-level resistance",
+              levels == 3 ~ "low-level resistance",
+              levels == 4 ~ "intermediate resistance",
+              levels == 5 ~ "high-level resistance"
+            )))
+}
+
+mut_combo_vec <- mut_score_combo |> 
+  pull(combination_rule) |>
+  paste(collapse = " + ") |>
+  str_split(" \\+ ") |> 
+  unlist() |>
+  unique()
+
+mut_combo_idx <- mut_combo_vec %in% (mutations |> pull(mutation))
+
+# Function to sort mutations by position number
+sort_mutations <- function(mutation_string) {
+  # Split the string by " + "
+  positions <- str_extract(mutation_string, "\\d+") |> as.numeric()
+  
+  # Sort mutations by their positions
+  sorted_mutations <- mutation_string[order(positions)]
+  
+  return(sorted_mutations)
+}
+
+mut_combo_seq <- sort_mutations(mut_combo_vec[mut_combo_idx])
+
+# Function to create combinations of a given size
+create_combinations <- function(mutations_, size) {
+  combn(mutations_, size, FUN = function(x) paste(x, collapse = " + "), simplify = TRUE)
+}
+
+if (length(mut_combo_seq)==1) { 
+  mut_score_sum <- mut_score |>
+    filter(Rule %in% mut_interest) |>
+    select(-1) |>
+    summarize(across(everything(), sum)) |>
+    pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+  
+  } else {
+
+# Generate combinations of size 2, 3, and 4
+all_combinations <- map(n:m, ~create_combinations(mut_combo_seq, .x)) |> 
+  unlist()
+
+# filter from mut_score_combo
+mut_score_combo_df <- mut_score_combo |>
+  filter(combination_rule %in% all_combinations) |>
+  rename(Rule = combination_rule)
+
+# sum single + combo
+mut_score_sum <- mut_score |>
+  filter(Rule %in% mut_interest) |>
+  bind_rows(mut_score_combo_df) |>
+  select(-1) |>
+  summarize(across(everything(), sum)) |>
+  pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+}
+
+return(mut_score_sum)
+}
+```
+
+
+
+``` r
+hiv_genotype <- function(sample="KJ849778.1") {
+class_group <- c("HIV_RT","HIV_PR","HIV_INT")
+for (class in class_group) {
+  mutations <- extract_align(sample, class)
+  if (class == "HIV_RT") {
+    print(load_hivdb("NRTI",mutations))
+    print(load_hivdb("NNRTI",mutations))
+  }
+  if (class == "HIV_PR") {
+    print(load_hivdb("PI",mutations))
+  }
+  if (class == "HIV_INT") {
+    print(load_hivdb("INSTI",mutations))
+  } 
+}
+}
+```
+</details>
+
+
+<p align="center">
+  <img src="our_algo.png" alt="image" width="50%" height="auto">
+</p>
+
+WHAT !?!?! My algorithm failed 💔 !!! ❌❌❌ Noooo...!!! Ths iis very odd. Let's inspect! 
+
+Let's pick RT and inspect. 
+
+
+``` r
+sample <- "KJ849778.1"
+mutations <- extract_align(class = "HIV_RT", sample = sample)
+mutations |> pull(mutation)
+```
+
+![](inspect1.png)
+
+Let's look at Stanford's
+
+![](inspect1_ref.png)
+Do you see what i'm seeing? Our aligned AA has a lot of `X`'s and these X's coincide with Stanford's. For example `M184X` on ours is Stanford's `M184MI`. Our `G190X` is their `G190EKR`. 🤔 And some of the mutations are the same, so it's not a frame issue. Oh wait !!! All `X`'s because we cannot assess what exactly the amino acid is, we can't tell if there is mutation at all, hence we assume it could be any !?! That total makes sense! That means we'll have to incorporate this into our algorithm! And also, not shown here, if there is missing, algorithm should also choose the max mutation score as penalty. Now let's implement that!
+
+
+<details>
+<summary>code</summary>
+
+``` r
+load_hivdb <- function(dataset, mutations){
+  
+if (dataset=="NRTI") {  
+mut_score <- read_csv("hivdb_nrti_single.csv")
+mut_score_combo <- read_csv("hivdb_nrti_combo.csv")
+n <- 2
+m <- 4
+}
+
+if (dataset=="NNRTI") {
+  mut_score <- read_csv("hivdb_nnrti_single.csv",show_col_types = FALSE)
+  mut_score_combo <- read_csv("hivdb_nnrti_combo.csv",show_col_types = FALSE)
+  n <- 2
+  m <- 2
+}  
+  
+if (dataset=="PI") {
+    mut_score <- read_csv("hivdb_pi_single.csv",show_col_types = FALSE)
+    mut_score_combo <- read_csv("hivdb_pi_combo.csv",show_col_types = FALSE)
+    n <- 2
+    m <- 3
+}  
+  
+if (dataset=="INSTI") {
+  mut_score <- read_csv("hivdb_insti_single.csv",show_col_types = FALSE)
+  mut_score_combo <- read_csv("hivdb_insti_combo.csv",show_col_types = FALSE)
+  n <- 2
+  m <- 3
+  
+}
+
+mut_interest <- c()
+
+# check if there is X
+if (sum(mutations |> pull(mutation) |> str_detect("X$")) > 0) {
+  mutations_vec <- str_replace(mutations |> pull(mutation), pattern = "X", replacement = "")
+} else { 
+  mutations_vec <- mutations |> pull(mutation)}
+
+for (mut_i in mut_score |> pull(Rule)) { 
+    add_mut <- F
+    add_mut <-  str_detect(mut_i, paste(mutations_vec,collapse="|"))
+    if (add_mut) {
+      mut_interest <- c(mut_interest, mut_i)
+    }
+    
+}
+
+if (length(mut_interest)==0) {
+  return(mut_score |> 
+           slice_sample(n = 0) |>  # Get 0 rows but keep structure
+           select(-1) |> 
+           summarise(across(everything(), ~0)) |>
+            pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+            mutate(levels = case_when(
+              score <= 9 ~ 1,
+              score >= 10 & score <= 14 ~ 2,
+              score >= 15 & score <= 29 ~ 3,
+              score >= 30 & score <= 59 ~ 4,
+              score >= 60 ~ 5
+            )) |>
+            mutate(interpretation = case_when(
+              levels == 1 ~ "susceptible",
+              levels == 2 ~ "potential low-level resistance",
+              levels == 3 ~ "low-level resistance",
+              levels == 4 ~ "intermediate resistance",
+              levels == 5 ~ "high-level resistance"
+            )))
+}
+
+mut_combo_vec <- mut_score_combo |> 
+  pull(combination_rule) |>
+  paste(collapse = " + ") |>
+  str_split(" \\+ ") |> 
+  unlist() |>
+  unique()
+
+mut_combo_idx <- mut_combo_vec %in% (mutations |> pull(mutation))
+
+# Function to sort mutations by position number
+sort_mutations <- function(mutation_string) {
+  # Split the string by " + "
+  positions <- str_extract(mutation_string, "\\d+") |> as.numeric()
+  
+  # Sort mutations by their positions
+  sorted_mutations <- mutation_string[order(positions)]
+  
+  return(sorted_mutations)
+}
+
+mut_combo_seq <- sort_mutations(mut_combo_vec[mut_combo_idx])
+
+
+# Function to create combinations of a given size
+create_combinations <- function(mutations_, size) {
+  combn(mutations_, size, FUN = function(x) paste(x, collapse = " + "), simplify = TRUE)
+}
+
+if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")) > 0) { 
+  mut_score_sum <- mut_score |>
+    filter(Rule %in% mut_interest) |>
+    mutate(Rule_x = str_extract(Rule, "^[A-Z]{1}[0-9]+")) |>
+    # distinct(Rule_x, .keep_all = T) |>
+    group_by(Rule_x) |>
+    summarize(across(everything(),max)) |>
+    select(-Rule,-Rule_x) |>
+    summarize(across(everything(), sum)) |>
+    pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+  
+  } else {
+
+# Generate combinations of size 2, 3, and 4
+if (m > length(mut_combo_seq)) { m <- length(mut_combo_seq) }
+all_combinations <- map(n:m, ~create_combinations(mut_combo_seq, .x)) |> 
+  unlist()
+
+# filter from mut_score_combo
+mut_score_combo_df <- mut_score_combo |>
+  filter(combination_rule %in% all_combinations) |>
+  rename(Rule = combination_rule)
+
+# sum single + combo
+mut_score_sum <- mut_score |>
+  filter(Rule %in% mut_interest) |>
+  bind_rows(mut_score_combo_df) |>
+  select(-1) |>
+  summarize(across(everything(), sum)) |>
+  pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+    mutate(levels = case_when(
+      score <= 9 ~ 1,
+      score >= 10 & score <= 14 ~ 2,
+      score >= 15 & score <= 29 ~ 3,
+      score >= 30 & score <= 59 ~ 4,
+      score >= 60 ~ 5
+    )) |>
+    mutate(interpretation = case_when(
+      levels == 1 ~ "susceptible",
+      levels == 2 ~ "potential low-level resistance",
+      levels == 3 ~ "low-level resistance",
+      levels == 4 ~ "intermediate resistance",
+      levels == 5 ~ "high-level resistance"
+    ))
+}
+
+return(mut_score_sum)
+}
+
+hiv_genotype()
+```
+</details>
+
+<p align="center">
+  <img src="try2.png" alt="image" width="60%" height="auto">
+</p>
+
+Not too shabby! Now our NNRTI and PI look exactly the same! But our INSTI is not great! Mainly because there are a quite a few deletions that our alignment and their alignments don't agree. 
+
+Let's try another genome and see if our algorithm agrees with Stanford's
+
+### Trial 1 ✅ {#trial1}
+#### Our code
+
+``` r
+sample <- sample(all_hiv_genome,1) |> names() |> str_split(" ") |> unlist() |> _[1]
+hiv_genotype(sample = sample)
+```
+
+<p align="center">
+  <img src="final1.png" alt="image" width="60%" height="auto">
+</p>
+
+#### Stanford's
+
+``` r
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample)] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+
+![](final1_sierra.png)
+Alright! Not too shabby! That was `AY900571.2` accession.
+
+### Trial 2 ✅ {#trial2}
+Let's try another one.
+
+#### Our code
+<details>
+<summary>code</summary>
+
+``` r
+sample <- sample(all_hiv_genome,1) |> names() |> str_split(" ") |> unlist() |> _[1]
+hiv_genotype(sample = sample)
+```
+</details>
+
+<p align="center">
+  <img src="final2.png" alt="image" width="50%" height="auto">
+</p>
+
+
+#### Stanford's
+
+<details>
+<summary>code</summary>
+
+``` r
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample)] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+</details>
+
+![](final2_sierra.png)
+
+Awesome! No resistance at all! That was `FM877777.1`. Let's give another a go! 
+
+### Trial 3 ✅ {#trial3}
+#### Our code
+<details>
+<summary>code</summary>
+
+``` r
+sample <- sample(all_hiv_genome,1) |> names() |> str_split(" ") |> unlist() |> _[1]
+hiv_genotype(sample = sample)
+```
+</details>
+
+<p align="center">
+  <img src="final3.png" alt="image" width="60%" height="auto">
+</p>
+
+#### Stanford's
+<details>
+<summary>code</summary>
+
+``` r
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample)] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+</details>
+
+![](final3_sierra.png)
+
+There you go! Our algorithm works! That was `EU448295.1`. Let's do another one!
+
+### Trial 4 ✅ {#trial4}
+#### Our code
+<details>
+<summary>code</summary>
+
+``` r
+sample <- sample(all_hiv_genome,1) |> names() |> str_split(" ") |> unlist() |> _[1]
+hiv_genotype(sample = sample)
+```
+</details>
+
+<p align="center">
+  <img src="final4.png" alt="image" width="60%" height="auto">
+</p>
+
+#### Stanford's
+<details>
+<summary>code</summary>
+
+``` r
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample)] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+</details>
+
+![](final4_sierra.png)
+
+There you go! Our algorithm works again! That was `EU735539.1`. Let's do our last one.
+
+### Trial 5 ✅ {#trial5}
+#### Our code
+<details>
+<summary>code</summary>
+
+``` r
+sample <- sample(all_hiv_genome,1) |> names() |> str_split(" ") |> unlist() |> _[1]
+hiv_genotype(sample = sample)
+```
+</details>
+
+<p align="center">
+  <img src="final5.png" alt="image" width="60%" height="auto">
+</p>
+
+#### Stanford's
+<details>
+<summary>code</summary>
+
+``` r
+all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample)] |> writeXStringSet("hiv_test.fasta")
+
+# run sierrapy input fasta
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+
+# read json output
+jsonlite::read_json("hiv_test_output.0.json", simplifyVector = T)$drugResistance[[1]][3]$drugScores
+```
+</details>
+
+![](final5_sierra.png)
+
+That was `AF443091.1`. And 5 of 5 correct ✅ !  Hurray !!!!
+
+## Final Thoughts {#thoughts}
+Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  
+
+
+## Opportunities for Improvement {#opportunities}
+- Need to rewrite the interpretation code into a function so that we don't have to paste 3 different times or modify 3 different times on the `load_hivdb` function. 
+- Learn the exact algorithm sierra uses for alignment, especially when it comes to deletion/insertion
+- Look at `sierra-local` to see how they use `nucamino` to align and find mutations/indels
+- prettify the results with `gt`
+- include more ARTs
+- look into Stanford HIVdb NGS analysis
+
+
+## Lessons Learnt {#lessons}
+- We did use genotype-phenotype [DRMcv](https://hivdb.stanford.edu/download/GenoPhenoDatasets/DRMcv.R) but found the results not reproducible and also does not match the mutation interpretation results, probably user error.
+- After multiple attempts to align seq, map to reference, then translate, just found out that `DECIPHER::AlignTranslation()` does a better job at this! Don't use `AlignSeq` for aligning amino acids!
+- learnt that the position of M184V, K65R etc are RT, PR, IN gene specific! 
+- learnt that Stanford HIVdb assumes mutation of different variants if `X`. For example, if `M184X` then it could be `M184I` or `M184V`, assume the worst case scenario and assign the max mutation score for that position.
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
