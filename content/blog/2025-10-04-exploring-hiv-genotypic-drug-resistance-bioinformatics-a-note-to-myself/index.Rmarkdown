@@ -1101,7 +1101,7 @@ df_our_own_drug <- df_our_own$ART
 
 all_hiv_genome[all_hiv_genome |> names() |> str_detect(sample_i)] |> writeXStringSet("hiv_test.fasta")
 
-system("/Users/kenkoonwong/miniforge3/bin/sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
+system("sierrapy fasta hiv_test.fasta -o hiv_test_output.json")
 
 # read json output
 
