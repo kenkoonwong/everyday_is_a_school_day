@@ -469,14 +469,37 @@ if (class == "HIV_PR") { rt_sequence <- subseq(hxb2_genome, start = 2253, end = 
 if (class == "HIV_INT") { rt_sequence <- subseq(hxb2_genome, start = 4230, end = 5093) }
 
 # this automatically translate aligned seq into aligned AA, sweet !!! 
-alignseq <- AlignTranslation(c(rt_sequence,sample_rt), type="AAStringSet", verbose = F)
+# alignseq <- AlignTranslation(c(rt_sequence,sample_rt), type="AAStringSet", verbose = F)
+
+alignseq_nt <- AlignSeqs(c(rt_sequence,sample_rt),verbose=F)
+ref_pos <- c()
+align_ref_seq <- as.matrix(alignseq_nt) |> _[1,] 
+
+for (i in 1:length(align_ref_seq)) {
+  if (align_ref_seq[i] %in% LETTERS) { ref_pos <- c(ref_pos, i) }
+}
+
+align_ref_seq2 <- align_ref_seq[ref_pos] |> paste(collapse="") |> DNAStringSet() 
+align_sample_seq <- as.matrix(alignseq_nt) |> _[2, ref_pos] |> str_replace("-","G") |> paste(collapse="") |> DNAStringSet() 
+
+alignseq <- AlignTranslation(c(align_ref_seq2,align_sample_seq), verbose=F, type = "AAStringSet")
+
+# which(align_ref_seq[ref_pos] != align_sample_seq)
+
 
 # turn alignment into matrix
 align_matrix <- as.matrix(alignseq)
 
 # extract alignment on both ref and sample
-ref_seq <- align_matrix[1,]
-sample_seq <- align_matrix[2,]
+for (i in 1:length(align_matrix[1,])) {
+  if (align_matrix[1,][i] %in% LETTERS) {
+    start_seq <- i
+    break
+  }
+}
+
+ref_seq <- align_matrix[1,start_seq:length(align_matrix[1,])]
+sample_seq <- align_matrix[2,start_seq:length(align_matrix[1,])]
 
 # find position where there is mutation
 mutation_positions <- which(ref_seq != sample_seq & ref_seq != "-" & sample_seq != "-")
@@ -693,7 +716,6 @@ Let's look at Stanford's
 ![](inspect1_ref.png)
 Do you see what i'm seeing? Our aligned AA has a lot of `X`'s and these X's coincide with Stanford's. For example `M184X` on ours is Stanford's `M184MI`. Our `G190X` is their `G190EKR`. 🤔 And some of the mutations are the same, so it's not a frame issue. Oh wait !!! All `X`'s because we cannot assess what exactly the amino acid is, we can't tell if there is mutation at all, hence we assume it could be any !?! That total makes sense! That means we'll have to incorporate this into our algorithm! And also, not shown here, if there is missing, algorithm should also choose the max mutation score as penalty. Now let's implement that!
 
-
 <details>
 <summary>code</summary>
 
@@ -716,13 +738,23 @@ if (dataset=="NNRTI") {
   
 if (dataset=="PI") {
     mut_score <- read_csv("hivdb_pi_single.csv",show_col_types = FALSE)
-    mut_score_combo <- read_csv("hivdb_pi_combo.csv",show_col_types = FALSE)
+    mut_score_combo <- read_csv("hivdb_pi_combo.csv",show_col_types = FALSE) |>
+      rename(`ATV/r`=ATV_r,`DRV/r`=DRV_r,`LPV/r`=LPV_r)
     n <- 2
     m <- 3
 }  
   
 if (dataset=="INSTI") {
-  mut_score <- read_csv("hivdb_insti_single.csv",show_col_types = FALSE)
+  mut_score <- read_csv("hivdb_insti_single.csv",show_col_types = FALSE) 
+  l74 <- mut_score |>
+    filter(str_detect(Rule,"L74")) |>
+    select(-Rule) 
+  l74_2 <- tibble(Rule = c("L74M","L74F")) |>
+    bind_cols(l74)
+  mut_score <- mut_score |> 
+    filter(!str_detect(Rule, "L74")) |>
+    bind_rows(l74_2)
+    
   mut_score_combo <- read_csv("hivdb_insti_combo.csv",show_col_types = FALSE)
   n <- 2
   m <- 3
@@ -752,6 +784,12 @@ if (length(mut_interest)==0) {
            select(-1) |> 
            summarise(across(everything(), ~0)) |>
             pivot_longer(cols = everything(), names_to = "ART", values_to = "score") |>
+                   mutate(ART = case_when(
+      ART == "ATV_r" ~ "ATV/r",
+      ART == "DRV_r" ~ "DRV/r",
+      ART == "LPV_r" ~ "LPV/r",
+      TRUE ~ ART
+    )) |>
             mutate(levels = case_when(
               score <= 9 ~ 1,
               score >= 10 & score <= 14 ~ 2,
@@ -796,7 +834,8 @@ create_combinations <- function(mutations_, size) {
   combn(mutations_, size, FUN = function(x) paste(x, collapse = " + "), simplify = TRUE)
 }
 
-if (length(mut_combo_seq)==1|sum(mutations |> pull(mutation) |> str_detect("X$")) > 0) { 
+#sum(mutations |> pull(mutation) |> str_detect("X$")) > 0
+if (length(mut_combo_seq)==1) { 
   mut_score_sum <- mut_score |>
     filter(Rule %in% mut_interest) |>
     mutate(Rule_x = str_extract(Rule, "^[A-Z]{1}[0-9]+")) |>
@@ -1055,8 +1094,12 @@ That was `AF443091.1`. And 5 of 5 correct ✅ !  Hurray !!!!
 
 
 
-We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494), removed 16 due to NA (either our algo or Sierra returned NA). Found 89.5% full agreement (n=428), full agreement meaning 0 deviation of level of any ART from both algorithm. Not too shabby at all! Definitely not good enough for clinical interpretation. I suspect this is mainly alignment and also code related. 
+We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494). Found 96.2% full agreement (n=475), meaning 0 deviation of level of any ART from both algorithm on the same genome sample. Not too shabby at all! I suspect the 3.4% is mainly alignment issues. I had initially used `AlignTranslation` prior to sequence alignemtn and it only gave me 89% agreement. Found out that I had to create my own function to align it properly (align DNA sequence first, then use reference sequence repositioning and extract sample sequence, then aligntranslate). I also found out that INSTI mutation score table is missing something.
 
+#### Investigation
+
+
+![](plot.png)
 
 ## Final Thoughts {#thoughts}
 Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  
