@@ -29,10 +29,10 @@ tags:
 - DECIPHER
 - sierrapy
 - sierra
-excerpt: "Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it"
+excerpt: "Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it. We went from agreement of 89% to 99.8% after different methods of alignment"
 ---
 
-> Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it
+> Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it. We went from agreement of 89% to 99.8% after different methods of alignment
 
 ![](hiv.jpg)
 
@@ -52,6 +52,8 @@ We've all learnt and memorize what those letters and numbers mean when it comes 
   - [Trial 3](#trial3)
   - [Trial 4](#trial4)
   - [Trial 5](#trial5)
+  - [Asess all](#all)
+  - [nucamino pipeline](#nucamino)
 - [Final Thoughts](#thoughts)
 - [Opportunities for improvement](#opportunity)
 - [Lessons Learnt](#lessons)
@@ -1094,12 +1096,35 @@ That was `AF443091.1`. And 5 of 5 correct ✅ !  Hurray !!!!
 
 
 
+### Assess All {#all}
 We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494). Found 96.2% full agreement (n=475), meaning 0 deviation of level of any ART from both algorithm on the same genome sample. Not too shabby at all! I suspect the 3.4% is mainly alignment issues. I had initially used `AlignTranslation` prior to sequence alignemtn and it only gave me 89% agreement. Found out that I had to create my own function to align it properly (align DNA sequence first, then use reference sequence repositioning and extract sample sequence, then aligntranslate). I also found out that INSTI mutation score table is missing something.
 
-#### Investigation
+### Investigation {#investigation}
 
 
 ![](plot.png)
+### Writing a Pipeline with Nucamino {#nucamino}
+#### Install nucamino
+
+``` bash
+# Clone the repository
+git clone https://github.com/hivdb/nucamino.git
+cd nucamino
+
+# Initialize Go modules (if needed)
+go mod init github.com/hivdb/nucamino 2>/dev/null || true
+go mod tidy
+
+# Build the binary
+go build -o nucamino ./cmd/nucamino
+```
+
+After using nucamino for alignment, we were able to get reproducibility up to 99.8% (n=493)!!! Alright! I found out that I've been missing `del` as part of NRTI mutation penalty. And the last one `DQ167215.1`, I couldn't really get it to work. I wonder if that has something to do with frameshift, which I haven't figured out how nucamino handles that. 
+
+
+
+
+
 
 ## Final Thoughts {#thoughts}
 Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  

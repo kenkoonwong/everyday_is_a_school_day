@@ -29,10 +29,10 @@ tags:
 - DECIPHER
 - sierrapy
 - sierra
-excerpt: "Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it"
+excerpt: "Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it. We went from agreement of 89% to 99.8% after different methods of alignment"
 ---
 
-> Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it
+> Ever wondered what M184V, K65R actually mean? I learnt it from rebuilding Stanford's HIV resistance algorithm from scratch to find out. Spoiler: it took tons of code to match their 3-line tool. But the lesson was worth it. We went from agreement of 89% to 99.8% after different methods of alignment
 
 ![](hiv.jpg)
 
@@ -52,6 +52,8 @@ We've all learnt and memorize what those letters and numbers mean when it comes 
   - [Trial 3](#trial3)
   - [Trial 4](#trial4)
   - [Trial 5](#trial5)
+  - [Asess all](#all)
+  - [nucamino pipeline](#nucamino)
 - [Final Thoughts](#thoughts)
 - [Opportunities for improvement](#opportunity)
 - [Lessons Learnt](#lessons)
@@ -1154,9 +1156,10 @@ count |>
 load("hiv_ownalgo_sierra2.rda")
 ```
 
+### Assess All {#all}
 We did rewrite some of the functions (not shown here), compared our algorithm and Sierra's of all the downaloded HIV genome fastas with complete RT, PR, INT positions from blast (n=494). Found 96.2% full agreement (n=475), meaning 0 deviation of level of any ART from both algorithm on the same genome sample. Not too shabby at all! I suspect the 3.4% is mainly alignment issues. I had initially used `AlignTranslation` prior to sequence alignemtn and it only gave me 89% agreement. Found out that I had to create my own function to align it properly (align DNA sequence first, then use reference sequence repositioning and extract sample sequence, then aligntranslate). I also found out that INSTI mutation score table is missing something.
 
-#### Investigation
+### Investigation {#investigation}
 ```{r,echo=F,eval=F}
 #### investigation
 nrti_drug <- c("ABC","AZT","3TC","FTC","TDF")
@@ -1185,7 +1188,7 @@ results |>
 not_acc <- results |> filter(levels_diff != 0) |> distinct(sample) |> pull()
 all_again <- results |> distinct(sample) |> pull()
 df_repeat <- df_repeat |> filter(ART == "")
-# sample <- "EU170137.1"
+# sample <- "AF077336.1"
 for (i in all_again) {
 df_ourown <- hiv_genotype_df(i)
 df_sierra_saved <- results |> filter(sample == i) |> select(ART, levels.y, score.y, interpretation.y)
@@ -1239,6 +1242,153 @@ df_repeat |>
 ```
 
 ![](plot.png)
+### Writing a Pipeline with Nucamino {#nucamino}
+#### Install nucamino
+```{bash, eval=F}
+# Clone the repository
+git clone https://github.com/hivdb/nucamino.git
+cd nucamino
+
+# Initialize Go modules (if needed)
+go mod init github.com/hivdb/nucamino 2>/dev/null || true
+go mod tidy
+
+# Build the binary
+go build -o nucamino ./cmd/nucamino
+```
+
+After using nucamino for alignment, we were able to get reproducibility up to 99.8% (n=493)!!! Alright! I found out that I've been missing `del` as part of NRTI mutation penalty. And the last one `DQ167215.1`, I couldn't really get it to work. I wonder if that has something to do with frameshift, which I haven't figured out how nucamino handles that. 
+
+```{r,eval=F,echo=F}
+sample <- "MF373180.1"
+all_hiv_genome[str_detect(names(all_hiv_genome),sample)] |> as.character() |> clipr::write_clip()
+# recreate hiv_genotype
+hiv_genotype_df_nucamino <- function(sample="KJ849778.1") {
+
+all_hiv_genome[str_detect(names(all_hiv_genome),sample)] |> writeXStringSet("test_nucamino.fasta")
+system("/Users/kenkoonwong/Downloads/nucamino/nucamino align hiv1b pol -i test_nucamino.fasta -o nucamino_align.tsv")
+    
+class_group <- c("HIV_RT","HIV_PR","HIV_INT")
+nuca <- read_tsv("nucamino_align.tsv")
+mut_nuca <- nuca$`POL Mutations` |> str_split(",") |> _[[1]] |> str_extract(".*(?=:|-)")
+
+mutations2 <- tibble(origin=mut_nuca) |>
+  mutate(position=as.numeric(str_extract(origin, "[0-9]+"))-56) |> 
+  mutate(class = case_when(
+    position >= 1 & position <= 99 ~ "HIV_PR",
+    position >= 100 & position <= (560+99) ~ "HIV_RT",
+    position >= (561+99) & position <= 1003 ~ "HIV_INT"
+  )) |>
+  mutate(position = case_when(
+    class == "HIV_RT" ~ position - 99,
+    class == "HIV_INT" ~ position - 560 - 99,
+    TRUE ~ position
+  )) |> 
+  drop_na() |> 
+  mutate(reference = str_extract(origin, "^[A-Z]{1}"),
+         sample = str_extract(origin, "[A-Z_]+$")) |> 
+  mutate(sample = ifelse(sample=="X","Z",sample)) |>  # this is to replace X with something else 
+  mutate(sample = ifelse(is.na(sample),"del",sample)) |> 
+  mutate(mutation = paste0(reference,position,sample),
+         position_replace = paste0(position,sample)) |>
+  drop_na()
+
+### take care of more than 1 mutations
+pull_sample <- mutations2 |> pull(sample) 
+mutations_repeat <- mutations2 |> filter(origin == "")
+
+for (i in 1:length(pull_sample)) {
+  if (str_detect(pull_sample[i],"del")) { 
+    mutations_repeat <- mutations_repeat |> bind_rows(mutations2[i,]) 
+    next
+    }
+n <- nchar(pull_sample[i])
+sample_repeat <- str_split(pull_sample[i],"") |> unlist()
+mutations_repeat <- mutations_repeat |>
+  bind_rows(tibble(origin=mutations2[[i,"origin"]],position=mutations2[[i,"position"]],class=mutations2[[i,"class"]],reference=mutations2[[i,"reference"]],sample=sample_repeat) |> 
+              mutate(mutation = paste0(reference,position,sample),
+         position_replace = paste0(position,sample))) 
+}
+
+
+df_algo <- tibble(ART=as.character(),score=as.numeric(),levels=as.numeric(),interpretation=as.character())
+for (class in class_group) {
+  mutations <- mutations_repeat |>
+    filter(class == !!class)
+  if (class == "HIV_RT") {
+    df_algo <- df_algo |> rbind(load_hivdb("NRTI",mutations), load_hivdb("NNRTI",mutations))
+  }
+  if (class == "HIV_PR") {
+    df_algo <- df_algo |> rbind(load_hivdb("PI",mutations))
+  }
+  if (class == "HIV_INT") {
+    df_algo <- df_algo |> rbind(load_hivdb("INSTI",mutations))
+  } 
+}
+return(df_algo)
+}
+
+hiv_genotype_df_nucamino()
+```
+
+```{r,eval=F,echo=F}
+all_again <- results |> distinct(sample) |> pull()
+no_acc <- df_repeat |> filter(levels_diff != 0) |> distinct(sample) |> pull()
+# df_repeat_backup <- df_repeat
+df_repeat <- df_repeat |> filter(ART == "")
+# sample <- "DQ167215.1"
+for (i in no_acc) {
+df_ourown <- hiv_genotype_df_nucamino(i)
+df_sierra_saved <- results |> filter(sample == i) |> select(ART, levels.y, score.y, interpretation.y)
+# results |> filter(sample == !!sample)
+# all_hiv_genome[str_detect(names(all_hiv_genome),sample)] |> as.character() |> clipr::write_clip()
+df_repeat_i <- df_ourown |>
+  left_join(df_sierra_saved, by = "ART") |>
+  mutate(sample = i) |>
+  mutate(levels_diff = levels - levels.y)
+df_repeat <- df_repeat |>
+  bind_rows(df_repeat_i)
+}
+
+count <- df_repeat |> 
+  group_by(sample) |>
+  summarize(sum_levels_diff = sum(levels_diff)) |>
+  group_by(sum_levels_diff) |>
+  summarize(n = n())
+
+count |> 
+  mutate(good = case_when(
+  sum_levels_diff == 0 ~ 1,
+  TRUE ~ 0
+)) |>
+  group_by(good) |>
+  summarize(sum = sum(n)) |>
+  mutate(prop = sum*100/sum(sum))  
+
+df_repeat |>
+  filter(levels_diff != 0) |>
+  mutate(ART_class = case_when(
+    ART %in% nrti_drug ~ "NRTI",
+    ART %in% nnrti_drug ~ "NNRTI",
+    ART %in% pi_drug ~ "PI",
+    ART %in% insti_drug ~ "INSTI"
+  )) |> 
+  select(sample, levels_diff, ART_class) |>
+  mutate(levels_color = case_when(
+    levels_diff == 0 ~ "none",
+    levels_diff < 0 ~ "neg",
+    levels_diff > 0 ~ "pos"
+  )) |>
+  ggplot(aes(x=levels_diff,fill=levels_color)) +
+  geom_bar(alpha=0.5) +
+  scale_fill_manual(values = c("red","blue")) +
+  facet_wrap(.~ART_class) +
+  theme_bw() +
+  ggtitle("Investigating Disagreement With Agreement Filtered Out", subtitle = "Red means our algorithm under report level, blue means our algorithm over report level") +
+  theme(legend.position = "none") +
+  scale_x_continuous(breaks = seq(-4,4,1))
+```
+
 
 ## Final Thoughts {#thoughts}
 Hands down using `SierraPy` or `Sierra`-type app is the way to go, if we want reproducibility. There are options for local apps out there (see below). But learning to reproduce this really helps me understand the labeling of mutation and the way to get to susceptibility scoring better! It was a bumpy road, lots of trials, and lots more error and failure, but it ultimately it was a great learning experience. My respect for all these developers and researchers who have worked on this for years, really goes up! ❤️ It's not easy at all! Even with the help of LLM!  
