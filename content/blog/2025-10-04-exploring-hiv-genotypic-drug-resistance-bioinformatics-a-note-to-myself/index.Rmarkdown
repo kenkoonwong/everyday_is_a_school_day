@@ -1266,7 +1266,7 @@ all_hiv_genome[str_detect(names(all_hiv_genome),sample)] |> as.character() |> cl
 hiv_genotype_df_nucamino <- function(sample="KJ849778.1") {
 
 all_hiv_genome[str_detect(names(all_hiv_genome),sample)] |> writeXStringSet("test_nucamino.fasta")
-system("/Users/kenkoonwong/Downloads/nucamino/nucamino align hiv1b pol -i test_nucamino.fasta -o nucamino_align.tsv")
+system("nucamino align hiv1b pol -i test_nucamino.fasta -o nucamino_align.tsv")
     
 class_group <- c("HIV_RT","HIV_PR","HIV_INT")
 nuca <- read_tsv("nucamino_align.tsv")
