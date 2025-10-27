@@ -266,7 +266,8 @@ kable_df |>
 
 ```
 
-Challenging cases! Where we learn from others' experiences. Here is one from `InfectDiseaseAd` about a challenging case of disseminated histoplasmosis in an immunocompetent host. [source](https://bsky.app/profile/InfectDiseaseAd/post/3m3p4j3zjgs2s)le/boghuma.bsky.social/post/3m3n27xikns2o) 
+Challenging cases! Where we learn from others' experiences. 
+
 ![](https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:skpxj6dpacrxznfvwrpfdiw4/bafkreigcf6jbmsuclsdhmhtbakl7t42eulrnfp3yogiiot4erp7hje7rum@jpeg)
 
 Here `boghuma.bsky.social` shared first case of progressive pneumonia with bcx and resp cx growing Bacillus cereus, turned out to be Welder's Antrhax, an emerging entity that has caused 9 cases in Louisiana. Second case was AML w severe flank pain, with mold `Lichtheimia corymbifera` !?! Wow.
@@ -459,7 +460,7 @@ annotation_data2 |>
            background = "#90EE9050", bold = TRUE)
 ```
 
-All highlighted in green rows are significant after BH correction. You can see on the coefficient column, all are in the negative range, favoring Bluesky. 
+All highlighted in green rows are significant after BH correction. You can see on the coefficient column, all are in the negative range, favoring Bluesky. How do we interpret this? Let's pay a closer attention at `like_count`, since all of the dates appear to be different when platforms were compared, looking at official first day of ID week 10-19-25, we have `coefficient of -1.7996101`, which means Bluesky posts had `6 times` higher count of `likes` compared to X posts. Using `1/exp(-1.7996101)`. 
 
 Now what about the repeated/duplicate posts? Some users do post on both platforms. How do we account for that? First time using Claude Code, with instructions, we detected duplicates between Bluesky and X by applying a multi-method text similarity algorithm (exact match, ≥45% Jaccard similarity, substring match, or ≥70% word overlap) to posts from users active on both platforms within a 3-hour time window, using normalized text with URLs, hashtags, and mentions removed. To validate accuracy, we performed 100 iterations of 10% stratified random sampling of cross-platform users, calculating precision, recall, F1 score, and overall accuracy by comparing algorithm-detected duplicates against ground truth determined by the same similarity criteria. 
 
