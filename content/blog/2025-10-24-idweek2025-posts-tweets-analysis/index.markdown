@@ -73,7 +73,7 @@ This year is a fun challenge because there are 2 platforms that ID community hav
 
 > We had the least post and tweet counts combined this year when compared to 2024, 2023 and 2022! 
 
-Very interesting. When compared to IDweek [2022](https://www.kenkoonwong.com/blog/idweek2022/) and [2023](https://www.kenkoonwong.com/blog/idweek2023/), and [2024](https://www.kenkoonwong.com/blog/idweek2022/) and [2023](https://www.kenkoonwong.com/blog/idweek2023) the post peaks appear to be similar to 2024. This year it also appeared to have the least posts when compared to 2022, 2023, and 2024. We had a total of `1272` (it might actually be `1234` [see this](#duplicate)) posts this year, whereas in 2024, we had `1674` posts, in 2023 we had `2627` posts, and in 2022 it was `~2188`. It is clear that ID community and SoMe has decreased engagement this year.
+Very interesting. When compared to IDweek [2022](https://www.kenkoonwong.com/blog/idweek2022/) and [2023](https://www.kenkoonwong.com/blog/idweek2023/), and [2024](https://www.kenkoonwong.com/blog/idweek2024/) and the post peaks appear to be similar to 2024. This year it also appeared to have the least posts when compared to 2022, 2023, and 2024. We had a total of `1272` (it might actually be `1234` [see this](#duplicate)) posts this year, whereas in 2024, we had `1674` posts, in 2023 we had `2627` posts, and in 2022 it was `~2188`. It is clear that ID community and SoMe has decreased engagement this year.
 
 <br>
 
@@ -286,7 +286,7 @@ The first day is always a special day and mandatory selfie day! Here we have `bo
 ![](https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:skpxj6dpacrxznfvwrpfdiw4/bafkreifsmhbbxlstsw4iz5vzavasq2kl64ahg4t63rxtbr4gavtpwizc44@jpeg)
 
 <br>
-duin.bsky.social` highlighted the importance of [GOAT Trial](https://clinicaltrials.gov/study/NCT06080698). Gran Negative Organisms are always a hot topic in ID community!
+
 This day is a special day for SoMe! Thanks to `patrickching.bsky.social` for sharing the pictures on his post about [IDWeek2025 Social Media Event](https://bsky.app/profile/patrickching.bsky.social/post/3m3lipvpwgs2j), amplified by `jonathanrydermd.bsky.social`'s engagement! 
 
 ![](https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:yjb2nsyihm4v4r324fpc25du/bafkreiewrbo2gcnngmk544fksrpmknqjtmc2i75ahel7svd5sspzu7rgq4@jpeg)
