@@ -556,7 +556,7 @@ plot_data %>%
   
 ```
 
-Wow, this is interesting. With only 38 same posts in both platform, we observed that the like counts on the first 3 days (10-18-25, 10-19-25, 10-20-25) with Bluesky has more likes than X, with the highest engagement at `11x higher like counts` in Bluesky than X `from 1/exp(-2.3978953)`. Diving into the raw data, looks like `dralicehan.bsky.social`' and `pascalisid.bsky.social`s post was the main one that contributed to the high engagement on Bluesky!
+Wow, this is interesting. With only 38 same posts in both platform, we observed that the like counts on the first 3 days (10-18-25, 10-19-25, 10-20-25) with Bluesky has more likes than X, with the highest engagement at `11x higher like counts` in Bluesky than X `from 1/exp(-2.3978953)`. Diving into the raw data, looks like `dralicehan.bsky.social` and `pascalisid.bsky.social`'s post was the main one that contributed to the high engagement on Bluesky!
 
 ![](blueskypost.png)
 
