@@ -800,7 +800,7 @@ Wow, both platforms actually are quite comparable. Looking at the engagements (e
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" />
 
 
-We used negative binomial regression to compare social media (bluesky vs X) engagement metrics between platforms across five dates, applying Benjamini-Hochberg correction for multiple testing with alpha 0.05. Significant platform differences were found for like_count (multiple dates), reply_count (two dates), and repost_count (one date) after FDR correction. Favoring more engagement in Bluesky compared to X. Very interesting! 
+We used negative binomial regression to compare social media (bluesky vs X) engagement metrics between platforms across five dates, applying Benjamini-Hochberg correction for multiple testing with alpha 0.05. Significant platform differences were found for like_count (all 5 days), reply_count (3 days), and repost_count (2 days) after FDR correction. Favoring more engagement in Bluesky compared to X. Very interesting! 
 
 <table>
  <thead>
@@ -816,37 +816,37 @@ We used negative binomial regression to compare social media (bluesky vs X) enga
    <td style="text-align:left;"> 2025-10-18 </td>
    <td style="text-align:left;"> quote_count </td>
    <td style="text-align:right;"> 19.2115426 </td>
-   <td style="text-align:right;"> 0.9982225 </td>
+   <td style="text-align:right;"> 0.9988609 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-18 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> like_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.2536129 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0074477 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0111716 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-18 </td>
    <td style="text-align:left;"> reply_count </td>
    <td style="text-align:right;"> -2.2155737 </td>
-   <td style="text-align:right;"> 0.0872864 </td>
+   <td style="text-align:right;"> 0.1240385 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-18 </td>
    <td style="text-align:left;"> repost_count </td>
    <td style="text-align:right;"> -1.0116009 </td>
-   <td style="text-align:right;"> 0.1931021 </td>
+   <td style="text-align:right;"> 0.2703430 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-18 </td>
    <td style="text-align:left;"> bookmark_count </td>
    <td style="text-align:right;"> -0.6061358 </td>
-   <td style="text-align:right;"> 0.6746440 </td>
+   <td style="text-align:right;"> 0.9009762 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-19 </td>
    <td style="text-align:left;"> quote_count </td>
    <td style="text-align:right;"> -1.2872035 </td>
-   <td style="text-align:right;"> 0.1491205 </td>
+   <td style="text-align:right;"> 0.2045081 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-19 </td>
@@ -858,25 +858,25 @@ We used negative binomial regression to compare social media (bluesky vs X) enga
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-19 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> reply_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.4764455 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0001238 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0002229 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-19 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> repost_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.6381804 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0001238 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0002229 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-19 </td>
    <td style="text-align:left;"> bookmark_count </td>
    <td style="text-align:right;"> -0.3709127 </td>
-   <td style="text-align:right;"> 0.6491750 </td>
+   <td style="text-align:right;"> 0.8569110 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-20 </td>
    <td style="text-align:left;"> quote_count </td>
    <td style="text-align:right;"> -0.9022669 </td>
-   <td style="text-align:right;"> 0.0872864 </td>
+   <td style="text-align:right;"> 0.1240385 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-20 </td>
@@ -888,25 +888,25 @@ We used negative binomial regression to compare social media (bluesky vs X) enga
    <td style="text-align:left;"> 2025-10-20 </td>
    <td style="text-align:left;"> reply_count </td>
    <td style="text-align:right;"> -0.2529024 </td>
-   <td style="text-align:right;"> 0.1822460 </td>
+   <td style="text-align:right;"> 0.2624342 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-20 </td>
    <td style="text-align:left;"> repost_count </td>
    <td style="text-align:right;"> -0.4804749 </td>
-   <td style="text-align:right;"> 0.1582976 </td>
+   <td style="text-align:right;"> 0.2229932 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-20 </td>
    <td style="text-align:left;"> bookmark_count </td>
    <td style="text-align:right;"> -0.6623755 </td>
-   <td style="text-align:right;"> 0.1582976 </td>
+   <td style="text-align:right;"> 0.2229932 </td>
   </tr>
   <tr>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-21 </td>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> quote_count </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -2.4923102 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0385113 </td>
+   <td style="text-align:left;"> 2025-10-21 </td>
+   <td style="text-align:left;"> quote_count </td>
+   <td style="text-align:right;"> -2.4923102 </td>
+   <td style="text-align:right;"> 0.0544660 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-21 </td>
@@ -918,49 +918,49 @@ We used negative binomial regression to compare social media (bluesky vs X) enga
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-21 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> reply_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -0.7904070 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0017897 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0028636 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-21 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> repost_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.1225999 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0032694 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0050867 </td>
   </tr>
   <tr>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-21 </td>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> bookmark_count </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.8732710 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0402315 </td>
+   <td style="text-align:left;"> 2025-10-21 </td>
+   <td style="text-align:left;"> bookmark_count </td>
+   <td style="text-align:right;"> -1.8732710 </td>
+   <td style="text-align:right;"> 0.0579333 </td>
   </tr>
   <tr>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-22 </td>
-   <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> quote_count </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.7408394 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0468763 </td>
+   <td style="text-align:left;"> 2025-10-22 </td>
+   <td style="text-align:left;"> quote_count </td>
+   <td style="text-align:right;"> -1.7408394 </td>
+   <td style="text-align:right;"> 0.0685566 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-22 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> like_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -0.8979284 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0003515 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0006327 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 2025-10-22 </td>
    <td style="text-align:left;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> reply_count </td>
    <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> -1.2430010 </td>
-   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0000364 </td>
+   <td style="text-align:right;font-weight: bold;background-color: rgba(144, 238, 144, 80) !important;"> 0.0000656 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-22 </td>
    <td style="text-align:left;"> repost_count </td>
    <td style="text-align:right;"> -0.6104784 </td>
-   <td style="text-align:right;"> 0.1596579 </td>
+   <td style="text-align:right;"> 0.2275125 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 2025-10-22 </td>
    <td style="text-align:left;"> bookmark_count </td>
    <td style="text-align:right;"> -0.2675336 </td>
-   <td style="text-align:right;"> 0.6835116 </td>
+   <td style="text-align:right;"> 0.9227407 </td>
   </tr>
 </tbody>
 </table>
@@ -969,14 +969,21 @@ All highlighted in green rows are significant after BH correction. You can see o
 
 Now what about the repeated/duplicate posts? Some users do post on both platforms. How do we account for that? First time using Claude Code, with instructions, we detected duplicates between Bluesky and X by applying a multi-method text similarity algorithm (exact match, ≥45% Jaccard similarity, substring match, or ≥70% word overlap) to posts from users active on both platforms within a 3-hour time window, using normalized text with URLs, hashtags, and mentions removed. To validate accuracy, we performed 100 iterations of 10% stratified random sampling of cross-platform users, calculating precision, recall, F1 score, and overall accuracy by comparing algorithm-detected duplicates against ground truth determined by the same similarity criteria. 
 
-
-
 Our results showed there were ~1234 unique posts as compared to the total 1272 posts. Let's remove these duplicates and see how many total posts from both platforms
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+
+Alright, it looks quite similar to previous! So the duplicate didn't really make a whole lot of difference! 
+
+Let's take a look whether there is a difference in engagement if we were to compare the SAME post in both platforms?
 
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="672" />
 
-Alright, it looks quite similar to previous! So the duplicate didn't really make a whole lot of difference!
+Wow, this is interesting. With only 38 same posts in both platform, we observed that the like counts on the first 3 days (10-18-25, 10-19-25, 10-20-25) with Bluesky has more likes than X, with the highest engagement at `11x higher like counts` in Bluesky than X `from 1/exp(-2.3978953)`. Diving into the raw data, looks like `dralicehan.bsky.social`' and `pascalisid.bsky.social`s post was the main one that contributed to the high engagement on Bluesky!
 
+![](blueskypost.png)
+
+<br>
 
 ## Acknowledgement {#ack}
 Thank you for those who have contributed! I learnt a lot from you guys! It's these type of engagement that keep us all connected even for those who can't attend the meeting! If you see your username above, thank you! If you don't see it and have contributed, thank you! Sorry if I have left any usernames out. Please feel free to use the shiny app link above to look at all the posts queried to catch up, or just search on bluesky and X platform! 

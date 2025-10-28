@@ -32,6 +32,7 @@ excerpt: IDWeek2025 had the lowest post count since 2022 (1,272 posts). While to
 
 ```{r,eval=F,echo=F}
 ### posts
+library(tidyverse)
 library(wordcloud)
 library(wordcloud2)
 library(tidytext)
@@ -388,6 +389,8 @@ library(MASS)
 nbr_model_result <- tibble(date=as.Date(character()),metric=as.character(),coef=as.numeric(),pval=as.numeric())
 dates <- c("10-18-25","10-19-25","10-20-25","10-21-25","10-22-25")
 metric <- c("quote_count", "like_count", "reply_count", "repost_count", "bookmark_count")
+
+### Test all rows
 for (i in dates) {
 
 nbr_df <- merge_clean |>
@@ -405,6 +408,38 @@ nbr_model_result <- nbr_model_result |>
 }
 }
 
+
+## test only those posts posted same post in both platform
+rep <- merge_clean |>
+  group_by(post_hash) |>
+  mutate(row = row_number()) |> 
+  filter(row == 2) |>
+  pull(post_hash)
+
+data_both <- merge_clean |>
+  filter(post_hash %in% rep)  
+
+for (i in dates) {
+
+nbr_df <- data_both |>
+  mutate(date = date(created_at)) |>
+  filter(date == mdy(i))
+
+for (j in metric) {
+# model
+if (sum(nbr_df[[j]])==0) { next }
+model <- glm.nb(as.formula(paste(j, "~ platform")), data = nbr_df)
+pval <- summary(model)$coefficients[2,4]
+coef <- summary(model)$coefficients[2,1]
+
+nbr_model_result <- nbr_model_result |>
+  bind_rows(tibble(date=mdy(i),metric=j,coef=coef,pval=pval))
+}
+}
+
+
+
+
 nbr_model_result <- nbr_model_result %>%
     mutate(pval_adj = p.adjust(pval, method = "BH"))
 
@@ -417,6 +452,7 @@ plot_data <- merge_clean %>%
 
 # Prepare annotation data from your NBR results
 annotation_data <- nbr_model_result %>%
+  slice(1:25) |>
   mutate(
     label = case_when(
       pval_adj < 0.05 ~ paste0("p = ", round(pval_adj,5)),
@@ -444,7 +480,7 @@ plot_data %>%
 ```
 
 
-We used negative binomial regression to compare social media (bluesky vs X) engagement metrics between platforms across five dates, applying Benjamini-Hochberg correction for multiple testing with alpha 0.05. Significant platform differences were found for like_count (multiple dates), reply_count (two dates), and repost_count (one date) after FDR correction. Favoring more engagement in Bluesky compared to X. Very interesting! 
+We used negative binomial regression to compare social media (bluesky vs X) engagement metrics between platforms across five dates, applying Benjamini-Hochberg correction for multiple testing with alpha 0.05. Significant platform differences were found for like_count (all 5 days), reply_count (3 days), and repost_count (2 days) after FDR correction. Favoring more engagement in Bluesky compared to X. Very interesting! 
 
 ```{r,echo=F}
 annotation_data2 <- annotation_data |>
@@ -464,15 +500,6 @@ All highlighted in green rows are significant after BH correction. You can see o
 
 Now what about the repeated/duplicate posts? Some users do post on both platforms. How do we account for that? First time using Claude Code, with instructions, we detected duplicates between Bluesky and X by applying a multi-method text similarity algorithm (exact match, ≥45% Jaccard similarity, substring match, or ≥70% word overlap) to posts from users active on both platforms within a 3-hour time window, using normalized text with URLs, hashtags, and mentions removed. To validate accuracy, we performed 100 iterations of 10% stratified random sampling of cross-platform users, calculating precision, recall, F1 score, and overall accuracy by comparing algorithm-detected duplicates against ground truth determined by the same similarity criteria. 
 
-```{r, echo=F}
-rep <- merge_clean |>
-  group_by(post_hash) |>
-  mutate(row = row_number()) |> 
-  filter(row == 2) |>
-  pull(post_hash)
-
-```
-
 Our results showed there were ~1234 unique posts as compared to the total 1272 posts. Let's remove these duplicates and see how many total posts from both platforms
 
 ```{r,echo=F,warning=F,message=F}
@@ -487,8 +514,51 @@ merge_clean |>
   theme_bw()
 ```
 
-Alright, it looks quite similar to previous! So the duplicate didn't really make a whole lot of difference!
+Alright, it looks quite similar to previous! So the duplicate didn't really make a whole lot of difference! 
 
+Let's take a look whether there is a difference in engagement if we were to compare the SAME post in both platforms?
+
+```{r, echo=F}
+# First, prepare your plotting data
+plot_data <- data_both %>%
+  mutate(date = date(created_at)) %>%
+  pivot_longer(cols = c("quote_count":"bookmark_count"), 
+               names_to = "metric", 
+               values_to = "value")
+
+# Prepare annotation data from your NBR results
+annotation_data <- nbr_model_result %>%
+  slice(26:45) |>
+  mutate(
+    label = case_when(
+      pval_adj < 0.05 ~ paste0("p = ", round(pval_adj,5)),
+      TRUE ~ "ns"
+    ),
+    date_factor = as.factor(date)
+  ) %>%
+  dplyr::select(date_factor, metric, coef, label, pval_adj)
+
+# Create the plot
+plot_data %>%
+  ggplot(aes(x = as.factor(date), y = value, fill = platform)) +
+  geom_violin(alpha = 0.5) +
+  geom_text(data = annotation_data,
+            aes(x = date_factor, y = Inf, label = label),
+            inherit.aes = FALSE,
+            vjust = 1.2,
+            size = 1.5) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  theme_bw() +
+  xlab("date") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+  
+```
+
+Wow, this is interesting. With only 38 same posts in both platform, we observed that the like counts on the first 3 days (10-18-25, 10-19-25, 10-20-25) with Bluesky has more likes than X, with the highest engagement at `11x higher like counts` in Bluesky than X `from 1/exp(-2.3978953)`. Diving into the raw data, looks like `dralicehan.bsky.social`' and `pascalisid.bsky.social`s post was the main one that contributed to the high engagement on Bluesky!
+
+![](blueskypost.png)
+
+<br>
 
 ## Acknowledgement {#ack}
 Thank you for those who have contributed! I learnt a lot from you guys! It's these type of engagement that keep us all connected even for those who can't attend the meeting! If you see your username above, thank you! If you don't see it and have contributed, thank you! Sorry if I have left any usernames out. Please feel free to use the shiny app link above to look at all the posts queried to catch up, or just search on bluesky and X platform! 
