@@ -31,7 +31,7 @@ excerpt: Finally understood TMLE's "doubly robust" property through simulation. 
 ![](dr.png)
 
 ## Motivations:
-I've always heard about Targeted Maximum Likelihood Estimation (TMLE) and I've read [Katherine Hoffman]()'s blog post several times. Printed her cheat sheet and go through it several times. Each time I thought I understood it, the next time I found myself questioning my understanding. 🤣 So, what a better way to dive a tad deeper as to the machinery behind this, and why is it useful? Let's go! 
+I've always heard about Targeted Maximum Likelihood Estimation (TMLE) and I've read [Katherine Hoffman](https://github.com/kathoffman/causal-inference-visual-guides/blob/master/visual-guides/TMLE.pdf)'s blog post several times. Printed her cheat sheet and go through it several times. Each time I thought I understood it, the next time I found myself questioning my understanding. 🤣 So, what a better way to dive a tad deeper as to the machinery behind this, and why is it useful? Let's go! 
 
 Just to set the context right, we're going to estimate Average Treatment Effect (ATE) and use `g-computation` as a standard approach.
 
