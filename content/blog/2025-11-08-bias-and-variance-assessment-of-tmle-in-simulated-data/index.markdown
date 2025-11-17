@@ -1,0 +1,1044 @@
+---
+title: "Bias, Variance, and Doubly Robust Estimation: Testing The Promise of TMLE in Simulated Data"
+author: Ken Koon Wong
+date: '2025-11-16'
+slug: tmle
+categories: 
+- r
+- R
+- tmle
+- xgboost
+- tidymodels
+- future
+- g computation
+- bias
+- variance
+tags: 
+- r
+- R
+- tmle
+- xgboost
+- tidymodels
+- future
+- g computation
+- bias
+- variance
+excerpt: Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. It worked on simulated complex data, would it work in real world? 🤔
+---
+<script src="{{< blogdown/postref >}}index_files/kePrint/kePrint.js"></script>
+<link href="{{< blogdown/postref >}}index_files/lightable/lightable.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/kePrint/kePrint.js"></script>
+<link href="{{< blogdown/postref >}}index_files/lightable/lightable.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/kePrint/kePrint.js"></script>
+<link href="{{< blogdown/postref >}}index_files/lightable/lightable.css" rel="stylesheet" />
+
+> Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. It worked on simulated complex data, would it work in real world? 🤔
+
+![](dr.png)
+
+## Motivations:
+I've always heard about Targeted Maximum Likelihood Estimation (TMLE) and I've read [Katherine Hoffman]()'s blog post several times. Printed her cheat sheet and go through it several times. Each time I thought I understood it, the next time I found myself questioning my understanding. 🤣 So, what a better way to dive a tad deeper as to the machinery behind this, and why is it useful? Let's go! 
+
+Just to set the context right, we're going to estimate Average Treatment Effect (ATE) and use `g-computation` as a standard approach.
+
+## Objectives:
+- [What is TMLE?](#tmle)
+- [What Does Doubly Robust mean?](#dr)
+- [What is Bias and Variance?](biasvariance)
+- [Simulate Data](#data)
+- [Write a Function to Estimate](#estimate)
+  - [Wrong outcome model](#wrong_outcome)
+  - [G-computation](#gcomp)
+  - [Correct outcome model](#correct_outcome)
+  - [Wrong treatment model](#wrong_ps_model)
+  - [Correct treatment model](#correct_treatment)
+  - [TMLE Steps](#tmle_procedure)
+- [Comparing methods and models](#models)
+- [Is there a traditional statistical method for this?](#traditional)
+- [Opportunities for improvement](#opportunity)
+- [Lessons learnt](#lessons)
+
+## What is TMLE? {#tmle}
+TMLE is a statistical method used for estimating causal effects in observational studies and clinical trials. It combines elements of machine learning and traditional statistical techniques to provide robust estimates of treatment effects while controlling for confounding variables. TMLE operates in two main steps: first, it estimates the outcome model and the treatment model, and then it uses these models to adjust the treatment effect estimate, targeting the parameter of interest directly. This approach is particularly useful in settings where standard methods may be biased or inefficient, as it allows for the incorporation of flexible machine learning algorithms to improve estimation accuracy. You will hear the term Doubly Robust about this method. What's do robust x 2 about this?
+
+## What Does Doubly Robust mean? {#dr}
+Doubly Robust (DR) estimation refers to a statistical property of certain estimators that remain consistent if either the model for the treatment assignment (propensity score) or the model for the outcome is correctly specified, but not necessarily both. In other words, a doubly robust estimator provides two chances for obtaining a valid estimate of the causal effect: if one of the models is misspecified, as long as the other model is correctly specified, the estimator will still yield consistent results. This property is particularly advantageous in observational studies where there may be uncertainty about the correct specification of either model, enhancing the reliability of causal inferences drawn from the data. I didn't quite understand this until we simulated the data to test this theory. It will, hopefully, be more clear when we go through the simulation. But, wait, what metrics should we use for this? Bias and variance!
+
+## What is Bias and Variance? {#biasvariance}
+Bias and variance are two fundamental concepts in statistics and machine learning that describe different sources of error in predictive models. Bias refers to the systematic error that occurs when a model consistently overestimates or underestimates the true value of a parameter. High bias can lead to underfitting, where the model fails to capture the underlying patterns in the data. Variance, on the other hand, refers to the variability of model predictions for different training datasets. High variance can lead to overfitting, where the model captures noise in the training data rather than the true signal. The trade-off between bias and variance is a key consideration in model selection and evaluation, as it affects the overall accuracy and generalizability of predictive models.
+
+The formula for bias is: 
+$$
+\text{Bias}(\hat{\theta}) = E[\hat{\theta}] - \theta
+$$
+Where:
+- `\(\hat{\theta}\)` is the estimator of the parameter `\(\theta\)`
+- `\(E[\hat{\theta}]\)` is the expected value of the estimator
+
+In pseudo-R code would look something like this:
+
+``` r
+predicted_theta <- vector(mode = "numeric", length=1000)
+
+for (i in 1:1000) {
+  training_data <- dplyr::slice_sample(original_training_data, n = nrow(original_training_data), replace = T)
+  model <- glm(outcome~treatment+confounder,data=training_data)
+  outcome_hat_1 <- predict(model,newdata = training_data |> mutate(treatment = 1))
+  outcome_hat_0 <- predict(model,newdata = training_data |> mutate(treatment = 0))
+  predicted_theta[i] <- mean(outcome_hat_1) - mean(outcome_hat_0)
+}
+
+bias <- mean(predicted_theta) - theta
+```
+
+In my own language, bias is, how close our `estimation on average` is to the true value. 
+
+The formula for variance is:
+$$
+\text{Var}(\hat{\theta}) = E[(\hat{\theta} - E[\hat{\theta}])^2]
+$$
+
+Where:
+- `\(\hat{\theta}\)` is the estimator of the parameter `\(\theta\)`
+- `\(E[\hat{\theta}]\)` is the expected value of the estimator
+
+
+In pseudo-R code would look something like this:
+
+``` r
+predicted_theta <- vector(mode = "numeric", length=1000)
+
+for (i in 1:1000) {
+  training_data <- dplyr::slice_sample(original_training_data, n = nrow(original_training_data), replace = T)
+  model <- glm(outcome~treatment+confounder,data=training_data)
+  outcome_hat_1 <- predict(model,newdata = training_data |> mutate(treatment = 1))
+  outcome_hat_0 <- predict(model,newdata = training_data |> mutate(treatment = 0))
+  predicted_theta[i] <- mean(outcome_hat_1) - mean(outcome_hat_0)
+}
+
+variance <- mean((predicted_theta-mean(predicted_theta))^2)
+# or 
+variance <- var(predicted_theta) 
+```
+
+We will be using `bias` and `variance` to test the doubly robust theory. But first, let's simulate some data!
+
+## Simulate Data {#data}
+
+``` r
+library(tidyverse)
+
+set.seed(1)
+
+n <- 10000
+W1 <- rnorm(n)
+W2 <- rnorm(n)
+W3 <- rbinom(n, 1, 0.5)
+W4 <- rnorm(n)
+
+# TRUE propensity score model
+A <- rbinom(n, 1, plogis(-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4))
+
+# TRUE outcome model
+Y <- rbinom(n, 1, plogis(-1 + 0.2*A + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2))
+
+# Calculate TRUE ATE
+logit_Y1 <- -1 + 0.2 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+logit_Y0 <- -1 + 0 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+
+Y1_true <- plogis(logit_Y1)
+Y0_true <- plogis(logit_Y0)
+true_ATE <- mean(Y1_true - Y0_true)
+
+df <- tibble(W1 = W1, W2 = W2, W3 = W3, W4 = W4, A = A, Y = Y,
+           true_ATE = true_ATE, Y1_true = Y1_true, Y0_true = Y0_true)
+```
+
+Alright, our true ATE here is 0.0373518. We'll see if doubly robust method can be able to estimate this either outcome or treatment model is misspecified. 
+
+## Write a Function to Estimate {#estimate}
+### Let's look at the WRONG Outcome model ❌ {#wrong_outcome}
+
+``` r
+model <- glm(Y ~ A + W1 + W2 + W3 + W4, family = "binomial")
+
+summary(model)
+```
+
+```
+## 
+## Call:
+## glm(formula = Y ~ A + W1 + W2 + W3 + W4, family = "binomial")
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -1.045765   0.041489 -25.206   <2e-16 ***
+## A           -0.050142   0.047732  -1.050    0.293    
+## W1           0.767386   0.026058  29.449   <2e-16 ***
+## W2          -0.024726   0.022807  -1.084    0.278    
+## W3           0.561572   0.045658  12.300   <2e-16 ***
+## W4          -0.003209   0.022382  -0.143    0.886    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 12737  on 9999  degrees of freedom
+## Residual deviance: 11519  on 9994  degrees of freedom
+## AIC: 11531
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+Ouch. Looking quickly at the coefficient of A is -0.0501418. Totally inverse of the true ATE. Alright let's look at `g-computation` and see if it returns the same result.
+
+### g-computation function {#gcomp}
+
+``` r
+g_comp <- function(model,data,ml=F) {
+  if (ml==T) {
+   y1 <- predict(model, new_data=data |> mutate(A=as.factor(1)), type = "prob")[,2] |> pull()
+   y0 <- predict(model, new_data=data |> mutate(A=as.factor(0)), type = "prob")[,2] |> pull()
+  } else {
+  y1 <- predict(model, newdata=data |> mutate(A=1), type = "response")
+  y0 <- predict(model, newdata=data |> mutate(A=0), type = "response")
+  }
+  return(mean(y1-y0))
+}
+```
+
+
+``` r
+g_comp(model,df)
+```
+
+```
+## [1] -0.009823307
+```
+
+Yup, incorrect! Now what if we use the RIGHT Outcome model?
+
+### The correct outcome model ✅{#correct_outcome}
+
+``` r
+model <- glm(Y ~ A + W1 + I(W2^2) + W3 + W1:W2 + W4, family = "binomial")
+
+g_comp(model,df)
+```
+
+```
+## [1] 0.03576854
+```
+
+Wow! Look at that! if we correctly specify the outcome model, it actually is VERY close to true ATE! 
+
+### The wrong treatment model ❌  {#wrong_ps_model}
+
+Now what if we use `IPW` but with the wrong treatment model and see if we can estimate ATE
+
+``` r
+ps_model <- glm(A ~ W1 + W2 + W3 + W4, family = "binomial")  
+ps <- ps_model$fitted.values
+ps_final <- pmax(pmin(ps, 0.95), 0.05)
+weights <- ifelse(A == 1, 1/ps_final, 1/(1-ps_final))
+
+model <- glm(Y ~ A, family = "binomial", weights = weights)
+g_comp(model,df)
+```
+
+```
+## [1] -0.0095777
+```
+
+Wow, very wrong indeed! Now let's look at the right treatment model
+
+### The Correct treatment model ✅{#correct_treatment}
+
+``` r
+ps_model <- glm(A ~ W1 + I(W2^2) + W3 + W1:W2 + W4, family = "binomial")  #-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4
+
+ps <- ps_model$fitted.values
+ps_final <- pmax(pmin(ps, 0.95), 0.05)
+weights <- ifelse(A == 1, 1/ps_final, 1/(1-ps_final))
+
+model <- glm(Y ~ A, family = "binomial", weights = weights)
+g_comp(model,df)
+```
+
+```
+## [1] 0.03874379
+```
+
+Not too shabby! very close to our true ATE! To be honest, how on earth are we supposed to know before hand the complex equation to specify on either treatment or outcome model !?
+
+### Let's Try ML xgboost {#ML}
+Let's see if xgboost can tease out outcome model without us specifying all these weird interactions and quadratic relationships.
+
+
+``` r
+library(tidymodels)
+library(doParallel)  
+library(future)
+
+workers <- parallel::detectCores(logical = FALSE) - 1
+plan(multisession, workers = workers)
+future::nbrOfWorkers() 
+
+# Set up parallel processing
+all_cores <- parallel::detectCores(logical = FALSE)
+cl <- makePSOCKcluster(all_cores - 1)  # Leave 1 core free
+registerDoParallel(cl)
+
+df_ml <- df |> 
+  select(Y,A,W1,W2,W3,W4) |>
+  mutate(Y = as.factor(Y),
+         A = as.factor(A))
+
+# Define model specification
+xgb_spec <- boost_tree(
+  trees = 1000,
+  tree_depth = tune(),
+  min_n = tune(),
+  loss_reduction = tune(),
+  # sample_size = tune(),
+  mtry = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")  
+
+# Create workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(Y ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),df_ml),
+  learn_rate(),
+  size = 20
+)
+
+# Cross-validation and tuning
+set.seed(1)
+folds <- vfold_cv(df_ml, v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         parallel_over = "everything")
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = df_ml)
+
+# g-comp
+g_comp(final_fit, df_ml, T)
+```
+
+
+
+
+
+```
+## [1] 0.03447109
+```
+
+Wow, nice! ✅ Quite close to our true ATE without specifying any interactions or quadratic relationship. Mind you, this dataset is quite large.
+
+Now, let's try out if we can use `xgboost` to create an accurate treatment model and use its weights to plug into our good trust `glm`.
+
+
+``` r
+# Rereate workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(A ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),df_ml |> select(-Y)),
+  learn_rate(),
+  size = 20
+)
+
+# Cross-validation and tuning
+set.seed(1)
+folds <- vfold_cv(df_ml |> select(-Y), v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         parallel_over = "everything")
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = df_ml |> select(-Y))
+
+# calc ps
+ps <- predict(final_fit, new_data = df_ml |> select(-Y), type = "prob")[,2] |> pull()
+ps_final <- ps
+weights <- ifelse(A == 1, 1/ps_final, 1/(1-ps_final))
+
+# glm model 
+model <- glm(Y ~ A, family = "binomial", weights = weights)
+g_comp(model, df_ml)
+```
+
+
+```
+## [1] 0.04840169
+```
+
+Wow, compared to [this](#wrong_ps_model), our ATE is much closer to our true ATE than the wrongly specified treatment model. Though it's still quite biased, isn't it? it's far from the true ATE. But at least we know ML methods can probably handle these complex relationhip. 
+
+Now let's write function to estimate bias and variance! Since that's our major question. And then we'll look into TMLE procedure.
+
+<details>
+<summary>code</summary>
+
+``` r
+bias <- function(predicted_theta, theta) {
+  return(mean(predicted_theta - theta))
+}
+
+variance <- function(predicted_theta) {
+  return(var(predicted_theta))
+}
+```
+</details>
+
+### TMLE {#tmle_procedure}
+Since we know xgboost is able to estimate the correct outcome model, why don't we just use logistic regression here. Let's imagine we somehow got only treatment model correct, but not the outcome model, will TMLE be able to tease this out? 
+
+#### Step 1. Create Outcome Model
+
+``` r
+model_outcome <- glm(Y ~ A + W1 + W2 + W3 + W4, family = "binomial") #wrong
+model_outcome_all <- predict(model_outcome, newdata = df, type = "response")
+model_outcome_1 <- predict(model_outcome, newdata = df |> mutate(A = 1), type = "response")
+model_outcome_0 <- predict(model_outcome, newdata = df |> mutate(A = 0), type = "response")
+```
+
+#### Step 2. Create Treatment Model & Clever Covariate
+
+``` r
+model_treatment <- glm(A ~ W1 + I(W2^2) + W3 + W1:W2 + W4, family = "binomial")  #-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4
+
+ps <- model_treatment$fitted.values
+ps_final <- ps
+# ps_final <- pmax(pmin(ps, 0.95), 0.05)
+a_1 <- 1/(predict(model_treatment, df, type = "response"))
+a_0 <- -1/(1 - predict(model_treatment, df, type = "response"))
+clever_covariate <- ifelse(A == 1, 1/ps_final, -1/(1-ps_final))
+```
+
+#### Step 3. Estimate Fluctuation Parameter
+
+``` r
+epsilon_model <- glm(Y ~ -1 + offset(qlogis(model_outcome$fitted.values)) + clever_covariate, family = "binomial")
+summary(epsilon_model)
+```
+
+```
+## 
+## Call:
+## glm(formula = Y ~ -1 + offset(qlogis(model_outcome$fitted.values)) + 
+##     clever_covariate, family = "binomial")
+## 
+## Coefficients:
+##                  Estimate Std. Error z value Pr(>|z|)    
+## clever_covariate 0.041886   0.009675   4.329  1.5e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 11519  on 10000  degrees of freedom
+## Residual deviance: 11497  on  9999  degrees of freedom
+## AIC: 11499
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+``` r
+epsilon <- epsilon_model$coefficients
+```
+
+
+
+#### Step 4. Update Initial Outcomes
+
+``` r
+updated_outcome_1 <- plogis(qlogis(model_outcome_1)+epsilon*a_1)
+updated_outcome_0 <- plogis(qlogis(model_outcome_0)+epsilon*a_0)
+```
+
+
+#### Step 5. Compute ATE
+
+``` r
+(ate <- mean(updated_outcome_1-updated_outcome_0))
+```
+
+```
+## [1] 0.04068321
+```
+
+Wow, imagine specifying the wrong outcome model, but the right treatment model will bring our ATE to closer to the true ATE! Imagine our wrongly specified outcoem model would have produced ATE of -0.009 [here](#wrong_outcome).of Not too shabby!
+
+#### Step 6. Estimate Standard Error
+
+``` r
+se <- sqrt(var((Y-model_outcome_all)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n)
+pval <- 2*(1-pnorm(abs(ate/se)))
+print(paste0("ATE: ",round(ate,3), " [95%CI ", round(ate-1.96*se,3),"-",round(ate+1.96*se,3),", p=",round(pval,3),"]"))
+```
+
+```
+## [1] "ATE: 0.041 [95%CI 0.008-0.073, p=0.015]"
+```
+
+There you have it! Our final estimates, standard error, and pval. Thanks to [khstats](https://www.khstats.com/blog/tmle/tutorial-pt2#step-6-calculate-the-standard-errors-for-confidence-intervals-and-p-values) for step by step guidance. Very helpful to reproduce the framework. 
+
+## Comparing Models {#models}
+Now, let's resample 1000 times with n = 6000 (after sample size calculation of the effect we have with 80% power and alpha 5%) of 1) correctly specified logistic regression outcome model. 2) an inverse probability weighting (IPW) approach with correctly specified treatment assignment probabilities . 3) incorrectly specific logistic regression outcome model. 4) Hyperparameter-tuned xgboost outcome model and see what how their biases and variances differ.
+
+<details>
+<summary>My messy code</summary>
+
+``` r
+n_sample <- 1000
+df_ate <- tibble(model=character(),bias=numeric(),variance=numeric())
+
+### correct outcome model specification, logistic regression
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+for (i in 1:n_sample) {
+  set.seed(i)
+  data <- slice_sample(df, n = 6000, replace = T)
+  model <- glm(Y ~ A + W1 + I(W2^2) + W3 + W1:W2 + W4, data = data, family = "binomial")
+  ate <- g_comp(model,data)
+  predicted_ate[i] <- ate
+}
+
+df_ate <- df_ate |>
+  bind_rows(tibble(model="logreg_correct_outcome",bias=bias(predicted_ate,true_ATE),variance=variance(predicted_ate)))
+
+### correct treatment model specification, logistic regression ipw
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+for (i in 1:n_sample) {
+  set.seed(i)
+  data <- slice_sample(df, n = 6000, replace = T)
+  ps_model <- glm(A ~ W1 + I(W2^2) + W3 + W1:W2 + W4, data=data, family = "binomial")  #-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4
+
+  ps <- ps_model$fitted.values
+  ps_final <- pmax(pmin(ps, 0.95), 0.05)
+  weights <- ifelse(data$A == 1, 1/ps_final, 1/(1-ps_final))
+
+  model <- glm(Y ~ A, data=data, family = "binomial", weights = weights)
+  ate <- g_comp(model,data)
+  predicted_ate[i] <- ate
+}
+
+df_ate <- df_ate |>
+  bind_rows(tibble(model="logreg_treatment_outcome",bias=bias(predicted_ate,true_ATE),variance=variance(predicted_ate)))
+
+### no interaction or quadratic relationship outcome model
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+for (i in 1:n_sample) {
+  set.seed(i)
+  data <- slice_sample(df, n = 6000, replace = T)
+  model <- glm(Y ~ A + W1 + W2 + W3 + W4, data = data, family = "binomial")
+  ate <- g_comp(model,data)
+  predicted_ate[i] <- ate
+}
+
+df_ate <- df_ate |>
+  bind_rows(tibble(model="logreg_wrong_outcome",bias=bias(predicted_ate,true_ATE),variance=variance(predicted_ate)))
+
+
+### xgboost
+library(tidymodels)
+library(future)
+
+plan(multisession, workers = 6)
+
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+for (i in 1:n_sample) {
+set.seed(i)
+data <- slice_sample(df, n = 6000, replace = T) |> select(Y,A,W1:W4) |> mutate(Y = as.factor(Y), A = as.factor(A))
+train <- data # you really don't need to do this, but i was lazy to change the oother ML codes
+
+xgb_spec <- boost_tree(
+  trees = tune(),
+  tree_depth = tune(),
+  min_n = tune(),
+  loss_reduction = tune(),
+  mtry = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")  
+
+# Create workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(Y ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train),
+  learn_rate(),
+  size = 5
+)
+
+# Cross-validation and tuning
+folds <- vfold_cv(train, v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         verbose = T)
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = train)
+
+# g-comp
+ate <- g_comp(final_fit, train, T)
+
+predict_ate[i] <- ate
+}
+
+df_ate <- df_ate |>
+  bind_rows(tibble(model="xgboost_outcome_model",bias=bias(predicted_ate,true_ATE),variance=variance(predicted_ate)))
+```
+</details>
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> model </th>
+   <th style="text-align:right;"> bias </th>
+   <th style="text-align:right;"> variance </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> logreg_correct_outcome </td>
+   <td style="text-align:right;"> -0.0009778 </td>
+   <td style="text-align:right;"> 0.0001410 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_treatment_outcome </td>
+   <td style="text-align:right;"> 0.0019444 </td>
+   <td style="text-align:right;"> 0.0001581 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_wrong_outcome </td>
+   <td style="text-align:right;"> -0.0464683 </td>
+   <td style="text-align:right;"> 0.0001354 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_outcome_model </td>
+   <td style="text-align:right;"> -0.0164066 </td>
+   <td style="text-align:right;"> 0.0000459 </td>
+  </tr>
+</tbody>
+</table>
+
+Wow, look at that! When outcome or treatment models were correctly specified, logistic regression is still the best with the lowest bias and low variance. When the outcome model was incorrectly specified, it became more biased and variance didn't really change much. When we used xgboost for outcome model only, it's less biased than misspecified logistic regression outcome model and interestingly, it has the lowest variance. Very interesting! This I think is helpful because it seems like tree based model is able to tease out quadratic and interaction relationship without us having to specify it. Now, what if we use xgboost models for both outcome and treatment models and then use TMLE framework to see if they are any better!  
+
+#### Using TMLE procedures with Xgboost
+We'll do the same as above by resampling 1000 times with n of 6000 with replacement. Then assess the bias and variance of the ATE. We will use xghboost model for both treatment and outcome models. Then use the TMLE procedure for the test as shown above. As for tuning, we will use grid search with space filling (`grid_space_filling` with size of 5).
+
+<details>
+<summary>My messy code</summary>
+
+``` r
+library(tidymodels)
+library(tidyverse)
+library(future)
+plan(multisession, workers = 4)
+predicted_ate <- vector(mode = "numeric", length = n_sample)}
+
+for (i in n_sample:1) {
+
+# sample
+data <- slice_sample(df, n = 6000, replace = T) |> select(Y,A,W1:W4) |> mutate(Y = as.factor(Y), A = as.factor(A))
+train <- data
+
+# outcome model
+xgb_spec <- boost_tree(
+  trees = tune(),
+  tree_depth = tune(),
+  min_n = tune(),
+  loss_reduction = tune(),
+  # sample_size = tune(),
+  mtry = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")  
+
+# Create workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(Y ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train),
+  learn_rate(),
+  size = 5
+)
+
+# Cross-validation and tuning
+folds <- vfold_cv(train, v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         # parallel_over = "resamples", 
+                         verbose = T)
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = train)
+
+# predict
+outcome <- predict(final_fit, new_data = train, type = "prob")[,2] |> pull()
+outcome_0 <- predict(final_fit, new_data = train |> mutate(A = as.factor(0)), type = "prob")[,2] |> pull()
+outcome_1 <- predict(final_fit, new_data = train |> mutate(A = as.factor(1)), type = "prob")[,2] |> pull()
+
+# -------------------------------------------------------
+# treatment model 
+train_tx <- train |> select(-Y)
+
+xgb_wf_tx <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(A ~ .)
+
+
+xgb_grid_tx <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train_tx),
+  learn_rate(),
+  size = 5
+)
+
+# Cross-validation and tuning
+folds_tx <- vfold_cv(train_tx, v = 5)
+
+xgb_res_tx <- tune_grid(
+  xgb_wf_tx,
+  resamples = folds_tx,
+  grid = xgb_grid_tx,
+  control = control_grid(save_pred = TRUE,
+                         verbose = T)
+)
+
+# Select best model
+best_xgb_tx <- select_best(xgb_res_tx, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb_tx <- finalize_workflow(xgb_wf_tx, best_xgb)
+final_fit_tx <- fit(final_xgb_tx, data = train_tx)
+
+ps <- predict(final_fit_tx, new_data = train_tx |> select(-A), type = "prob")[,2] |> pull()
+ps_final <- ps
+a_1 <- 1/(predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull())
+a_0 <- -1/(1 - (predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull()))
+clever_covariate <- ifelse(train_tx$A == 1, 1/ps_final, -1/(1-ps_final))
+
+# step 3 
+epsilon_model <- glm(train$Y ~ -1 + offset(qlogis(outcome)) + clever_covariate, family = "binomial")
+summary(epsilon_model)
+epsilon <- epsilon_model$coefficients
+
+#### Step 4. Update Initial Outcomes
+updated_outcome_1 <- plogis(qlogis(outcome_1)+epsilon*a_1)
+updated_outcome_0 <- plogis(qlogis(outcome_0)+epsilon*a_0)
+
+#### Step 5. Compute ATE
+ate <- mean(updated_outcome_1-updated_outcome_0)
+
+predicted_ate[i] <- ate
+}
+
+df_ate <- df_ate |>
+bind_rows(tibble(model="xgboost_tmle_model_size5",bias=bias(predicted_ate,true_ATE),variance=variance(predicted_ate)))
+```
+</details>
+
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> model </th>
+   <th style="text-align:right;"> bias </th>
+   <th style="text-align:right;"> variance </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> logreg_correct_outcome </td>
+   <td style="text-align:right;"> -0.0009778 </td>
+   <td style="text-align:right;"> 0.0001410 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_treatment_outcome </td>
+   <td style="text-align:right;"> 0.0019444 </td>
+   <td style="text-align:right;"> 0.0001581 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_wrong_outcome </td>
+   <td style="text-align:right;"> -0.0464683 </td>
+   <td style="text-align:right;"> 0.0001354 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_outcome_model </td>
+   <td style="text-align:right;"> -0.0164066 </td>
+   <td style="text-align:right;"> 0.0000459 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_tmle_model_size5 </td>
+   <td style="text-align:right;"> 0.0066270 </td>
+   <td style="text-align:right;"> 0.0001399 </td>
+  </tr>
+</tbody>
+</table>
+
+Wow, how about that! Less biased than xgboost of outcome model only! Although the variance appear to be higher than pure xgboost outcome model, but it's about the same as logistic regression. It does seem like TMLE can improve bias. Do you think we can do better? What if we increase the size to 20?
+
+<details>
+<summary>My messy code</summary>
+
+``` r
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+
+for (i in 1:n_sample) {
+  set.seed(i)
+data <- slice_sample(df, n = 6000, replace = T) |> select(Y,A,W1:W4) |> mutate(Y = as.factor(Y), A = as.factor(A))
+train <- data
+# train <- df |> select(Y,A,W1:W4) |> mutate(Y = as.factor(Y), A = as.factor(A))
+
+
+# outcome model
+xgb_spec <- boost_tree(
+  trees = tune(),
+  tree_depth = tune(),
+  min_n = tune(),
+  loss_reduction = tune(),
+  # sample_size = tune(),
+  mtry = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")  
+
+# Create workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(Y ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train),
+  learn_rate(),
+  size = 20
+)
+
+# Cross-validation and tuning
+folds <- vfold_cv(train, v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         # parallel_over = "resamples", 
+                         verbose = T)
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = train)
+
+# predict
+outcome <- predict(final_fit, new_data = train, type = "prob")[,2] |> pull()
+outcome_0 <- predict(final_fit, new_data = train |> mutate(A = as.factor(0)), type = "prob")[,2] |> pull()
+outcome_1 <- predict(final_fit, new_data = train |> mutate(A = as.factor(1)), type = "prob")[,2] |> pull()
+
+# -------------------------------------------------------
+# treatment model 
+train_tx <- train |> select(-Y)
+
+xgb_wf_tx <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(A ~ .)
+
+
+xgb_grid_tx <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train_tx),
+  learn_rate(),
+  size = 20
+)
+
+# Cross-validation and tuning
+folds_tx <- vfold_cv(train_tx, v = 5)
+
+xgb_res_tx <- tune_grid(
+  xgb_wf_tx,
+  resamples = folds_tx,
+  grid = xgb_grid_tx,
+  control = control_grid(save_pred = TRUE,
+                         verbose = T)
+)
+
+# Select best model
+best_xgb_tx <- select_best(xgb_res_tx, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb_tx <- finalize_workflow(xgb_wf_tx, best_xgb)
+final_fit_tx <- fit(final_xgb_tx, data = train_tx)
+
+ps <- predict(final_fit_tx, new_data = train_tx |> select(-A), type = "prob")[,2] |> pull()
+ps_final <- ps
+# ps_final <- pmax(pmin(ps, 0.95), 0.05)
+a_1 <- 1/(predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull())
+a_0 <- -1/(1 - (predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull()))
+clever_covariate <- ifelse(train_tx$A == 1, 1/ps_final, -1/(1-ps_final))
+
+# step 3 
+epsilon_model <- glm(train$Y ~ -1 + offset(qlogis(outcome)) + clever_covariate, family = "binomial")
+summary(epsilon_model)
+epsilon <- epsilon_model$coefficients
+
+#### Step 4. Update Initial Outcomes
+updated_outcome_1 <- plogis(qlogis(outcome_1)+epsilon*a_1)
+updated_outcome_0 <- plogis(qlogis(outcome_0)+epsilon*a_0)
+
+#### Step 5. Compute ATE
+ate <- mean(updated_outcome_1-updated_outcome_0)
+```
+</details>
+
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> model </th>
+   <th style="text-align:right;"> bias </th>
+   <th style="text-align:right;"> variance </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> logreg_correct_outcome </td>
+   <td style="text-align:right;"> -0.0009778 </td>
+   <td style="text-align:right;"> 0.0001410 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_treatment_outcome </td>
+   <td style="text-align:right;"> 0.0019444 </td>
+   <td style="text-align:right;"> 0.0001581 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logreg_wrong_outcome </td>
+   <td style="text-align:right;"> -0.0464683 </td>
+   <td style="text-align:right;"> 0.0001354 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_outcome_model </td>
+   <td style="text-align:right;"> -0.0164066 </td>
+   <td style="text-align:right;"> 0.0000459 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_tmle_model_size5 </td>
+   <td style="text-align:right;"> 0.0066270 </td>
+   <td style="text-align:right;"> 0.0001399 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> xgboost_tmle_model_size20 </td>
+   <td style="text-align:right;"> 0.0041615 </td>
+   <td style="text-align:right;"> 0.0001645 </td>
+  </tr>
+</tbody>
+</table>
+
+Look at that! Less biased than tmle size of 5, but you can see variance start to increase. This is really cool! 
+
+## Is there a traditional statistical method for this? {#traditional}
+Yes, apparently there is! Augmented IPW estimator [here](https://pmc.ncbi.nlm.nih.gov/articles/PMC8793316/) provides a doubly robust method for estimating causal effects that combines propensity score weighting with outcome modeling. AIPW remains consistent as long as either the propensity score model or the outcome model is correctly specified (sounds familiar? It's like TMLE!), making it more reliable than traditional methods when model specification is uncertain. [Here is AIPW](https://cran.r-project.org/web/packages/AIPW/index.html) R package, if need to use this in the future.
+
+This doubly robust method also reminds me of Double Machine Learning (DML), we should compare all these methods in the future!
+
+
+## Opportunities for improvement {#opportunity}
+- learn to use `future_lapply` with distributed computing
+- test out different ML models for TMLE
+- does it matter if we use all data (like above) or does ATE change with train/test split? 
+
+
+
+## Lessons learnt {#lessons}
+- learnt to include anchor 
+- learnt from offset does in `glm`
+- learnt TMLE's procedure
+- learnt to use `future` parallel computing
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://med-mastodon.com/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
