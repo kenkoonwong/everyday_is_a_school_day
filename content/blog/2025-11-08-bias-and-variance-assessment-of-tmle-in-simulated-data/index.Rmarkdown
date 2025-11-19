@@ -417,7 +417,8 @@ Wow, imagine specifying the wrong outcome model, but the right treatment model w
 
 #### Step 6. Estimate Standard Error
 ```{r}
-se <- sqrt(var((Y-model_outcome_all)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n)
+updated_outcome <- ifelse(A == 1, updated_outcome_1, updated_outcome_0)
+se <- sqrt(var((Y-updated_outcome)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n)
 pval <- 2*(1-pnorm(abs(ate/se)))
 print(paste0("ATE: ",round(ate,3), " [95%CI ", round(ate-1.96*se,3),"-",round(ate+1.96*se,3),", p=",round(pval,3),"]"))
 ```

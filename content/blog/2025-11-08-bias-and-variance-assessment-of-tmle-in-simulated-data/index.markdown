@@ -508,13 +508,14 @@ Wow, imagine specifying the wrong outcome model, but the right treatment model w
 #### Step 6. Estimate Standard Error
 
 ``` r
-se <- sqrt(var((Y-model_outcome_all)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n)
+updated_outcome <- ifelse(A == 1, updated_outcome_1, updated_outcome_0)
+se <- sqrt(var((Y-updated_outcome)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n)
 pval <- 2*(1-pnorm(abs(ate/se)))
 print(paste0("ATE: ",round(ate,3), " [95%CI ", round(ate-1.96*se,3),"-",round(ate+1.96*se,3),", p=",round(pval,3),"]"))
 ```
 
 ```
-## [1] "ATE: 0.041 [95%CI 0.008-0.073, p=0.015]"
+## [1] "ATE: 0.041 [95%CI 0.021-0.06, p=0]"
 ```
 
 There you have it! Our final estimates, standard error, and pval. Thanks to [khstats](https://www.khstats.com/blog/tmle/tutorial-pt2#step-6-calculate-the-standard-errors-for-confidence-intervals-and-p-values) for step by step guidance. Very helpful to reproduce the framework. 
