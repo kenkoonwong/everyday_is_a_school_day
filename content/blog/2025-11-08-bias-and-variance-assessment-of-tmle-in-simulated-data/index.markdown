@@ -55,6 +55,8 @@ Just to set the context right, we're going to estimate Average Treatment Effect 
   - [TMLE Steps](#tmle_procedure)
 - [Comparing methods and models](#models)
 - [Is there a traditional statistical method for this?](#traditional)
+- [But Does It Really Work?](#tails)
+- [Acknowledgement](#ack)
 - [Opportunities for improvement](#opportunity)
 - [Lessons learnt](#lessons)
 
@@ -1019,10 +1021,398 @@ ate <- mean(updated_outcome_1-updated_outcome_0)
 
 Look at that! Less biased than tmle size of 5, but you can see variance start to increase. This is really cool! 
 
+
 ## Is there a traditional statistical method for this? {#traditional}
 Yes, apparently there is! Augmented IPW estimator [here](https://pmc.ncbi.nlm.nih.gov/articles/PMC8793316/) provides a doubly robust method for estimating causal effects that combines propensity score weighting with outcome modeling. AIPW remains consistent as long as either the propensity score model or the outcome model is correctly specified (sounds familiar? It's like TMLE!), making it more reliable than traditional methods when model specification is uncertain. [Here is AIPW](https://cran.r-project.org/web/packages/AIPW/index.html) R package, if need to use this in the future.
 
 This doubly robust method also reminds me of Double Machine Learning (DML), we should compare all these methods in the future!
+
+
+## But Does It Really Work? {#tails}
+After the blog was published on 11/16/25, Frank Harrell stated "No examination of TMLE is complete without critical examination of the non-coverage probabilities in both tails of confidence intervals. Prepare to be disappointed. Be sure to estimate non-coverage separately in the two tails. Some confidence interval procedures are accurate with overall coverage despite being wrong in both tails." It's true that we did not assess the 95% confidence interval with our resampling. Coming from a very experienced statistician, he is most likely right. Now, let's examine the non-coverage tails! Let's compare 1) logistic regression (correctly specificed outcome model), 2) logistic regression w IPW (correctly specified treatment model), 3) logistic regression (misspecified outcome model), 4) TMLE with xgboost (with grid search size of 5), 5) TMLE with xgboost (with grid search size of 20). Then, we'll assess their 95% CIs and calculate what are the proportions of non-coverage in left and right tails across the 5 comparisons above and visualize them!
+
+For logistic regression models, we use bootstrap with 1000 resamples to estimate standard error. For TMLE models, we will use the estimated standard error from the TMLE procedure. 
+
+<details>
+<summary>my messy code for logistic regression</summary>
+
+``` r
+library(dplyr)
+library(future)
+library(future.apply)
+
+set.seed(1)
+
+n <- 10000
+W1 <- rnorm(n)
+W2 <- rnorm(n)
+W3 <- rbinom(n, 1, 0.5)
+W4 <- rnorm(n)
+
+# TRUE propensity score model
+A <- rbinom(n, 1, plogis(-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4))
+
+# TRUE outcome model
+Y <- rbinom(n, 1, plogis(-1 + 0.2*A + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2))
+
+# Calculate TRUE ATE
+logit_Y1 <- -1 + 0.2 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+logit_Y0 <- -1 + 0 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+
+Y1_true <- plogis(logit_Y1)
+Y0_true <- plogis(logit_Y0)
+true_ATE <- mean(Y1_true - Y0_true)
+
+df <- tibble(W1 = W1, W2 = W2, W3 = W3, W4 = W4, A = A, Y = Y)
+
+g_comp <- function(model,data,ml=F) {
+  if (ml==T) {
+    y1 <- predict(model, new_data=data |> mutate(A=as.factor(1)), type = "prob")[,2] |> pull()
+    y0 <- predict(model, new_data=data |> mutate(A=as.factor(0)), type = "prob")[,2] |> pull()
+  } else {
+    y1 <- predict(model, newdata=data |> mutate(A=1), type = "response")
+    y0 <- predict(model, newdata=data |> mutate(A=0), type = "response")
+  }
+  return(mean(y1-y0))
+}
+
+
+# Set up parallel backend
+plan(multisession, workers = 10)  # or plan(multisession)
+
+n_sample <- 1000
+predicted_ate <- predicted_lower <- predicted_upper <- vector(mode = "numeric", length = n_sample)
+n_boot <- 1000
+i_boot_seed <- runif(n_boot, 0, n_boot * 1000)  # Better seed range
+n_boot_sample <- 6000
+
+df_se <- tibble(method=character(),ate=numeric(),lower=numeric(),upper=numeric())
+
+formula_list <- list()
+formula_list[[1]] <- as.formula(Y ~ A + W1 + I(W2^2) + W3 + W1:W3 + I(W4^2))
+formula_list[[2]] <- as.formula(Y ~ A + W1 + W2 + W3 + W4)
+formula_list[[3]] <- as.formula(A ~ W1 + I(W2^2) + W1:W2 + I(W4^2))
+
+model_function <- function(formula,data,method) {
+  if (method=="logreg_outcome_correct") {
+    model_final <- glm(formula = formula, data = data, family = "binomial")
+  }
+  if (method=="logreg_treatment_correct") {
+  ps_model <- glm(formula=formula,data=data,family="binomial")
+  ps <- ps_model$fitted.values
+  ps_final <- pmax(pmin(ps, 0.95), 0.05)
+  weights <- ifelse(data$A == 1, 1/ps_final, 1/(1-ps_final))
+  model_final <- glm(Y~A,data=data,family="binomial",weights=weights)
+  }
+  if (method=="logreg_outcome_wrong") {
+    model_final <- glm(formula = formula, data = data, family = "binomial")
+  }
+  if (is.null(method)) { stop("need method") }
+  ate <- g_comp(model_final,data)
+  return(ate)
+}
+
+# Create the bootstrap function
+bootstrap_ate <- function(j, data, formula, n_boot_sample, i_boot_seed,method) {
+  set.seed(i_boot_seed[j])
+  data_boot <- slice_sample(data, n = n_boot_sample, replace = TRUE)
+  ate_boot <- model_function(formula,data_boot,method=method)
+  return(ate_boot)
+}
+
+
+# method vector 
+method_vec <- c("logreg_outcome_correct","logreg_treatment_correct","logreg_outcome_wrong")
+
+for (method in method_vec) {
+  if (method=="logreg_outcome_correct") { formula <- formula_list[[1]] }
+  if (method=="logreg_treatment_correct") { formula <- formula_list[[3]] }
+  if (method=="logreg_outcome_wrong") { formula <- formula_list[[2]] }
+for (i in 1:n_sample) {
+  set.seed(i)
+  data <- slice_sample(df, n = n_boot_sample, replace = TRUE)
+  # model <- glm(formula = formula, data = data, family = "binomial")
+  ate <- model_function(formula,data,method=method)
+  predicted_ate[i] <- ate
+  
+  ate_vec <- future_lapply(1:n_boot, bootstrap_ate, 
+                           data = data, 
+                           formula = formula,
+                           n_boot_sample = n_boot_sample,
+                           i_boot_seed = i_boot_seed,
+                           method = method,
+                           future.globals = list(g_comp = g_comp, model_function=model_function),
+                           future.seed = NULL,  # Use NULL since you're doing manual seeding
+                           future.packages = c("dplyr"))
+  
+  # Convert list to numeric vector
+  ate_vec <- unlist(ate_vec)
+  
+  # Calculate confidence intervals
+  predicted_lower[i] <- quantile(ate_vec, 0.025)
+  predicted_upper[i] <- quantile(ate_vec, 0.975)
+  
+  print(paste("Sample", i, "ATE:", round(ate, 4), 
+              "CI: [", round(predicted_lower[i], 4), ",", round(predicted_upper[i], 4), "]"))
+  df_se <- df_se |>
+    rbind(tibble(method = method, ate=predicted_ate[i], lower=predicted_lower[i],upper=predicted_upper[i]))
+}
+}
+
+# Clean up
+plan(sequential)
+
+df_se2 <- df_se
+save(df_se2, file = "logreg_bootstrap_tails.rda")
+```
+</details>
+
+<details>
+<summary>my messy code for tmle</summary>
+
+``` r
+### change size 5 vs 20
+
+library(dplyr)
+library(tidymodels)
+library(future)
+plan(multisession, workers = 5)
+
+set.seed(1)
+
+n <- 10000
+W1 <- rnorm(n)
+W2 <- rnorm(n)
+W3 <- rbinom(n, 1, 0.5)
+W4 <- rnorm(n)
+
+# TRUE propensity score model
+A <- rbinom(n, 1, plogis(-0.5 + 0.8*W1 + 0.5*W2^2 + 0.3*W3 - 0.4*W1*W2 + 0.2*W4))
+
+# TRUE outcome model
+Y <- rbinom(n, 1, plogis(-1 + 0.2*A + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2))
+
+# Calculate TRUE ATE
+logit_Y1 <- -1 + 0.2 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+logit_Y0 <- -1 + 0 + 0.6*W1 - 0.4*W2^2 + 0.5*W3 + 0.3*W1*W3 + 0.2*W4^2
+
+Y1_true <- plogis(logit_Y1)
+Y0_true <- plogis(logit_Y0)
+true_ATE <- mean(Y1_true - Y0_true)
+
+df <- tibble(W1 = W1, W2 = W2, W3 = W3, W4 = W4, A = A, Y = Y)
+
+# sample
+n_sample <- 1000
+n_i <- 6000
+
+predicted_ate <- vector(mode = "numeric", length = n_sample)
+pred_se <- vector(mode = "numeric", length = n_sample)
+
+for (i in 1:n_sample) {
+  set.seed(i)
+data <- slice_sample(df, n = n_i, replace = T) |> select(Y,A,W1:W4) |> mutate(Y = as.factor(Y), A = as.factor(A))
+train <- data
+
+
+# outcome model
+xgb_spec <- boost_tree(
+  trees = tune(),
+  tree_depth = tune(),
+  min_n = tune(),
+  loss_reduction = tune(),
+  # sample_size = tune(),
+  mtry = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")  
+
+# Create workflow
+xgb_wf <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(Y ~ .)
+
+# Tuning grid
+xgb_grid <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train),
+  learn_rate(),
+  size = 5 # here <------------
+)
+
+# Cross-validation and tuning
+folds <- vfold_cv(train, v = 5)
+
+xgb_res <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid = xgb_grid,
+  control = control_grid(save_pred = TRUE,
+                         parallel_over = "everything",
+                         verbose = T)
+)
+
+# Select best model
+best_xgb <- select_best(xgb_res, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb <- finalize_workflow(xgb_wf, best_xgb)
+final_fit <- fit(final_xgb, data = train)
+
+# predict
+outcome <- predict(final_fit, new_data = train, type = "prob")[,2] |> pull()
+outcome_0 <- predict(final_fit, new_data = train |> mutate(A = as.factor(0)), type = "prob")[,2] |> pull()
+outcome_1 <- predict(final_fit, new_data = train |> mutate(A = as.factor(1)), type = "prob")[,2] |> pull()
+
+# -------------------------------------------------------
+# treatment model 
+train_tx <- train |> select(-Y)
+
+xgb_wf_tx <- workflow() %>%
+  add_model(xgb_spec) %>%
+  add_formula(A ~ .)
+
+
+xgb_grid_tx <- grid_space_filling(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  finalize(mtry(),train_tx),
+  learn_rate(), 
+  size = 5 # and here <-----------------
+)
+
+# Cross-validation and tuning
+folds_tx <- vfold_cv(train_tx, v = 5)
+
+xgb_res_tx <- tune_grid(
+  xgb_wf_tx,
+  resamples = folds_tx,
+  grid = xgb_grid_tx,
+  control = control_grid(save_pred = TRUE,
+                         verbose = T)
+)
+
+# Select best model
+best_xgb_tx <- select_best(xgb_res_tx, metric = "roc_auc")
+
+# Finalize and fit
+final_xgb_tx <- finalize_workflow(xgb_wf_tx, best_xgb)
+final_fit_tx <- fit(final_xgb_tx, data = train_tx)
+
+ps <- predict(final_fit_tx, new_data = train_tx |> select(-A), type = "prob")[,2] |> pull()
+ps_final <- ps
+# ps_final <- pmax(pmin(ps, 0.95), 0.05)
+a_1 <- 1/(predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull())
+a_0 <- -1/(1 - (predict(final_fit_tx, new_data = train_tx, type = "prob")[,2] |> pull()))
+clever_covariate <- ifelse(train_tx$A == 1, 1/ps_final, -1/(1-ps_final))
+
+# step 3 
+epsilon_model <- glm(train$Y ~ -1 + offset(qlogis(outcome)) + clever_covariate, family = "binomial")
+summary(epsilon_model)
+epsilon <- epsilon_model$coefficients
+
+#### Step 4. Update Initial Outcomes
+updated_outcome_1 <- plogis(qlogis(outcome_1)+epsilon*a_1)
+updated_outcome_0 <- plogis(qlogis(outcome_0)+epsilon*a_0)
+
+#### Step 5. Compute ATE
+ate <- mean(updated_outcome_1-updated_outcome_0)
+
+
+### step 6. SE
+updated_outcome <- ifelse(train$A == 1, updated_outcome_1, updated_outcome_0)
+se <- sqrt(var((as.numeric(train$Y==1)-updated_outcome)*clever_covariate+updated_outcome_1-updated_outcome_0-ate)/n_i)
+
+predicted_ate[i] <- ate
+pred_se[i] <- se
+print(paste0("i: ",i, " ate: ", ate, " se: ",se))
+if ((i %% 2)==0) { save(predicted_ate, pred_se, file = "predicted_ate_tmle_se_5.rda") } # and make sure you change file name when saving too <--------- size 5 vs 20
+}
+```
+</details>
+
+<details>
+<summary>visualization code</summary>
+
+``` r
+library(tidyverse)
+load("logreg_bootstrap_tails.rda")
+load("predicted_ate_tmle_se_5.rda")
+xgb_tmle_5_se_df <- tibble(ate=predicted_ate,se=pred_se)
+load("predicted_ate_tmle_se_20.rda")
+xgb_tmle_20_se_df <- tibble(ate=predicted_ate,se=pred_se)
+
+#### combine all
+df_all_ci <- xgb_tmle_20_se_df |>
+  mutate(lower_ci = ate - 1.96*se,
+         upper_ci = ate + 1.96*se) |>
+  mutate(
+    method = "tmle_xgboost_size20"
+  ) |>
+  select(method, ate, lower_ci, upper_ci) |>
+  rbind(xgb_tmle_5_se_df |>
+          mutate(lower_ci = ate - 1.96*se,
+                 upper_ci = ate + 1.96*se) |>
+          mutate(
+            method = "tmle_xgboost_size5"
+          ) |>
+          select(method,ate,lower_ci,upper_ci)) |>
+  rbind(df_se2 |>
+          rename(lower_ci=lower,upper_ci=upper)) |>
+  mutate(coverage = case_when(
+    lower_ci > true_ATE ~ "left_miss",
+    upper_ci < true_ATE ~ "right_miss",
+    TRUE ~ "within"
+  )) 
+
+##### calculate prop
+coverage_df <- df_all_ci |>
+  group_by(method,coverage) |>
+  summarize(prop = n()*100/1000) |>
+  ungroup(coverage) |>
+  pivot_wider(id_cols = c("method"), names_from = "coverage", values_from = "prop", values_fill = 0) |>
+    mutate(stat = paste0("right missed: ", right_miss,"%, covered: ",within,"%, left missed: ",left_miss,"%"))
+
+coverage_order <- coverage_df |>
+  arrange(desc(within)) |>
+  pull(method)
+
+coverage_df <- coverage_df |>
+  mutate(method = factor(method, levels = coverage_order))
+
+plot <- df_all_ci |>
+  group_by(method) |>
+  arrange(ate) |>
+  mutate(row = row_number(),
+         method = factor(method, levels = coverage_order)) |>
+  ggplot(aes(x=row,y=ate,color=coverage)) +
+  geom_point() +
+  geom_ribbon(aes(ymin=lower_ci,ymax=upper_ci,fill=coverage),alpha=0.5) +
+  geom_hline(yintercept = true_ATE, linewidth=0.5, color="blue") +
+  geom_text(data=coverage_df, aes(x=500,y=-0.05,label=stat), inherit.aes = F) +
+  theme_bw() +
+  facet_wrap(.~method, ncol=1) +
+  theme(legend.position = "bottom") +
+  xlab("bootstrap no.")
+```
+</details>
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-31-1.png" width="672" />
+
+Wow, Frank was right to say "prepare to be disappointed!" 😅 The correctly specified logistic regression outcome model was the clear winner with 95.0% coverage and pretty symmetric tails (1.7% left miss, 3.3% right miss) - basically exactly what you'd want to see. The correctly specified treatment model with IPW did reasonably well at 92.4% coverage, though it had some asymmetry (7.0% left miss, 0.6% right miss). But wow, the misspecified logistic regression outcome model was a disaster - only 2.8% coverage with almost everything missing on the right tail (97.2% right miss)!
+
+Now here's where it gets interesting: TMLE with XGBoost grid search size 5 achieved 87.6% coverage, which isn't terrible, but it had this concerning asymmetry (11.3% left miss, 1.1% right miss). When I cranked up the grid search to size 20, thinking it would get better, it actually got worse - dropped to 71.1% coverage with misses on both sides (21.9% left miss, 7.0% right miss). So Frank's warning was spot on! While TMLE definitely saved us from the catastrophic failure of misspecified parametric models, those confidence intervals just don't behave properly. The machine learning component does great at capturing complex relationships without us having to specify all those weird interactions, but the price is wonky uncertainty estimates. Seems like TMLE's real strength is getting better point estimates, not reliable confidence intervals. 🤔
+
+
+## Acknowledgements {#ack}
+Thanks to Frank Harrell for the pointers! We can see the non-coverage tails much clearer for all methods!
+
 
 
 ## Opportunities for improvement {#opportunity}
