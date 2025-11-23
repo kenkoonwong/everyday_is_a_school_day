@@ -23,10 +23,10 @@ tags:
 - g computation
 - bias
 - variance
-excerpt: Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. It worked on simulated complex data, would it work in real world? 🤔
+excerpt: Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. But beware the confidence intervals - Frank Harrell was right to say "prepare to be disappointed!" 🤔
 ---
 
-> Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. It worked on simulated complex data, would it work in real world? 🤔
+> Finally understood TMLE's "doubly robust" property through simulation. Works well when either outcome OR treatment model is correct. XGBoost + TMLE captured complex relationships without manual specification. But beware the confidence intervals - Frank Harrell was right to say "prepare to be disappointed!" 🤔
 
 ![](dr.png)
 
