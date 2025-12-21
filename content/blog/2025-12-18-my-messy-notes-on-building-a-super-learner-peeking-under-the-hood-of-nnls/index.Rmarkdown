@@ -108,8 +108,8 @@ We will go throught the iterative procedure below, move Passive set (R) one by o
 <summary>code</summary>
 ```{r,eval=F}
 # step 1: find gradient 
-w <- t(A) %*% (b-A %*% x)
-if (sum(w<=0)==dim(A)[2]) { stop("all gradients are zero or negative, we have achieved optimality") }
+gradient <- t(X) %*% (y-X %*% beta)
+if (sum(gradient<=0)==dim(X)[2]) { stop("all gradients are zero or negative, we have achieved optimality") }
 if (length(R)==0) { stop("R is empty")}
 ```
 </details>
@@ -392,6 +392,8 @@ y <- 0.2*x + 0.5*w + 0.2*x*w + 0.05*x^2
 
 Made sure to set seed for reproducibility, create 5 fold for cross validation. Then extract all the prediction for validation sets from each models and stack them into `X` matrix. Then extract the RMSE from each models and stack them into `metrics` matrix. Finally, we run our nnls code above to get the weights and RMSE for super learner. We repeat this for 1000 iterations and log the results.
 
+This cross-validation step is the defining feature of the Super Learner. By fitting each base learner on training folds and generating out-of-fold predictions, we obtain an unbiased prediction matrix that is then used to estimate optimal ensemble weights via NNLS.
+
 <details>
 <summary>code</summary>
 ```{r, eval=F}
@@ -487,6 +489,7 @@ run_iteration <- function(i) {
   rmse_result <- if (sum(metrics < rmse_superlearner) >= 1) { "solo_better" } else { "superlearner_better" }
   
   model <- nnls::nnls(A=X,b=y)
+  rmse_ours_nnls <- c(rmse_superlearner, sqrt(mean((y - X %*% model$x)^2)))
   same_weights_result <- if (sum(round(beta, 4) == round(model$x, 4)) == 3) { "same" } else { "not_same" }
   weights_log <- c(model$x, beta)
   

@@ -110,8 +110,8 @@ We will go throught the iterative procedure below, move Passive set (R) one by o
 
 ``` r
 # step 1: find gradient 
-w <- t(A) %*% (b-A %*% x)
-if (sum(w<=0)==dim(A)[2]) { stop("all gradients are zero or negative, we have achieved optimality") }
+gradient <- t(X) %*% (y-X %*% beta)
+if (sum(gradient<=0)==dim(X)[2]) { stop("all gradients are zero or negative, we have achieved optimality") }
 if (length(R)==0) { stop("R is empty")}
 ```
 </details>
@@ -392,12 +392,12 @@ if (any(beta_i<0)) {
 ```
 
 ```
-## [1] 0.0000000 0.9999243 0.0000000 0.0000000 0.0000000
-## [1] 0.0000000 0.5100031 0.4899828 0.0000000 0.0000000
-## [1] 0.0000000 0.3468156 0.3228658 0.0000000 0.3303072
-## [1] 0.000000e+00 3.465752e-01 3.227937e-01 1.124196e-05 3.306095e-01
-## [1] 2.344816e-01 2.635713e-01 2.497437e-01 9.064046e-06 2.521798e-01
-## [1] "all gradients are zero or negative, we have achieved optimality"
+## [1] 0.9998029 0.0000000 0.0000000 0.0000000 0.0000000
+## [1] 0.5145682 0.0000000 0.0000000 0.4853314 0.0000000
+## [1] 0.3242697 0.3571370 0.0000000 0.3184922 0.0000000
+## [1] 0.2346782 0.2762402 0.0000000 0.2480602 0.2409658
+## [1] 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208
+## [1] "R is empty"
 ```
 
 Let's look at our weights and RMSE
@@ -408,7 +408,7 @@ beta
 ```
 
 ```
-## [1] 2.344816e-01 2.635713e-01 2.497437e-01 9.064046e-06 2.521798e-01
+## [1] 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208
 ```
 
 ``` r
@@ -416,7 +416,7 @@ sqrt(mean((y - X %*% beta)^2))
 ```
 
 ```
-## [1] 0.004918013
+## [1] 0.004614622
 ```
 
 Let's look at `nnls` package and see if we can the same result
@@ -428,8 +428,8 @@ model
 
 ```
 ## Nonnegative least squares model
-## x estimates: 0.2344816 0.2635713 0.2497437 9.064046e-06 0.2521798 
-## residual sum-of-squares: 0.02419
+## x estimates: 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208 
+## residual sum-of-squares: 0.02129
 ## reason terminated: The solution has been computed sucessfully.
 ```
 
@@ -438,7 +438,7 @@ sqrt(mean((y - X %*% model$x)^2))
 ```
 
 ```
-## [1] 0.004918013
+## [1] 0.004614622
 ```
 
 wow! Awesome!!! Looks the same or at least very similar. Alright, now we're at least able to reproduce the nnls portion from scratch. Let's see if we can simulate a non-linear data and train with different models and see how our end result is!
@@ -455,6 +455,8 @@ y <- 0.2*x + 0.5*w + 0.2*x*w + 0.05*x^2
 ```
 
 Made sure to set seed for reproducibility, create 5 fold for cross validation. Then extract all the prediction for validation sets from each models and stack them into `X` matrix. Then extract the RMSE from each models and stack them into `metrics` matrix. Finally, we run our nnls code above to get the weights and RMSE for super learner. We repeat this for 1000 iterations and log the results.
+
+This cross-validation step is the defining feature of the Super Learner. By fitting each base learner on training folds and generating out-of-fold predictions, we obtain an unbiased prediction matrix that is then used to estimate optimal ensemble weights via NNLS.
 
 <details>
 <summary>code</summary>
@@ -552,6 +554,7 @@ run_iteration <- function(i) {
   rmse_result <- if (sum(metrics < rmse_superlearner) >= 1) { "solo_better" } else { "superlearner_better" }
   
   model <- nnls::nnls(A=X,b=y)
+  rmse_ours_nnls <- c(rmse_superlearner, sqrt(mean((y - X %*% model$x)^2)))
   same_weights_result <- if (sum(round(beta, 4) == round(model$x, 4)) == 3) { "same" } else { "not_same" }
   weights_log <- c(model$x, beta)
   
