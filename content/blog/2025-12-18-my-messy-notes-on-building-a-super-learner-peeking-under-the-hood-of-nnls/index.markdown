@@ -40,10 +40,14 @@ Super Learner is an ensemble machine learning algorithm that optimally combines 
 ## What is the algorithm behind Super Learner? {#engine}
 The beauty of Super Learner lies in its theoretical guarantee: it will perform at least as well as the best single algorithm in your library of candidate learners, and often performs substantially better. This property, known as the [oracle inequality](https://vanderlaan-lab.org/2019/05/11/adaptive-algorithm-selection-via-the-super-learner/), means that Super Learner asymptotically achieves the lowest possible prediction error among the combinations of the candidate algorithms. 🤔 To be transparent, I don't really understand all these. But, let's move on. The engine behind this is [Non-Negative Least Squares (NNLS)](https://en.wikipedia.org/wiki/Non-negative_least_squares), an elegant constrained optimization method that finds the optimal weights for combining your candidate algorithms. 
 
+> Note: The Super Learner theory does not require NNLS, but works well in practice and is often much faster than true convex combination optimization, and can be seen in the early work on Stacked Regression by Leo Breiman.  
+
 ### NNLS {#nnls}
 At its core, NNLS solves a seemingly simple problem: given a matrix `X` of predictions from your candidate algorithms and an outcome vector `y`, find `weights β` that minimize the squared prediction error `||y - Xβ||²` subject to two crucial constraints: 
 1. all weights must be non-negative (β ≥ 0)
-2. the weights must sum to one (ensuring a proper convex combination). 
+2. ~~the weights must sum to one (ensuring a proper convex combination).~~
+
+> Note: Unlike the theoretical Super Learner which requires weights to sum to one (convex combination), NNLS only enforces non-negativity. This relaxation makes the optimization much faster while performing just as well in practice. Thanks to [Eric Polley](https://health.uchicago.edu/faculty/eric-polley-phd) for correcting and educating me on the above. Much appreciated! 
 
 ### Lawson-Hanson Algorithm {#lha}
 The most commonly used algorithm for solving NNLS is the active set method developed by Lawson and Hanson in 1974. This iterative algorithm is remarkably intuitive: it maintains two sets of variables—an "active set" of variables currently in the model with positive weights, and a "passive set" of variables currently excluded (with zero weights). The algorithm begins with all variables in the passive set, then iteratively identifies which passive variable, if added to the active set, would most improve the fit. Once a variable enters the active set, the algorithm solves an unconstrained least squares problem using only the active variables. If any weights become negative during this step, the algorithm removes the most negative variable from the active set and repeats the process. This addition-and-removal dance continues until no passive variables would improve the fit and all active variables have positive weights—at which point we've found our optimal solution.
@@ -392,11 +396,22 @@ if (any(beta_i<0)) {
 ```
 
 ```
-## [1] 0.9998029 0.0000000 0.0000000 0.0000000 0.0000000
-## [1] 0.5145682 0.0000000 0.0000000 0.4853314 0.0000000
-## [1] 0.3242697 0.3571370 0.0000000 0.3184922 0.0000000
-## [1] 0.2346782 0.2762402 0.0000000 0.2480602 0.2409658
-## [1] 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208
+## [1] 0.000000 0.000000 1.000061 0.000000 0.000000
+## [1] 1.289716e-05 0.000000e+00 1.000049e+00 0.000000e+00 0.000000e+00
+## [1] "negative weights: -4.80441441441621e-06 0 0.530291436850037 0 0.469820844889452"
+## [1] "new weights after setting negative weight as zero: 0 0 0.6578 0 0.3423"
+## [1] "negative weights: -4.57899476983191e-06 6.81265663325082e-05 0.530205009482599 0 0.469839806590533"
+## [1] "new weights after setting negative weight as zero: 0 0 0.6578 0 0.3423"
+## [1] "negative weights: -4.73337830228063e-06 6.51033708645959e-05 0.530467184328906 -5.88823524796493e-06 0.469586269810267"
+```
+
+```
+## Warning in alpha * (beta - beta_i): longer object length is not a multiple of
+## shorter object length
+```
+
+```
+## [1] "new weights after setting negative weight as zero: 0 0 0.6578 0 0.3423"
 ## [1] "R is empty"
 ```
 
@@ -408,7 +423,7 @@ beta
 ```
 
 ```
-## [1] 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208
+## [1] 0.0000 0.0000 0.6578 0.0000 0.3423
 ```
 
 ``` r
@@ -416,7 +431,7 @@ sqrt(mean((y - X %*% beta)^2))
 ```
 
 ```
-## [1] 0.004614622
+## [1] 0.007206879
 ```
 
 Let's look at `nnls` package and see if we can the same result
@@ -428,8 +443,8 @@ model
 
 ```
 ## Nonnegative least squares model
-## x estimates: 0.1884031 0.2342831 0.1677427 0.2059978 0.2035208 
-## residual sum-of-squares: 0.02129
+## x estimates: 0 6.970084e-05 0.53029 0 0.4697488 
+## residual sum-of-squares: 0.04886
 ## reason terminated: The solution has been computed sucessfully.
 ```
 
@@ -438,7 +453,7 @@ sqrt(mean((y - X %*% model$x)^2))
 ```
 
 ```
-## [1] 0.004614622
+## [1] 0.006989728
 ```
 
 wow! Awesome!!! Looks the same or at least very similar. Alright, now we're at least able to reproduce the nnls portion from scratch. Let's see if we can simulate a non-linear data and train with different models and see how our end result is!
@@ -731,6 +746,9 @@ weight_logs |>
 
 
 🥹 Does that mean our home-grown algorithm works just as well? You be the judge. Let me know if this is due to pure luck! 
+
+## Acknowledgement:
+Thanks [Eric Polley](https://health.uchicago.edu/faculty/eric-polley-phd) for correcting and educating me on that NNLS does not require the beta coefficients sum up to 1 (only non-negative). Also The Super Learner theory does not require NNLS, but works well in practice and is often much faster than true convex combination optimization, and can be seen in the early work on Stacked Regression by Leo Breiman. Much appreciated!
 
 
 ## Opportunities for improvement {#opportunity}
