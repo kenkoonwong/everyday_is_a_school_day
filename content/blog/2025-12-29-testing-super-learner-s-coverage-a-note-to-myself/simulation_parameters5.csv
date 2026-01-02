@@ -1,0 +1,7 @@
+"parameter","value"
+"n_population","10000"
+"n_sample_iterations","1000"
+"n_bootstrap_size","6000"
+"SL_library","c(""SL.xgboost"", ""SL.ranger"", ""SL.glm"", ""SL.mean""), c(""SL.xgboost"", ""SL.ranger""), c(""SL.xgboost"", ""SL.glm""), c(""SL.xgboost"", ""SL.ranger"", ""screen.glmnet""), c(""xgb_500_3_0.001"", ""xgb_1000_3_0.001"", ""xgb_500_5_0.001"", ""xgb_1000_5_0.001"", ""xgb_500_3_0.01"", ""xgb_1000_3_0.01"", ""xgb_500_5_0.01"", ""xgb_1000_5_0.01"", ""SL.glm"")"
+"n_workers","4"
+"runtime_seconds","11846.3348600864"
