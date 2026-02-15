@@ -677,7 +677,12 @@ This is what we've been working toward. Restraints are off, the system is equili
 
 Run this first to re-center
 ```{bash, eval=F}
-echo "1 0" | gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center
+# Step 1: Make molecules whole first
+echo "0" | gmx trjconv -s md.tpr -f md.xtc -o md_nojump.xtc -pbc nojump
+
+# Step 2: Center on protein and apply mol PBC
+echo "1 0" | gmx trjconv -s md.tpr -f md_nojump.xtc -o md_noPBC.xtc -pbc mol
+-center
 ```
 
 
