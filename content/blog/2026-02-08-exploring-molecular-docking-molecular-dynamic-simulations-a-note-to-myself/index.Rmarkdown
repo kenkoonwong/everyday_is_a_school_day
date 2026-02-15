@@ -974,7 +974,7 @@ The matchmaker aligns both frames.
 ![](pbp2x_pcn_fram0_fram5000_viz.gif)
 Great! Looks like it the coordinates are quite similar! Especially the beta lactam ring area, which is the most important part for the interaction. The tail area seems to have more wiggle room, which is consistent with our RMSF analysis.
 
-Wow, I learnt so much, and so much more to learn! The physics is really fascinating! I don't understanding all of the them, but at least this is a step to knowing what I don't know, which is a lot! The trials and erros we've gone through, and thanks to Claude, I was able to get unstuck! But still, took quite a long time from experimentation, reproducing with different pdbs, then the documentation! My heart goes to those who do this for a living... it's not easy! ❤️ Thanks to all who contribute to the scientific community! All the software I used are freely available! And you can reproduce this at your own home as well!
+Wow, I learnt so much, and so much more to learn! The physics is really fascinating! I don't understanding all of the them, but at least this is a step to knowing what I don't know, which is a lot! The trials and erros we've gone through, and thanks to Claude, I was able to get unstuck! But still, took quite a long time from experimentation, reproducing with different pdbs, then the documentation! My heart goes to those who do this for a living... it's not easy! ❤️ Thanks to all who contribute to the scientific community! All the software I used are freely available! And you can reproduce this at your own home as well! Please be sure to cite them!
 
 
 ## Opportunities for Improvement {#opportunities}
@@ -986,6 +986,7 @@ Wow, I learnt so much, and so much more to learn! The physics is really fascinat
 - I need to turn all of the above into a pipeline where there is less copy and paste and typing! So I can run more!
 - I am really curious about how certain ESBL beta lactamase has affinity to beta lactamase inhibitor. Want to see if gromacs can simulate this!
 - I should really be using index in gromacs
+- learn about MM-GBSA / MM-PBSA for post-processing
 
 
 ## Lessons Learnt {#lessons}
