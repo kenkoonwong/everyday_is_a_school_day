@@ -671,6 +671,8 @@ gmx mdrun -deffnm md
 
 This is what we've been working toward. Restraints are off, the system is equilibrated, and we're letting the simulation run freely for 10 nanoseconds. Every 10 ps the coordinates get saved to a compressed .xtc trajectory file for analysis later. Sit back, let it cook, and get ready for the analysis phase.
 
+> Note: The above default is 10 ns. We did extend to 50 ns to further assess the rmsd issue we saw initially (not documented here) (see note how to do so). Also! These are quite memory intensive! Make sure your harddrive has lots of storage! 
+
 ## Asessment {#assess}
 
 Run this first to re-center
@@ -718,6 +720,20 @@ plot_xvg(ligand)
 Backbone RMSD rises from 0 to ~0.5 nm within the first ~5 ns and plateaus around 0.5–0.6 nm for the remainder of the 50 ns simulation, indicating the protein equilibrates early and maintains a stable conformation throughout — consistent across all simulation lengths tested. The ligand (UNL) RMSD tells a different story: it fluctuates around 0.2–0.4 nm for the first ~20 ns, then drifts progressively upward to ~0.5–0.7 nm after ~25 ns with no plateau, suggesting the ligand undergoes a conformational transition away from its original docked pose mid-simulation. However, this should be interpreted alongside the minimum distance, COM distance, H-bond, and interaction energy data.
 
 > Note: I had to use echo "1 0" | gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center to re-center because there were some outliers of the RMSD of the ligand with 12-15 values. This disappeared after re-centering
+
+> Note: I also had to extend 10ns to 50ns to further assess if protein rmsd plateaud as it kept rising. To extend use this:
+
+```{bash, eval=F}
+gmx convert-tpr -s md.tpr -extend 40000 -o md_extended.tpr
+
+gmx mdrun -deffnm md_extended \
+  -s md_extended.tpr \
+  -cpi md.cpt \
+  -nb gpu -pme gpu -bonded gpu -update gpu \
+  -ntmpi 1 -ntomp 4 \
+  -v
+```
+
 
 ### RMSF — Root Mean Square Fluctuation {#rmsf}
 What it measures: Per-residue (or per-atom) flexibility over time.
@@ -845,6 +861,9 @@ tibble(hbond$hbond_prot_lig$data) |>
 
 Ligand-protein H-bond analysis reveals 1–3 persistent H-bonds throughout the simulation with only rare drops to zero, indicating the ligand maintains contact with the protein but does not settle into a single stable binding pose — consistent with the progressive RMSD drift. Rather than full dissociation, the ligand appears to be dynamically sampling multiple interaction geometries. This suggests weak or non-specific binding at this site, and a more favorable docking pose or alternative binding site may need to be explored.
 
+> Note: Try simulating ligand-protein complex where you know it won't bind and see this hydrogen bonds to be 0 0 0 0 all the way. Quite often, when i mistakenly docked in the wrong coordinates, my first few minutes production has very low hydrogen bond average. Usually in those situation, I'll stop instead of continuing. What do you guys do?
+
+
 ### Binding Pocket Distance Analysis {#distance}
 What it measures: Distance between the ligand center-of-mass (or key atoms) and key binding site residues.
 
@@ -966,6 +985,7 @@ Wow, I learnt so much, and so much more to learn! The physics is really fascinat
 - we did not assess covalent docking
 - I need to turn all of the above into a pipeline where there is less copy and paste and typing! So I can run more!
 - I am really curious about how certain ESBL beta lactamase has affinity to beta lactamase inhibitor. Want to see if gromacs can simulate this!
+- I should really be using index in gromacs
 
 
 ## Lessons Learnt {#lessons}

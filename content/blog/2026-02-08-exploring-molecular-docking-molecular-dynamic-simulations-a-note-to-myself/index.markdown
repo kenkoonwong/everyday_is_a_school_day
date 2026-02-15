@@ -686,6 +686,8 @@ gmx mdrun -deffnm md
 
 This is what we've been working toward. Restraints are off, the system is equilibrated, and we're letting the simulation run freely for 10 nanoseconds. Every 10 ps the coordinates get saved to a compressed .xtc trajectory file for analysis later. Sit back, let it cook, and get ready for the analysis phase.
 
+> Note: The above default is 10 ns. We did extend to 50 ns to further assess the rmsd issue we saw initially (not documented here) (see note how to do so). Also! These are quite memory intensive! Make sure your harddrive has lots of storage! 
+
 ## Asessment {#assess}
 
 Run this first to re-center
@@ -741,6 +743,21 @@ Backbone RMSD rises from 0 to ~0.5 nm within the first ~5 ns and plateaus around
 
 > Note: I had to use echo "1 0" | gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center to re-center because there were some outliers of the RMSD of the ligand with 12-15 values. This disappeared after re-centering
 
+> Note: I also had to extend 10ns to 50ns to further assess if protein rmsd plateaud as it kept rising. To extend use this:
+
+
+``` bash
+gmx convert-tpr -s md.tpr -extend 40000 -o md_extended.tpr
+
+gmx mdrun -deffnm md_extended \
+  -s md_extended.tpr \
+  -cpi md.cpt \
+  -nb gpu -pme gpu -bonded gpu -update gpu \
+  -ntmpi 1 -ntomp 4 \
+  -v
+```
+
+
 ### RMSF — Root Mean Square Fluctuation {#rmsf}
 What it measures: Per-residue (or per-atom) flexibility over time.
 
@@ -757,7 +774,7 @@ echo 13 | gmx rmsf -s md.tpr -f md_noPBC.xtc -o rmsf_ligand.xvg
 
 Binding site residues with low RMSF (< 1–1.5 Å) = well-restrained by ligand. If RMSF of active site residues is HIGH while your ligand RMSD is also high → ligand is not stabilizing the pocket. What does our say?
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-21-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-22-1.png" width="672" />
 
 A few minor peaks around residues 200, 300, and 580–600 suggest localized loop flexibility mid-structure but nothing dramatic. Overall the RMSF profile is consistent with a stable, well-folded protein throughout the 50 ns simulation, with flexibility confined primarily to the N-terminal region as expected for a large multimeric protein like PBP2x.
 
@@ -768,7 +785,7 @@ rmsf_ligand <- read_xvg("rmsf_ligand.xvg")
 plot_xvg(rmsf_ligand)
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-22-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-23-1.png" width="672" />
 
 Ligand RMSF analysis shows per-atom fluctuations ranging from ~0.02–0.27 nm across all 41 atoms (system atoms 10041–10082), with a notable peak around atom 10068 corresponding to H7 on the aromatic ring region (benzene ring), suggesting this part of the ligand is the most dynamically flexible. Overall fluctuation levels are moderate and consistent with the dynamic pose sampling behavior observed throughout the simulation.
 
@@ -792,7 +809,7 @@ echo '1' | gmx gyrate -s md.tpr -f md_noPBC.xtc -o gyrate.xvg
 ```
 
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-24-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-25-1.png" width="672" />
 
 According to Claude, the radius of gyration plot for the 50 ns simulation shows total Rg remaining stable at ~2.9 nm throughout, confirming the protein maintains its overall fold with no unfolding or collapse. RgX stays relatively flat around ~2.75 nm. However RgY and RgZ show dramatic and unusual fluctuations between ~20,000–45,000 ps — RgY drops sharply from ~2.75 nm down to ~2.3 nm then recovers, while RgZ spikes from ~1.8 nm up to ~2.45 nm then returns to baseline. These large axial swings occurring simultaneously in opposite directions are concerning and could indicate significant domain reorganization, partial chain separation, or a PBC artifact requiring further investigation. Will visualize in ChimeraX to determine the cause.
 
@@ -842,7 +859,7 @@ interaction <- read_xvg("interaction_energy.xvg")
 plot_xvg(interaction)
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-27-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-28-1.png" width="672" />
 
 Interaction energy plots show LJ/vdW interaction is more stable and consistently negative (~-80 to -130 kJ/mol) throughout the simulation, while Coulomb interaction is highly variable (0 to -80 kJ/mol) with frequent excursions toward zero, indicating the ligand maintains physical contact with the protein but repeatedly loses and regains specific electrostatic interactions. This pattern is consistent with dynamic surface sampling rather than stable binding mode occupancy.
 
@@ -859,9 +876,12 @@ more info than pdb during acpype conversion, so maybe try that out as well.
 echo '1 13' | gmx hbond -s md.tpr -f md_noPBC.xtc -num hbond_ligand_protein.xvg -tu ns 
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-29-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-30-1.png" width="672" />
 
 Ligand-protein H-bond analysis reveals 1–3 persistent H-bonds throughout the simulation with only rare drops to zero, indicating the ligand maintains contact with the protein but does not settle into a single stable binding pose — consistent with the progressive RMSD drift. Rather than full dissociation, the ligand appears to be dynamically sampling multiple interaction geometries. This suggests weak or non-specific binding at this site, and a more favorable docking pose or alternative binding site may need to be explored.
+
+> Note: Try simulating ligand-protein complex where you know it won't bind and see this hydrogen bonds to be 0 0 0 0 all the way. Quite often, when i mistakenly docked in the wrong coordinates, my first few minutes production has very low hydrogen bond average. Usually in those situation, I'll stop instead of continuing. What do you guys do?
+
 
 ### Binding Pocket Distance Analysis {#distance}
 What it measures: Distance between the ligand center-of-mass (or key atoms) and key binding site residues.
@@ -927,11 +947,11 @@ plot_dist <- dist_df |>
 ```
 </details>
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-32-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-33-1.png" width="672" />
 
 Minimum distance analysis between the ligand and protein confirms the ligand remains in close proximity (~0.15–0.25 nm) throughout the entire 50 ns simulation with no upward drift, ruling out full dissociation. Together with the persistent 1–3 protein-ligand H-bonds, this suggests the ligand maintains continuous contact with the protein surface but explores multiple binding geometries rather than converging on a single stable pose — consistent with weak or dynamic binding at this site.
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-33-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-34-1.png" width="672" />
 
 Center of mass distance between ligand and protein remains stable at ~2.75–2.95 nm throughout the 50 ns simulation with no directional drift, confirming the ligand does not dissociate from the protein. Combined with the minimum distance (~0.15–0.25 nm) and persistent 1–3 H-bonds, the collective picture is one of a ligand that remains associated with the protein but dynamically samples multiple surface poses rather than adopting a single locked binding mode — suggesting the binding interaction is real but relatively weak or non-specific at this site.
 
@@ -983,6 +1003,7 @@ Wow, I learnt so much, and so much more to learn! The physics is really fascinat
 - we did not assess covalent docking
 - I need to turn all of the above into a pipeline where there is less copy and paste and typing! So I can run more!
 - I am really curious about how certain ESBL beta lactamase has affinity to beta lactamase inhibitor. Want to see if gromacs can simulate this!
+- I should really be using index in gromacs
 
 
 ## Lessons Learnt {#lessons}
