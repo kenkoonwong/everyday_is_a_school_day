@@ -682,6 +682,9 @@ gmx mdrun -deffnm md -nb gpu -pme gpu
 
 # or cpu
 gmx mdrun -deffnm md
+
+# if ctrl+c and want to resume/continue
+gmx mdrun -v -deffnm md -nb gpu -pme gpu -cpi md.cpt -append
 ```
 
 This is what we've been working toward. Restraints are off, the system is equilibrated, and we're letting the simulation run freely for 10 nanoseconds. Every 10 ps the coordinates get saved to a compressed .xtc trajectory file for analysis later. Sit back, let it cook, and get ready for the analysis phase.
@@ -697,8 +700,7 @@ Run this first to re-center
 echo "0" | gmx trjconv -s md.tpr -f md.xtc -o md_nojump.xtc -pbc nojump
 
 # Step 2: Center on protein and apply mol PBC
-echo "1 0" | gmx trjconv -s md.tpr -f md_nojump.xtc -o md_noPBC.xtc -pbc mol
--center
+echo "1 0" | gmx trjconv -s md.tpr -f md_nojump.xtc -o md_noPBC.xtc -pbc mol -center
 ```
 
 
