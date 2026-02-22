@@ -349,7 +349,13 @@ python3 << 'PYEOF'
 
 > Note: The above code may not work. Might have to rewrite it to make it more robust
 
-We essentially want to combine our `pbp2x_processed.gro`, [remember this?](#prepare), and also our `pcn_docked_GMX.gro`, [rememebr this?](#ligand), into a single `protein-ligand complex` and call it `complex.gro`. 
+We essentially want to combine our `pbp2x_processed.gro`, [remember this?](#prepare), and also our `pcn_docked.gro`, into a single `protein-ligand complex` and call it `complex.gro`. 
+
+#### Convert Oringally Docked Pose To gro
+```{bash, eval=F}
+gmx editconf -f pcn_docked.pdb -o pcn_docked.gro
+```
+
 
 You go to this:
 
