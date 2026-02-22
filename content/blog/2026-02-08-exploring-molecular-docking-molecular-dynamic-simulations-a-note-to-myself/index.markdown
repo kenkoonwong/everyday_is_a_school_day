@@ -376,6 +376,8 @@ Change the total atoms numbers `100842` from 10041 + 41 = 10082. Then insert the
   <img src="complex.png" alt="image" width="60%" height="auto">
 </p>
 
+> Warning! Note: Do not use acpype gro because the coordinates may not be the same, use this something like this `gmx editconf -f diffdock_pose.pdb -o ligand_positioned.gro` from your original docked pose pdb.
+
 ### Define Simulation Box {#box}
 
 ``` bash
@@ -897,15 +899,7 @@ RMSD can be misleading if the ligand rotates in place. Tracking distances to kno
 
 
 ``` bash
-# Distance between ligand COM and active site serine (e.g., residue 62, atom OG)
-gmx distance -s md.tpr -f md_noPBC.xtc -oav distance_ser62.xvg -select 'com of group "LIG" plus atomname OG and resnum 62'
-
 echo '1 13' | gmx mindist -f md_noPBC.xtc -s md.tpr -n index.ndx -od mindist_prot_lig.xvg -on numcont_prot_lig.xvg -d 0.4
-
-gmx mindist -s md.tpr -f md_noPBC.xtc -od mindist_activesite.xvg -tu ns << EOF
-13   # Ligand
-r62  # Active site residue — create this group in make_ndx
-EOF
 
 gmx distance -f md_noPBC.xtc -s md.tpr -n index.ndx -select 'com of group "Protein" plus com of group "UNL"' -oall distance_prot_lig.xvg
 ```
@@ -1012,6 +1006,7 @@ Wow, I learnt so much, and so much more to learn! The physics is really fascinat
 - I am really curious about how certain ESBL beta lactamase has affinity to beta lactamase inhibitor. Want to see if gromacs can simulate this!
 - I should really be using index in gromacs
 - learn about MM-GBSA / MM-PBSA for post-processing
+- learn about protonation (physiological pH), probably using obabel
 
 
 ## Lessons Learnt {#lessons}
