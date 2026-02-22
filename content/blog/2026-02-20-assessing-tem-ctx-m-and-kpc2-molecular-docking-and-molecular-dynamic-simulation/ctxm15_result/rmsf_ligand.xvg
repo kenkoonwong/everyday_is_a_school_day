@@ -1,0 +1,30 @@
+# This file was created Sat Feb 21 02:23:02 2026
+# Created by:
+#                       :-) GROMACS - gmx rmsf, 2023.3 (-:
+# 
+# Executable:   /home/gpu/codex_gromacs/gromacs-2023.3-cuda/bin/gmx
+# Data prefix:  /home/gpu/codex_gromacs/gromacs-2023.3-cuda
+# Working dir:  /home/gpu/ctx
+# Command line:
+#   gmx rmsf -s md.tpr -f md.xtc -o rmsf_ligand.xvg
+# gmx rmsf is part of G R O M A C S:
+#
+# GROningen MAchine for Chemical Simulation
+#
+@    title "RMS fluctuation"
+@    xaxis  label "Atom"
+@    yaxis  label "(nm)"
+@TYPE xy
+ 4424   0.0187
+ 4425   0.0115
+ 4426   0.0244
+ 4427   0.0103
+ 4428   0.0210
+ 4429   0.0369
+ 4430   0.0108
+ 4431   0.0207
+ 4432   0.0110
+ 4433   0.0381
+ 4434   0.0369
+ 4435   0.0258
+ 4436   0.0163

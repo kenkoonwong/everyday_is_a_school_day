@@ -1,0 +1,30 @@
+# This file was created Sat Feb 21 17:14:25 2026
+# Created by:
+#                       :-) GROMACS - gmx rmsf, 2023.3 (-:
+# 
+# Executable:   /home/gpu/codex_gromacs/gromacs-2023.3-cuda/bin/gmx
+# Data prefix:  /home/gpu/codex_gromacs/gromacs-2023.3-cuda
+# Working dir:  /home/gpu/kpc2
+# Command line:
+#   gmx rmsf -s md.tpr -f md_nojump.xtc -o rmsf_ligand.xvg
+# gmx rmsf is part of G R O M A C S:
+#
+# Gnomes, ROck Monsters And Chili Sauce
+#
+@    title "RMS fluctuation"
+@    xaxis  label "Atom"
+@    yaxis  label "(nm)"
+@TYPE xy
+ 4381   0.0239
+ 4382   0.0114
+ 4383   0.0192
+ 4384   0.0106
+ 4385   0.0206
+ 4386   0.0357
+ 4387   0.0112
+ 4388   0.0206
+ 4389   0.0103
+ 4390   0.0375
+ 4391   0.0368
+ 4392   0.0266
+ 4393   0.0168
