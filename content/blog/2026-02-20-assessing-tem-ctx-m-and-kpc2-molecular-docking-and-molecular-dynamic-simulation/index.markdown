@@ -1,5 +1,5 @@
 ---
-title: Assessing TEM, CTX-M, and KPC2 With Molecular Docking and Molecular Dynamic Simulation
+title: Assessing TEM, CTX-M, and KPC-2 With Molecular Docking and Molecular Dynamic Simulation
 author: Ken Koon Wong
 date: '2026-02-21'
 slug: mdsim2
@@ -114,7 +114,7 @@ Alright, go through the [MD simulation procedure](https://www.kenkoonwong.com/bl
 echo -e "\"Protein\" | \"UNL\"\nq" | gmx make_ndx -f md.gro -o index.ndx
 echo "0" | gmx trjconv -s md.tpr -f md.xtc -o md_nojump.xtc -pbc nojump
 echo "Protein_UNL System" | gmx trjconv -s md.tpr -f md_nojump.xtc -o md_noPBC.xtc -pbc mol -center -n index.ndx
-echo '4 13' | gmx rms -s reference.gro -f md_noPBC.xtc -o rmsd_ligand.xvg -tu ns -n index.ndx
+echo '4 13' | gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd_ligand.xvg -tu ns -n index.ndx
 echo '4 4' | gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd_protein.xvg -tu ns -n index.ndx
 echo 4 | gmx rmsf -s md.tpr -f md_noPBC.xtc -o rmsf_protein.xvg -res 
 echo 13 | gmx rmsf -s md.tpr -f md_noPBC.xtc -o rmsf_ligand.xvg 
@@ -302,6 +302,8 @@ Wow, having the previous workflow really helps with lower the risk of error! I d
 - I change the output md.mdp to 50000 instead of 5000 to reduce bottle neck between cpu and gpu
 - use && chaining to run one production after another
 - can independently use 2 or more GPU if motherboard allows
+- gromacs automatically chooses a GPU that has better capacity and assign that as 0?
+- need to center in order for a good visualization, otherwise you will see protein and ligand might split as it exits the edge of simulation box, it enters from the other end. 
 
 
 If you like this article:
