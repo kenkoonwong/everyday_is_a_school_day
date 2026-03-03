@@ -79,7 +79,7 @@ We have a total of 1027 isolates, and 45.86% have detected carbapenamase genes! 
 
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" />
 
-Wow, NDM-1 is at the top? I've always thought KPCs is more frequent. Note, these are the sequences that were submitted to NCBI, not necessarily resembling the actual distribution in the real world. But still, interesting to see that NDM-1 is more frequently submitted than KPCs.
+Wow, NDM-1 is at the top? I've always thought KPCs is more frequent. Note, these are the sequences that were submitted to NCBI, not necessarily resembling the actual distribution in the real world. But still, interesting to see that NDM-1 is more frequently submitted than KPCs. 
 
 
 ### Visualize Carbapanemase Gene Frequency By Year {#anim}
@@ -277,6 +277,8 @@ What is interesting is that, I would imagine the ligand would have drifted away 
 I think the ligand is stuck in the pocket as the protein was undergoing conformational change and stabilized after ~30ns, and I think it may have trapped the ligand in the pocket, hence it didn't drift out of the pocket. I think 🤔 . Also, take note that the early simulation animation was without surface (only atoms), whereas the later one did have surface. With the matched protein and ligand of frame 0 and last frame proved that the initial pose was not optimal. 
 
 There you have it! 
+
+> Note: While MM/PBSA provides relative binding estimates, these simulations do not capture full enzymatic hydrolysis dynamics and should be interpreted as comparative rather than absolute
 
 
 ## Opportunities for improvement {#opportunities}
