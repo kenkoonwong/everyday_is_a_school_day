@@ -333,6 +333,96 @@ Notice that our initial model had a fixed fraction of unbound (fu) of 0.1, which
 
 We'll add that to our model and adjust the `np` (total concentration of protein binding sites) according to estimate with lower albumin (np = 295), this number again was from the paper in the discussion portion where their median albumin were ~25g/L.
 
+
+<details>
+<summary>code</summary>
+```{r,eval=F}
+mod <- mcode(model = "ceftriaxone", code='
+$PARAM
+theta1 = 0.56,
+theta2 = 0.32,
+CLcr   = 4.26,
+V1     = 10.3,
+V2     = 7.35,
+Q      = 5.28,
+np     = 517,  
+kaff   = 0.0367 
+
+$OMEGA
+0.24
+0.23
+0.42
+
+$SIGMA
+0.0576
+
+$CMT CENT PERI
+
+$GLOBAL
+double solveFree(double CTOT, double np, double kaff) {
+  double cf   = (-(np+1/kaff-CTOT)+sqrt(pow(np+1/kaff-CTOT,2.0)+(4.0*CTOT/kaff)));
+  return cf > 0 ? cf : 0;
+}
+
+$MAIN
+double CL  = theta1 + theta2 * (CLcr / 4.26);
+double CLi = CL * exp(ETA(1));
+double V1i = V1 * exp(ETA(2));
+double V2i = V2 * exp(ETA(3));
+
+$ODE
+double CTOT  = CENT / V1i;           // renamed: avoid clash with $TABLE
+double CFREE = solveFree(CTOT, np, kaff);
+
+dxdt_CENT = -CLi * CFREE
+            - (Q / V1i) * CENT
+            + (Q / V2i) * PERI;
+
+dxdt_PERI =  (Q / V1i) * CENT
+            - (Q / V2i) * PERI;
+
+$TABLE
+double CTOTAL      = CENT / V1i;      // notice this is not CTOT
+double Cp_free     = solveFree(CTOTAL, np, kaff);
+double Cp_bound    = CTOTAL - Cp_free;
+double FU          = Cp_free / (CTOTAL + 1e-9);
+double Cp_obs      = CTOTAL * (1 + EPS(1));
+
+$CAPTURE CTOTAL Cp_free Cp_bound FU Cp_obs
+')
+
+dosing <- ev(amt = 2000, rate = 4000, ii = 24, addl = 2, cmt = "CENT")
+
+set.seed(1)
+sims <- mod |>
+  param(np = 295) |>
+  ev(dosing) |>
+  mrgsim(nid = 1000, end = 72, delta = 0.25) |>
+  as_tibble()
+
+MIC <- 1
+
+pta <- paste0("Probability of Target Attainment: ", sims |>
+  filter(time >= 48) |>
+  group_by(ID) |>
+  summarise(fT = mean(Cp_free > MIC)) |>
+  summarise(PTA = mean(fT >= 0.50)) |>
+  pull(),", Albumin: ~25g/L, CrCl: ~63 ml/min")
+
+plot <- sims |>
+  ggplot(aes(x=time,y=Cp_free,group=ID)) +
+  geom_line(alpha=0.01) +
+  geom_hline(yintercept = MIC, color = "red") +
+  # geom_text(aes(x=20,y=150,label=pta)) +
+  theme_bw() +
+  ggtitle(pta)
+
+plot(plot)
+
+```
+</details>
+
+
 ```{r,echo=F,message=F,warning=F}
 mod <- mcode(model = "ceftriaxone", code='
 $PARAM

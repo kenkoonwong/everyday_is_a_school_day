@@ -265,11 +265,101 @@ Notice that our initial model had a fixed fraction of unbound (fu) of 0.1, which
 
 We'll add that to our model and adjust the `np` (total concentration of protein binding sites) according to estimate with lower albumin (np = 295), this number again was from the paper in the discussion portion where their median albumin were ~25g/L.
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+
+<details>
+<summary>code</summary>
+
+``` r
+mod <- mcode(model = "ceftriaxone", code='
+$PARAM
+theta1 = 0.56,
+theta2 = 0.32,
+CLcr   = 4.26,
+V1     = 10.3,
+V2     = 7.35,
+Q      = 5.28,
+np     = 517,  
+kaff   = 0.0367 
+
+$OMEGA
+0.24
+0.23
+0.42
+
+$SIGMA
+0.0576
+
+$CMT CENT PERI
+
+$GLOBAL
+double solveFree(double CTOT, double np, double kaff) {
+  double cf   = (-(np+1/kaff-CTOT)+sqrt(pow(np+1/kaff-CTOT,2.0)+(4.0*CTOT/kaff)));
+  return cf > 0 ? cf : 0;
+}
+
+$MAIN
+double CL  = theta1 + theta2 * (CLcr / 4.26);
+double CLi = CL * exp(ETA(1));
+double V1i = V1 * exp(ETA(2));
+double V2i = V2 * exp(ETA(3));
+
+$ODE
+double CTOT  = CENT / V1i;           // renamed: avoid clash with $TABLE
+double CFREE = solveFree(CTOT, np, kaff);
+
+dxdt_CENT = -CLi * CFREE
+            - (Q / V1i) * CENT
+            + (Q / V2i) * PERI;
+
+dxdt_PERI =  (Q / V1i) * CENT
+            - (Q / V2i) * PERI;
+
+$TABLE
+double CTOTAL      = CENT / V1i;      // notice this is not CTOT
+double Cp_free     = solveFree(CTOTAL, np, kaff);
+double Cp_bound    = CTOTAL - Cp_free;
+double FU          = Cp_free / (CTOTAL + 1e-9);
+double Cp_obs      = CTOTAL * (1 + EPS(1));
+
+$CAPTURE CTOTAL Cp_free Cp_bound FU Cp_obs
+')
+
+dosing <- ev(amt = 2000, rate = 4000, ii = 24, addl = 2, cmt = "CENT")
+
+set.seed(1)
+sims <- mod |>
+  param(np = 295) |>
+  ev(dosing) |>
+  mrgsim(nid = 1000, end = 72, delta = 0.25) |>
+  as_tibble()
+
+MIC <- 1
+
+pta <- paste0("Probability of Target Attainment: ", sims |>
+  filter(time >= 48) |>
+  group_by(ID) |>
+  summarise(fT = mean(Cp_free > MIC)) |>
+  summarise(PTA = mean(fT >= 0.50)) |>
+  pull(),", Albumin: ~25g/L, CrCl: ~63 ml/min")
+
+plot <- sims |>
+  ggplot(aes(x=time,y=Cp_free,group=ID)) +
+  geom_line(alpha=0.01) +
+  geom_hline(yintercept = MIC, color = "red") +
+  # geom_text(aes(x=20,y=150,label=pta)) +
+  theme_bw() +
+  ggtitle(pta)
+
+plot(plot)
+```
+</details>
+
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" />
 
 Wow, that's interesting! After we correctly fit in the free ceftriaxone estimation, it actually improved the PTA even when albumin is lower. What if we make albumin even lower to ~15g/L (np=~172), and increase our CrCl to 180 ml/min, and increase our fT >= 0.7 (more than 70% of the time free ceftriaxone is above mic), and see if we'll be able to clear the medication faster?
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" />
 
 PTA is still 100% !?!?! wow, ceftriaxone 2g really is a beast! Hmmm.. The free ceftriaxone is REALLY high, around ~200-300, can we simulate a q48h dosing and see what the PTA is like, even for our worse case scenario, low albumin, high CrCl, and stil cover ft>mic >= 70%? 
 
@@ -308,7 +398,7 @@ plot(plot)
 </details>
 
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" />
 
 Seriously!? PTA is still so high !? What does this actually mean? Is there literature on this? Maybe my code is not right... 🤔🤷‍♂️
 
