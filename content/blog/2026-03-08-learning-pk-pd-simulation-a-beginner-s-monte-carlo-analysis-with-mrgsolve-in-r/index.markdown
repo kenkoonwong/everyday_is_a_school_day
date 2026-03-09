@@ -26,7 +26,7 @@ tags:
 - poppk
 - central
 - peripheral
-excerpt: 🧪 Diving into PK/PD for the first time — simulating ceftriaxone with mrgsolve in R. Free drug levels were... surprisingly high? Even pushed it to q48h dosing out of curiosity and the results left me with more questions than answers 🤔📈
+excerpt: 🧪 Diving into PK/PD for the first time — simulating ceftriaxone with mrgsolve in R. Free drug levels were... surprisingly high? Even pushed it to q48h dosing out of curiosity and the results left me with more questions than answers 🤔📈 
 ---
 
 >🧪 Diving into PK/PD for the first time — simulating ceftriaxone with mrgsolve in R. Free drug levels were... surprisingly high? Even pushed it to q48h dosing out of curiosity and the results left me with more questions than answers 🤔📈
@@ -37,7 +37,7 @@ excerpt: 🧪 Diving into PK/PD for the first time — simulating ceftriaxone wi
 Learning pharmacokinetics (PK) and pharmocodynamics (PD) have always been an interest of mine. It's always challenging to read through these population PK papers with all the numbers etc. What's a better way of diving into the surface of these and see if we can at least know how to code a simulation to obtain the probability target attainment (PTA) of different minimal inhibitory concentration (mic) and learn the basics via code! Let's dive on!
 
 #### Disclaimer:
-*I am not a pharmacist and not an expert in PK/PD. This is a documentation for my own learning and for educational purposes only. Not a medical advice. If you noticed anything wrong here, please let me know!*
+*I am not a pharmacist and not an expert in PK/PD. This is a documentation for my own learning and for educational purposes only. Not a medical advice. If you noticed anything wrong here, please let me know! PLEASE BE ADVICE THAT THERE WAS AN ERROR IN MY MODEL WHEN CALCULATING FREE CEFTRIAXONE (MAKING SOME RESULTS INACCURATE), I LEFT THE MISTAKE IN THE SECTION AND SPECIFIED THE CORRECTION ON THE UPDATE SECTION.*
 
 ## Objectives:
 - [What Is Population PK](#poppk)
@@ -46,6 +46,7 @@ Learning pharmacokinetics (PK) and pharmocodynamics (PD) have always been an int
   - [Different CrCl](#crcl)
   - [Low Albumin](#albumin)
   - [?q48 Dosing](#48)
+  - [Update on q48 Dosing](#update)
 - [Oppotunities For Improvement](#opportunities)
 - [Lessons Learnt](#lessons)
 
@@ -257,6 +258,9 @@ plot(plot)
 That's interesting! That makes sense, increased CrCl will increase clearance of ceftriaxone, hence decrease in PTA. It's still pretty good though! Though, what is considered acceptable? 90%? 70%? 50%? Also, the above PTA is based on 50% of a time free ceftriaxone is above MIC. What is the acceptable number for that then? 🤷‍♂️ What if, since ceftriaxone is albumin bound, if we model albumin into the model as well? 
 
 ### Changes With Hypoalbuminemia {#albumin}
+
+> Note: Important update. DO NOT READ THIS WITHOUT LOOKING AT THE UPDATE SECTION DOWN BELOW. THE FORMULA PROVIDED HERE IS WRONG.
+
 Notice that our initial model had a fixed fraction of unbound (fu) of 0.1, which is the middle of the range reported in the package insert. However, in critically ill patients, hypoalbuminemia is common and can lead to an increase in the fraction of unbound drug, which can affect the pharmacokinetics and pharmacodynamics of ceftriaxone. Let's see how we can model this in our mrgsolve code. From the paper in method section, they used the formula below to estimate free ceftriaxone from total ceftriaxone:
 
 <p align="center">
@@ -409,14 +413,29 @@ Let's look at fT > mic >= 99%.
 ## [1] "PTA: 0.979, Albumin: ~15g/L, CrCl: ~180 ml/min, fT > mic >= 99%, q48h dosing"
 ```
 
-If you know anything about this, please let me know! this is for organism with mic <= 1, ceftriaxone 2g. Again, make note that this is purely for educational and learning purposes. The finding we got above is just a curious exploration. I wonder if there is some coding error on my part. Click the `code` above to expand for details. I also wonder if most of the trials we had before were based on higher mic, whereas the mic nowadays for ceftriaxone are mainly <= 1. 🤔
+If you know anything about this, please let me know! this is for organism with mic <= 1, ceftriaxone 2g. Again, make note that this is purely for educational and learning purposes. The finding we got above is just a curious exploration. I wonder if there is some coding error on my part. Click the `code` above to expand for details. I also wonder if most of the trials we had before were based on higher mic, whereas the mic nowadays for ceftriaxone are mainly <= 1. 🤔 
 
+### Update !!! {#update}
+Apparently, our unit conversion above for free ceftriaxone was in mmol/L but the CENT/V1 was in mg/L. That will do it! Now let's put the conversion in the model and see what we got?
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+
+😵‍💫 Ok. This looks more believable! The problem earlier on was because we did not convert mmol/L to mg/L. Kind of wished the article would have just used mg/L to begin with when calculating `np` (otal concentration of protein binding sites). Alright, all of our calculation with albumin were wrong!!! Let's recalculate the others.
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+
+Looking at the above, q24h dosing is still pretty good! 👍
+
+Wow, that's good that we continue to be skeptical of a result that is "too good to be true" and continued to look into it. What I did was, I basically used Claude Code in a temp folder where it contains my blog content and also the pdf of the article we used and ask the question, "is the q48 dosing result robust?" and eventually Claude Code found the problem! I'm very impressed! 
 
 ## Opportunities For Improvement {#opportunities}
 - Learn how they model popPK, this will really help us understand how they got those theta and omega estimates
 - I don't quite understand the sigma portion yet, will dive into this the next time, especially when estimating these values
 - Try to learn other properties such as AUC/mic, Cmax/mic etc, and see how the PTA changes
 - Learn more from literature which is preferred regarding acceptable free medication level above mic and acceptable PTA
+- rewrite model in the future to include units in the comments, so that we don't have the same mistake again
 
 ## Lessons learnt {#lessons}
 - learnt some mrgsolve model coding (uses cpp)
@@ -424,6 +443,7 @@ If you know anything about this, please let me know! this is for organism with m
 - learnt about the 2 compartments
 - found unexpected result for q48 dosing through simulation, still not sure if this is something real/true
 - learnt that thetas are not related to central/peripheral, rather theta1 is baseline clearance and theta2 is ?renal scaling
+- learnt big mistake in unit discordance causing erroneous results
 
 
 If you like this article:
