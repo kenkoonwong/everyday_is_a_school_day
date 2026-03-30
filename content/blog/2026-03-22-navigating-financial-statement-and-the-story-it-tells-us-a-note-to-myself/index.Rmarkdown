@@ -200,7 +200,7 @@ Does that mean if net income is negative, we'll have negative share? 🤔
 ### Operating Margin {#operatingmargin}
 $Operating Margin = Operating Income / Total Revenue$
 
-This is a measure of a company's profitability that indicates how much profit it generates from its operations relative to its total revenue. A higher operating margin suggests that the company is more efficient at converting revenue into profit, which can be a sign of a strong competitive position in the market. Warren looks for `more than 10%` which indicates that the company has a durable competitive advantage. ?????
+This is a measure of a company's profitability that indicates how much profit it generates from its operations relative to its total revenue. A higher operating margin suggests that the company is more efficient at converting revenue into profit, which can be a sign of a strong competitive position in the market. Though I'm unsure what is a good heuristic for this, we'll use `more than 10%`. What do you think?
 
 #### Metrics {#metric1}
 ```{r}
@@ -253,11 +253,6 @@ income_metric(income)
 ```
 
 
-Net margin
-
-
-What is EBTDA? It stands for `Earnings Before Depreciation, Taxes, and Amortization`. It is a measure of a company's operating performance that excludes non-operating expenses such as depreciation, taxes, and amortization. It is often used as a proxy for cash flow from operations, as it focuses on the core profitability of the business before accounting for non-cash expenses and tax obligations.
-
 
 ## Balance Sheet {#balance}
 
@@ -279,7 +274,7 @@ $Net Receivables / Gross Sale$
 If a company consistently has a lower ratio (? `5%` or less), it may indicate that the company is efficient in collecting payments from customers and has a lower risk of bad debts. A higher ratio may suggest that the company is having difficulty collecting payments, which could lead to cash flow issues and potential losses from uncollected receivables.
 
 ### The Current Ratio {#currentratio}
-$Current Ratio = Total Assets / Total Liabilities$
+$Current Ratio = Total Current Assets / Total Current Liabilities$
 
 The current ratio is a liquidity ratio that measures a company's ability to pay off its short-term liabilities with its short-term assets. A current ratio of `1 or higher` is generally considered good, indicating that the company has enough assets to cover its liabilities. A current ratio below `1` may indicate that the company may have difficulty meeting its short-term obligations. This makes sense.
 
