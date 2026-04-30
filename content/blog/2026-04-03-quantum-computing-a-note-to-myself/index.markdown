@@ -1,0 +1,665 @@
+---
+title: Exploring and Learning Quantum Computing Part 1
+author: Ken Koon Wong
+date: '2026-04-29'
+slug: qc1
+categories: 
+- r
+- R
+- qiskit
+- quantum computing
+- hadamard
+- superposition
+- cnot
+- bell
+- qc
+- qis
+tags: 
+- r
+- R
+- qiskit
+- quantum computing
+- hadamard
+- superposition
+- cnot
+- bell
+- qc
+- qis
+excerpt: Dipping my toes into quantum computing 🌊 — circuits, gates, superposition. Still very much a beginner, but hands-on experiments with qiskit + R's reticulate made it click a little more. Baby steps!
+---
+
+> Dipping my toes into quantum computing 🌊 — circuits, gates, superposition. Still very much a beginner, but hands-on experiments with qiskit + R's reticulate made it click a little more. Baby steps!
+
+![](quantum.jpg)
+
+## Motivations
+Alright, we've done molecular dynamic simulation and then the post-processing part where we used PBSA/GBSA. I was told that quantum mechanics can more accurately estimate the interaction between these interacting molecules. What an opportunity to dive into quantum computing! It's going to a bumpy ride because my knowledge for all of these are very limited, let's break these into small pieces and learn! In this blog, why don't we program a "Hello World" version and see if we can understand it a bit better. The main language this was programmed in is in Python, but you know me, let's bring this over to R with reticulate and see if we can have fun with it!
+
+## Objectives:
+- [Quantum Computing Basics](#qc)
+- [Learn Quantum Computing with Classic](#classic)
+  - [Installation](#install)
+  - [First Simple Example](#first)
+  - [Probability In Degrees](#degree)
+- [Gates](#gates)
+  - [CNOT](#cnot)
+- [Cheat Sheet](#cheatsheet)
+- [Oppotunities For Improvement](#opportunities)
+- [Lessons Learnt](#lessons)
+
+## Quantum Computing {#qc}
+Quantum computing is a new type of computing that uses the principles of quantum mechanics — the physics of tiny particles like electrons and photons — to process information in fundamentally different ways than regular computers. While a normal computer stores information as bits (either a 0 or a 1), a quantum computer uses qubits, which can be 0, 1, or both at the same time thanks to a property called superposition. On top of that, qubits can be entangled, meaning two qubits can be linked so that the state of one instantly affects the other, no matter the distance. This lets quantum computers explore many possible solutions to a problem simultaneously, rather than one at a time — making them potentially incredibly powerful for specific tasks like breaking encryption, simulating molecules for drug discovery, or optimizing complex systems. Think of it this way: a regular computer tries every door in a maze one by one, while a quantum computer can try all the doors at once. Spooky! 👻
+
+I'll be honest, I still don't understand all these. But that's OK, let's do some Hello World programming in quantum computer lanauge and see if we can retro-learn the fundamentals! Even better, let's take a look at classic computing simulation and see if we can use that to "understand" what's underneath the quantum computing package. 
+
+## Learn Quantum Computing with Classic Simulation {#classic}
+
+### Installation {#install}
+
+``` r
+library(reticulate)
+library(tidyverse)
+
+py_install("qiskit")
+py_install("qiskit_aer")
+```
+
+Pretty straightforward, let's install these.
+
+### First Simple Example {#first}
+
+``` r
+library(reticulate)
+library(tidyverse)
+
+QuantumCircuit <- import("qiskit")$QuantumCircuit
+AerSimulator <- import("qiskit_aer")$AerSimulator
+
+qubit <- 10
+n <- 1000
+p <- 0.5 
+qc <- QuantumCircuit(qubit)
+
+for (i in c(0:(qubit-1))) {
+  qc$h(qubit=as.integer(i))
+}
+
+qc$measure_all()
+qc$draw()
+```
+
+```
+##          ┌───┐ ░ ┌─┐                           
+##     q_0: ┤ H ├─░─┤M├───────────────────────────
+##          ├───┤ ░ └╥┘┌─┐                        
+##     q_1: ┤ H ├─░──╫─┤M├────────────────────────
+##          ├───┤ ░  ║ └╥┘┌─┐                     
+##     q_2: ┤ H ├─░──╫──╫─┤M├─────────────────────
+##          ├───┤ ░  ║  ║ └╥┘┌─┐                  
+##     q_3: ┤ H ├─░──╫──╫──╫─┤M├──────────────────
+##          ├───┤ ░  ║  ║  ║ └╥┘┌─┐               
+##     q_4: ┤ H ├─░──╫──╫──╫──╫─┤M├───────────────
+##          ├───┤ ░  ║  ║  ║  ║ └╥┘┌─┐            
+##     q_5: ┤ H ├─░──╫──╫──╫──╫──╫─┤M├────────────
+##          ├───┤ ░  ║  ║  ║  ║  ║ └╥┘┌─┐         
+##     q_6: ┤ H ├─░──╫──╫──╫──╫──╫──╫─┤M├─────────
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║ └╥┘┌─┐      
+##     q_7: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫─┤M├──────
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐   
+##     q_8: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫──╫─┤M├───
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐
+##     q_9: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫──╫──╫─┤M├
+##          └───┘ ░  ║  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘
+## meas: 10/═════════╩══╩══╩══╩══╩══╩══╩══╩══╩══╩═
+##                   0  1  2  3  4  5  6  7  8  9
+```
+
+``` r
+simulator = AerSimulator()
+job = simulator$run(qc, shots=n)
+result = job$result()
+counts = result$get_counts()
+df <- tibble(pattern=names(counts), freq=map_dbl(.x = pattern, .f=~counts[[.x]]))
+df |>
+  mutate(total = map_dbl(.x=df$pattern, .f=~str_split(.x, "") |> unlist() |> as.numeric() |> sum())) |>
+  group_by(total) |>
+  summarize(freq = sum(freq))
+```
+
+```
+## # A tibble: 9 × 2
+##   total  freq
+##   <dbl> <dbl>
+## 1     1    11
+## 2     2    30
+## 3     3   125
+## 4     4   208
+## 5     5   228
+## 6     6   229
+## 7     7   116
+## 8     8    45
+## 9     9     8
+```
+
+``` r
+rbinom(n,qubit,p) |> table()
+```
+
+```
+## 
+##   1   2   3   4   5   6   7   8   9 
+##   9  39 118 219 250 192 117  48   8
+```
+
+Wow, lots of code. Let's break it down. First, we create a quantum circuit with 10 qubits. Then we apply the Hadamard gate (h) to each qubit, which puts them into a superposition state where they have an equal probability of being measured as 0 or 1. After that, we measure all the qubits and run the simulation using the Aer simulator. Finally, we get the counts of the measurement outcomes and summarize them by the total number of 1s in the output pattern. We also compare this with a binomial distribution to see if the results match our expectations. 🙌 They did! 
+
+Hadamard gate basically puts all those qubits (you saw my for loop) to superposition state, which means that each qubit has a 50% chance of being measured as 0 or 1. In this case, since we have 10 qubits, the total number of 1s in the output pattern can range from 0 to 10, and we expect to see a distribution that follows a binomial distribution with parameters n=10 and p=0.5.
+
+Let's look at the 10 raw results:
+
+``` r
+num <- names(counts)
+
+for (i in num[1:10]) {
+  print(paste0(i, ": ", counts[i]))
+}
+```
+
+```
+## [1] "0000000001: 1"
+## [1] "0000000011: 2"
+## [1] "0000000100: 3"
+## [1] "0000000101: 3"
+## [1] "0000000110: 2"
+## [1] "0000000111: 1"
+## [1] "0000001011: 1"
+## [1] "0000001110: 3"
+## [1] "0000001111: 1"
+## [1] "0000010000: 1"
+```
+
+Here is the interesting thing, this simulation stores the pattern of the simulation. For example, there were 1 count of 0000000001, and 2 counts for 0000000010, 2 counts for 0000000011 etc. So you actually know what exact patterns it produced when we're measuring it! This is super cool. This is just a peek under the hood type of practice. Just curious what each variables contain etc. 
+
+If we were to draw the circuit out, it would look like this :
+
+``` r
+qc$draw(output='text',fold=60)
+```
+
+```
+##          ┌───┐ ░ ┌─┐                           
+##     q_0: ┤ H ├─░─┤M├───────────────────────────
+##          ├───┤ ░ └╥┘┌─┐                        
+##     q_1: ┤ H ├─░──╫─┤M├────────────────────────
+##          ├───┤ ░  ║ └╥┘┌─┐                     
+##     q_2: ┤ H ├─░──╫──╫─┤M├─────────────────────
+##          ├───┤ ░  ║  ║ └╥┘┌─┐                  
+##     q_3: ┤ H ├─░──╫──╫──╫─┤M├──────────────────
+##          ├───┤ ░  ║  ║  ║ └╥┘┌─┐               
+##     q_4: ┤ H ├─░──╫──╫──╫──╫─┤M├───────────────
+##          ├───┤ ░  ║  ║  ║  ║ └╥┘┌─┐            
+##     q_5: ┤ H ├─░──╫──╫──╫──╫──╫─┤M├────────────
+##          ├───┤ ░  ║  ║  ║  ║  ║ └╥┘┌─┐         
+##     q_6: ┤ H ├─░──╫──╫──╫──╫──╫──╫─┤M├─────────
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║ └╥┘┌─┐      
+##     q_7: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫─┤M├──────
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐   
+##     q_8: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫──╫─┤M├───
+##          ├───┤ ░  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐
+##     q_9: ┤ H ├─░──╫──╫──╫──╫──╫──╫──╫──╫──╫─┤M├
+##          └───┘ ░  ║  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘
+## meas: 10/═════════╩══╩══╩══╩══╩══╩══╩══╩══╩══╩═
+##                   0  1  2  3  4  5  6  7  8  9
+```
+
+On a real quantum computer, all qubits are measured simultaneously in a single shot — when `measure_all()` is called, every qubit collapses to a 0 or 1 at the same time, producing one complete bitstring (like `0110101001`) per shot. No qubit's result influences another's within the same measurement. In our example, since we only applied Hadamard gates with no entanglement, each qubit's outcome is truly independent — which is why our results neatly follow a binomial distribution. If qubits were entangled, measuring one would constrain the others, even though the measurement still happens all at once.
+
+> For educational purposes, |0> means the qubit is in the state of 0, and |1> means the qubit is in the state of 1. It is read as "ket 0" and "ket 1". The | symbol is called a "bra-ket" notation, which is a standard way to represent quantum states. The "ket" part (|>) represents a column vector in a complex vector space, which is how quantum states are mathematically described. So |0> and |1> are the basic states of a qubit, where |0> corresponds to the state where the qubit is in the 0 state, and |1> corresponds to the state where the qubit is in the 1 state. 
+
+But what good is it that we can only do simple 50% probability of 0 and 1? Can we change the probability of measuring 0 and 1? Yes, we can!
+
+### Probability In Degrees {#degree}
+In Hadamard gate, we're essentially making the probability of 0 and 1 50% as we mentioned above. The magnitude/amplitude is formulated as a * |0> + b * |1> , where by a^2 + b^2 = 1. Also, P(|0>) = a^2, and P(|1>) = b^2. So if we want to change the probability of 0 and 1, we can use the Ry gate, which rotates the qubit around the Y-axis of the Bloch sphere. The angle of rotation (theta) determines the probabilities of measuring 0 or 1. Specifically, if we set theta such that sin²(theta/2) = p, then the probability of measuring |1> will be p, and the probability of measuring |0> will be 1-p. So by adjusting theta, we can control the probabilities of our measurement outcomes.
+
+
+``` r
+p <- 0.25
+theta <- 2 * asin(sqrt(p))
+
+qc <- QuantumCircuit(qubit)
+
+for (i in c(0:(qubit-1))) {
+     qc$ry(theta=theta, qubit=as.integer(i))
+}
+
+qc$measure_all()
+qc$draw()
+```
+
+```
+##          ┌─────────┐ ░ ┌─┐                           
+##     q_0: ┤ Ry(π/3) ├─░─┤M├───────────────────────────
+##          ├─────────┤ ░ └╥┘┌─┐                        
+##     q_1: ┤ Ry(π/3) ├─░──╫─┤M├────────────────────────
+##          ├─────────┤ ░  ║ └╥┘┌─┐                     
+##     q_2: ┤ Ry(π/3) ├─░──╫──╫─┤M├─────────────────────
+##          ├─────────┤ ░  ║  ║ └╥┘┌─┐                  
+##     q_3: ┤ Ry(π/3) ├─░──╫──╫──╫─┤M├──────────────────
+##          ├─────────┤ ░  ║  ║  ║ └╥┘┌─┐               
+##     q_4: ┤ Ry(π/3) ├─░──╫──╫──╫──╫─┤M├───────────────
+##          ├─────────┤ ░  ║  ║  ║  ║ └╥┘┌─┐            
+##     q_5: ┤ Ry(π/3) ├─░──╫──╫──╫──╫──╫─┤M├────────────
+##          ├─────────┤ ░  ║  ║  ║  ║  ║ └╥┘┌─┐         
+##     q_6: ┤ Ry(π/3) ├─░──╫──╫──╫──╫──╫──╫─┤M├─────────
+##          ├─────────┤ ░  ║  ║  ║  ║  ║  ║ └╥┘┌─┐      
+##     q_7: ┤ Ry(π/3) ├─░──╫──╫──╫──╫──╫──╫──╫─┤M├──────
+##          ├─────────┤ ░  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐   
+##     q_8: ┤ Ry(π/3) ├─░──╫──╫──╫──╫──╫──╫──╫──╫─┤M├───
+##          ├─────────┤ ░  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘┌─┐
+##     q_9: ┤ Ry(π/3) ├─░──╫──╫──╫──╫──╫──╫──╫──╫──╫─┤M├
+##          └─────────┘ ░  ║  ║  ║  ║  ║  ║  ║  ║  ║ └╥┘
+## meas: 10/═══════════════╩══╩══╩══╩══╩══╩══╩══╩══╩══╩═
+##                         0  1  2  3  4  5  6  7  8  9
+```
+
+``` r
+simulator = AerSimulator()
+job = simulator$run(qc, shots=n)
+result = job$result()
+counts = result$get_counts()
+df <- tibble(pattern=names(counts), freq=map_dbl(.x = pattern, .f=~counts[[.x]]))
+df |>
+  mutate(total = map_dbl(.x=df$pattern, .f=~str_split(.x, "") |> unlist() |> as.numeric() |> sum())) |>
+  group_by(total) |>
+  summarize(freq = sum(freq))
+```
+
+```
+## # A tibble: 9 × 2
+##   total  freq
+##   <dbl> <dbl>
+## 1     0    47
+## 2     1   181
+## 3     2   303
+## 4     3   239
+## 5     4   164
+## 6     5    46
+## 7     6    18
+## 8     7     1
+## 9     8     1
+```
+
+``` r
+rbinom(n,qubit,p) |> table()
+```
+
+```
+## 
+##   0   1   2   3   4   5   6   7 
+##  58 186 290 256 132  55  18   5
+```
+
+Alright! We can change the probability, just like classic simulation! 
+
+The math behind the probability needs a little calculus jujitsu, but the key idea is that the Ry gate allows us to manipulate the state of the qubit in such a way that we can achieve any desired probability distribution for the measurement outcomes. By setting theta appropriately, we can create a superposition state that gives us the exact probabilities we want when we measure the qubit.
+
+
+<p align="center">
+  <img src="https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F6%2F6b%2FBloch_sphere.svg%2F220px-Bloch_sphere.svg.png&f=1&nofb=1&ipt=ca35d6535169b0462f686f4b2bfa95d67d508809bb451a4db98b3c095fd0582b" alt="image" width="60%" height="auto">
+</p>
+
+Bloch sphere is a geometrical representation of the state of a qubit. It is a unit sphere where any point on the surface represents a possible state of the qubit. The north pole of the sphere corresponds to the state |0>, while the south pole corresponds to the state |1>. The points on the equator represent superposition states where the qubit has equal probabilities of being measured as 0 or 1. The angle theta that we use in the Ry gate corresponds to a rotation around the Y-axis of the Bloch sphere, which allows us to move from the north pole (|0>) towards the south pole (|1>) and create superposition states with different probabilities.
+
+The Ry rotation gate rotates around the Y-axis of the Bloch sphere. The probability of measuring |1> is:
+
+P(|1>) = sin²(theta/2)     
+        
+
+|Angle (degrees) | P(&#124;1⟩)|
+|:---------------|-----------:|
+|0°              |        0.00|
+|30°             |        0.07|
+|45°             |        0.15|
+|60°             |        0.25|
+|90°             |        0.50|
+|180°            |        1.00|
+
+
+Alright, let's verify with our p = 0.25, did we get theta (angle) of 30 degrees?
+
+
+``` r
+theta
+```
+
+```
+## [1] 1.047198
+```
+
+Oppps, remember that theta is in radians, so we need to convert it to degrees:
+
+
+``` r
+theta * (180 / pi)
+```
+
+```
+## [1] 60
+```
+
+phew! 😮‍💨 it checked out.
+
+## Gates {#gates}
+### CNOT {#cnot}
+The CNOT (Controlled NOT) gate is a two-qubit gate that flips the state of the target qubit (from |0> to |1> or from |1> to |0>) if and only if the control qubit is in the state |1>. If the control qubit is in the state |0>, the target qubit remains unchanged. This gate is essential for creating entanglement between qubits, which is a key feature of quantum computing that allows for complex correlations between qubits. Let's check it out.
+
+#### Without Hadamard and CNOT
+
+``` r
+qc <- QuantumCircuit(2)
+qc$measure_all()
+simulator <- AerSimulator()
+qc$draw()
+```
+
+```
+##          ░ ┌─┐   
+##    q_0: ─░─┤M├───
+##          ░ └╥┘┌─┐
+##    q_1: ─░──╫─┤M├
+##          ░  ║ └╥┘
+## meas: 2/════╩══╩═
+##             0  1
+```
+
+``` r
+job <- simulator$run(qc, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'00': 1000}
+```
+
+As we can see, we didn't set anything, hence but qubits returned zero. And exacttly 1000 times. 
+
+#### Without Hadamard but With CNOT
+
+``` r
+qc_cnot <- QuantumCircuit(2)
+invisible(qc_cnot$cx(0L,1L))
+qc_cnot$measure_all()
+qc_cnot$draw()
+```
+
+```
+##               ░ ┌─┐   
+##    q_0: ──■───░─┤M├───
+##         ┌─┴─┐ ░ └╥┘┌─┐
+##    q_1: ┤ X ├─░──╫─┤M├
+##         └───┘ ░  ║ └╥┘
+## meas: 2/═════════╩══╩═
+##                  0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_cnot, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'00': 1000}
+```
+
+Now, even when we inserted CNOT gate, but because the control qubit (qubit 0) is in the state |0>, the target qubit (qubit 1) remains unchanged, resulting in the same output as before, where both qubits are measured as |00> with a count of 1000. Simplistic speaking, if our first qubit is 0, the CNOT gate does nothing to the second qubit, so we still get |00> every time. 
+
+#### With X Gate and CNOT 
+
+``` r
+qc_x <- QuantumCircuit(2)
+invisible(qc_x$x(0L))
+invisible(qc_x$cx(0L, 1L))
+qc_x$measure_all()
+qc_x$draw()
+```
+
+```
+##         ┌───┐      ░ ┌─┐   
+##    q_0: ┤ X ├──■───░─┤M├───
+##         └───┘┌─┴─┐ ░ └╥┘┌─┐
+##    q_1: ─────┤ X ├─░──╫─┤M├
+##              └───┘ ░  ║ └╥┘
+## meas: 2/══════════════╩══╩═
+##                       0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_x, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'11': 1000}
+```
+
+Now, if qubit 0 is now |1>, X gate basically turns the current state to the opposite, so qubit 0 is now |1>. When we apply the CNOT gate, it checks the state of qubit 0 (the control qubit). Since qubit 0 is now |1>, the CNOT gate flips the state of qubit 1 (the target qubit) from |0> to |1>. As a result, we get the output state |11> with a count of 1000.
+
+What if our qubit 0 is |0> but our qubit 1 is |1>. apply CNOT with control on qubit 0 and target on qubit 1? What would happen? |01> = 1000 ?
+
+
+``` r
+qc_x <- QuantumCircuit(2)
+invisible(qc_x$x(1L))
+invisible(qc_x$cx(0L, 1L))
+qc_x$measure_all()
+qc_x$draw()
+```
+
+```
+##                    ░ ┌─┐   
+##    q_0: ───────■───░─┤M├───
+##         ┌───┐┌─┴─┐ ░ └╥┘┌─┐
+##    q_1: ┤ X ├┤ X ├─░──╫─┤M├
+##         └───┘└───┘ ░  ║ └╥┘
+## meas: 2/══════════════╩══╩═
+##                       0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_x, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'10': 1000}
+```
+
+WAIT A MINUTE !?! Why is it not |01> ???!?! That is because the output is read right-to-left !!! Now what if we use CNOT with qubit 1 as control, and qubit 0 as target? What do you think will happen? It should be |11> = 1000, right?
+
+
+``` r
+qc_x <- QuantumCircuit(2)
+invisible(qc_x$x(1L))
+invisible(qc_x$cx(1L, 0L))
+qc_x$measure_all()
+qc_x$draw()
+```
+
+```
+##              ┌───┐ ░ ┌─┐   
+##    q_0: ─────┤ X ├─░─┤M├───
+##         ┌───┐└─┬─┘ ░ └╥┘┌─┐
+##    q_1: ┤ X ├──■───░──╫─┤M├
+##         └───┘      ░  ║ └╥┘
+## meas: 2/══════════════╩══╩═
+##                       0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_x, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'11': 1000}
+```
+
+Cool beans! Now, if it's truly read right-to-left, if we place qubit 0 as |1> and qubit 1 as |0> with CNOT control on qubit 1 and target on qubit 0, we should see |01> = 1000 !!! Let's examine.
+
+
+``` r
+qc_x <- QuantumCircuit(2)
+invisible(qc_x$x(0L))
+invisible(qc_x$cx(1L, 0L))
+qc_x$measure_all()
+qc_x$draw()
+```
+
+```
+##         ┌───┐┌───┐ ░ ┌─┐   
+##    q_0: ┤ X ├┤ X ├─░─┤M├───
+##         └───┘└─┬─┘ ░ └╥┘┌─┐
+##    q_1: ───────■───░──╫─┤M├
+##                    ░  ║ └╥┘
+## meas: 2/══════════════╩══╩═
+##                       0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_x, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'01': 1000}
+```
+
+🙌 !!! 
+
+Now, let's do another experiment. If we set both qubit 0 and 1 as |1> and assigned a CNOT with control via qubit 1 and target via qubit 0. We should see that it will turn qubit 0's |1> to |0>. And again, if we were to starts from right to left,  we should see |10>, right? 
+
+
+``` r
+qc_x <- QuantumCircuit(2)
+invisible(qc_x$x(0L))
+invisible(qc_x$x(1L))
+invisible(qc_x$cx(1L, 0L))
+qc_x$measure_all()
+qc_x$draw()
+```
+
+```
+##         ┌───┐┌───┐ ░ ┌─┐   
+##    q_0: ┤ X ├┤ X ├─░─┤M├───
+##         ├───┤└─┬─┘ ░ └╥┘┌─┐
+##    q_1: ┤ X ├──■───░──╫─┤M├
+##         └───┘      ░  ║ └╥┘
+## meas: 2/══════════════╩══╩═
+##                       0  1
+```
+
+``` r
+simulator <- AerSimulator()
+job <- simulator$run(qc_x, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'10': 1000}
+```
+
+🙌🙌🙌 !!!
+
+#### With Hadamard and CNOT (Bell State)
+
+``` r
+qc_bell <- QuantumCircuit(2)
+qc_bell$h(0L)
+```
+
+```
+## <qiskit.circuit.instructionset.InstructionSet object at 0x133a2e380>
+```
+
+``` r
+qc_bell$cx(0L, 1L)
+```
+
+```
+## <qiskit.circuit.instructionset.InstructionSet object at 0x133a2e440>
+```
+
+``` r
+qc_bell$draw()
+```
+
+```
+##      ┌───┐     
+## q_0: ┤ H ├──■──
+##      └───┘┌─┴─┐
+## q_1: ─────┤ X ├
+##           └───┘
+```
+
+``` r
+qc_bell$measure_all()
+simulator <- AerSimulator()
+job <- simulator$run(qc_bell, shots=1000)
+(counts <- job$result()$get_counts())
+```
+
+```
+## {'11': 489, '00': 511}
+```
+
+This is where the magic happens. The Hadamard gate puts the first qubit into a superposition state, which means it has an equal probability of being measured as |0> or |1>. When we apply the CNOT gate, it creates an entangled state between the two qubits. As a result, when we measure the qubits, we get either |00> or |11> with equal probability (approximately 500 counts each), and we never get |01> or |10>. This is a demonstration of quantum entanglement, where the state of one qubit is directly correlated with the state of another qubit, even though they are measured independently.
+
+
+
+## Cheat Sheet {#cheatsheet}
+    
+| Gate | Name | Matrix | Effect on l0⟩ | Effect on l1) |
+|------|------|--------|-----------|-----------|-----|
+| X | NOT/Pauli-X | [[0,1],[1,0]] | l1⟩ | l0⟩ | Bit flip |
+| H | Hadamard | [[1,1],[1,-1]]/√2 | (l0⟩+l1⟩)/√2 | (l0⟩-l1⟩)/√2 | Superposition |
+
+
+Two-Qubit Gates
+
+| Gate | Name | Effect |
+|------|------|--------|
+| CNOT | Controlled-NOT | If control=1, flip target |
+
+Common Circuits
+
+| Circuit | Gates | Result |
+|---------|-------|--------|
+| Bell State | H, CNOT | (l00⟩+l11⟩)/√2 |
+
+## Learning In Progress {#progress}
+Obviously my understanding of quantum computing is at best very surface. However, able to visualize the circuits, experiment with turning qubits and adding gates and test my understanding is truly remarkable for my learning! I don't think I'd be able to get that kind of feedback just by reading. I think the insight I got from doing these simple exercises is that my learning style requires me to be hands on and experiment with the response/answers and ask lots and lots of simple questions. 🙌 Or maybe sometimes I'll call it the illusion of understanding lol. Till next time! We'll explore common more a bit more complex circuits like oracle, grover, and then slowly, and hopefully venture into VQE which is where it will be helpful with post-molecular dynamic energy sampling assessment.
+
+## Opportunities For Improvement {#opportunities}
+- learn about other single gates like identity, pauli-y, pauli-z, phase, etc. Other two-qubit gates such as cz, swap. Other common circuits like bell state Y+, GHZ, oracle, and add to cheat sheet as I learn more
+- Should try the real thing with IBM instances
+- learn oracle
+- learn Grover's algorithm and Shor's algorithm
+- learn VQE and QAOA
+- learn quantum machine learning
+  
+## Lessons learnt {#lessons}
+- learnt some simple qiskit functions
+- learnt how to simulate classic probabilities in quantum computing lingo
+- learnt Dirac notation
+- explored the quantum circuits via qiskit
+- had to use `invisible` to hide python object printing on rmarkdown
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://rstats.me/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
