@@ -25,7 +25,7 @@ excerpt: A note to myself on survival analysis — KM curves, log-rank tests & C
 > A note to myself on survival analysis — KM curves, log-rank tests & Cox models 🧮 If I wrote it the way I understood it, maybe I'll actually remember it 🤞
 
 ## Motivations
-We see survival analysis or more generally called time-to-event analysis almost all the time when we review journals articles on NEJM etc. Even though we understand the heuristic in interpreting some of the simpler result, I realized that I need to look at this a bit closer to full understand the works and math behind it. There was a recent project that made me feel that my understanding of this is not as competent as I had hoped after talking to one of my statistician colleagues, who also so happen to wrote [this blog](https://www.emilyzabor.com/survival-analysis-in-r.html$0). Please take a look at Emily's blog for a better, and a more accurate survival analysis tutorial. This blog is more for my learning so that I can refer back the fundamental when I need a refresher in the future. Also, if I were to write it the way I understood it, maybe that might increase the probably of me recollecting what I understood before. What are we waiting for? Let's time-to-event this analysis! 
+We see survival analysis or more generally called time-to-event analysis almost all the time when we review journals articles on NEJM etc. Even though we understand the heuristic in interpreting some of the simpler result, I realized that I need to look at this a bit closer to full understand the works and math behind it. There was a recent project that made me feel that my understanding of this is not as competent as I had hoped after talking to one of my statistician colleagues, who also so happen to wrote [this blog](https://www.emilyzabor.com/survival-analysis-in-r.html). Please take a look at Emily's blog for a better, and a more accurate survival analysis tutorial. This blog is more for my learning so that I can refer back the fundamental when I need a refresher in the future. Also, if I were to write it the way I understood it, maybe that might increase the probably of me recollecting what I understood before. What are we waiting for? Let's time-to-event this analysis! 
 
 ## Objectives:
 = [Time-to-event Analysis](#time)
@@ -59,7 +59,7 @@ The `survival function`, written S(t), answers one simple question: "What is the
 |D|6 | 1 (event)|
 |E|8 | 0 (censored)|
 
-Alright, the above looks quite self-explanatory. We have 5 patients, and we are tracking their time to event in months. Patient A experienced the event at 21 months, while patient B was censored at 30 months (we lost track of them). Patient C had the event at 51 months, patient D at 61 months, and patient E was censored at 80 months. Now let's do some calculation.
+Alright, the above looks quite self-explanatory. We have 5 patients, and we are tracking their time to event in months. Patient A experienced the event at 2 months, while patient B was censored at 3 months (we lost track of them). Patient C had the event at 5 months, patient D at 6 months, and patient E was censored at 8 months. Now let's do some calculation.
 
 Formula:
 $$
@@ -689,6 +689,7 @@ Interesting. They do look different! Though the paper didn't directly use this p
 ## Acknowledgement {#ack}
 Thanks to Emily Zabor's tutorial and also personal advice on practical usage of survival analysis! Her blog contains so much more advanced topics and some functions and packages I'm planning to use in the future. It's truly one of the more comprehensive and yet easy to understand tutorials I've seen on survival analysis. Thanks Emily!
 
+Also thanks to [John Blishak](https://jdblischak.com/) for pointing out some of the typos and url error. I've made those changes as well. Thanks, John! I was telling him that LLM wouldn't have made those rookie error lol. 
 
 ## Opportunities For Improvement {#opportunities}
 - learn competing risk analysis with fine-gray model
