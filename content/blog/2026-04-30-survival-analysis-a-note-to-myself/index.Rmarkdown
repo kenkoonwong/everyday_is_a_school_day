@@ -398,7 +398,7 @@ Simulating the above is helpful because we then know the true rate was derived f
 km_fit <- survfit(Surv(time, status) ~ treatment, data = df)
 ```
 
-the log-rank test did show a significant difference between the two groups, which is expected since we set a true hazard ratio of 0.55 in the simulation. The Kaplan-Meier estimator will give us the estimated survival curves for each group, and we can visually compare them to see the difference in survival between the treatment and control groups.
+the log-rank test did show a difference between the two groups, though not statistically significant (likely not adequate n), which is expected since we set a true hazard ratio of 0.55 in the simulation. The Kaplan-Meier estimator will give us the estimated survival curves for each group, and we can visually compare them to see the difference in survival between the treatment and control groups. 
 
 ## Cox Proportional Hazard Model {#cox}
 ```{r, message=F, warning=F}
