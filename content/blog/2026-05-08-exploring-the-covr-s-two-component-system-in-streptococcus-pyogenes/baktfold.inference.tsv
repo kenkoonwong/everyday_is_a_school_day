@@ -1,0 +1,166 @@
+#Annotated with Baktfold (v0.2.0): https://github.com/gbouras13/baktfold
+Locus	Length	Product	Swissprot	AFDBClusters	PDB	CATH
+ECDJJN_00001	565	Penicillin-binding protein 2X	swissprot_P59676	afdbclusters_W7CYB0	pdb_5u47	cath_2zc4E00
+ECDJJN_00018	490	Mid-cell-anchored protein Z	swissprot_Q8DR55	afdbclusters_V6Z3P2	pdb_2nda	
+ECDJJN_00029	241	Bacitracin transport permease protein BcrB	swissprot_Q5WNX1	afdbclusters_A0A3M0NK23	pdb_7o16	
+ECDJJN_00030	73	Uncharacterized HTH-type transcriptional regulator YobD	swissprot_O34647	afdbclusters_A0AAJ3J2E3		
+ECDJJN_00031	44	hypothetical protein				
+ECDJJN_00032	74	hypothetical protein				
+ECDJJN_00033	74	hypothetical protein				
+ECDJJN_00034	128	Transposase from transposon Tn916	swissprot_P22886	afdbclusters_A0A136Q6R2	pdb_3nkh	cath_af_Q2FY83_185_400_1.10.443.10
+ECDJJN_00040	120	Dihydroneopterin aldolase	swissprot_P0C0G4	afdbclusters_A0A6A6KMT6	pdb_5f3m	cath_af_A0A0R0J0C6_26_148_3.30.1130.10
+ECDJJN_00068	53	hypothetical protein				
+ECDJJN_00076	62	putative tautomerase SPs0996	swissprot_P0DF85	afdbclusters_A0A7W1MXF3	pdb_8t9o	cath_4fazC00
+ECDJJN_00080	197	Threonylcarbamoyl-AMP synthase	swissprot_Q9UYB2	afdbclusters_A0A0R1HIT0	pdb_6f89	cath_af_Q2FWE2_20_236_3.90.870.10
+ECDJJN_00092	40	hypothetical protein				
+ECDJJN_00093	123	hypothetical protein				
+ECDJJN_00101	161	Transcriptional dual regulator GltC	swissprot_P20668	afdbclusters_A0A7W1W7M4	pdb_2hxr	cath_af_Q2FV83_76_274_3.40.190.290
+ECDJJN_00109	117	Methylmalonyl-CoA decarboxylase subunit gamma	swissprot_Q57111	afdbclusters_A0A383TF45	pdb_5ks8	cath_af_Q2QMG2_656_731_2.40.50.100
+ECDJJN_00113	468	Citrate transporter	swissprot_P42308	afdbclusters_A0A3L9DZI0	pdb_6ol1	cath_af_I6YCG9_3_406_1.20.1530.20
+ECDJJN_00123	1180	Chromosome partition protein Smc	swissprot_P51834	afdbclusters_A0A8T5FRK5	pdb_6yvu	cath_5h68A00
+ECDJJN_00148	79	hypothetical protein				
+ECDJJN_00156	332	hypothetical protein		afdbclusters_Q9A135	pdb_6eff	
+ECDJJN_00157	35	hypothetical protein				
+ECDJJN_00160	55	hypothetical protein				
+ECDJJN_00163	50	hypothetical protein				
+ECDJJN_00166	85	hypothetical protein		afdbclusters_A0A3Q8BUF0		
+ECDJJN_00174	390	Uncharacterized secreted protein ARB_07466	swissprot_D4ATA2	afdbclusters_A0A9X9R1U4		
+ECDJJN_00190	114	hypothetical protein				
+ECDJJN_00193	185	ADP-ribose pyrophosphatase	swissprot_P54570	afdbclusters_R6YXQ0	pdb_5c7q	cath_af_Q2FY72_1_175_3.90.79.10
+ECDJJN_00199	205	hypothetical protein				
+ECDJJN_00201	107	hypothetical protein				
+ECDJJN_00202	211	Phage protein		afdbclusters_A0A3P5XMW1		
+ECDJJN_00203	84	hypothetical protein				
+ECDJJN_00204	179	hypothetical protein				
+ECDJJN_00206	727	Ribonucleoside-diphosphate reductase subunit alpha	swissprot_P78027	afdbclusters_A0A846U1T2	pdb_1pem	cath_1peuA02
+ECDJJN_00221	80	hypothetical protein				
+ECDJJN_00248	140	putative metallophosphoesterase YsnB	swissprot_P94559	afdbclusters_A0A7R9A9S1	pdb_3ck2	cath_3ck2A00
+ECDJJN_00271	169	Shikimate kinase	swissprot_Q5LIQ7	afdbclusters_A0A957HMW6	pdb_1rkb	cath_af_A5PMF1_124_319_3.40.50.300
+ECDJJN_00297	121	Uncharacterized ABC transporter ATP-binding protein YfiB	swissprot_P54718	afdbclusters_A0A833RL99	pdb_5och	cath_af_Q0JNH5_2_142_3.40.50.300
+ECDJJN_00312	69	Uncharacterized HTH-type transcriptional regulator YgzD	swissprot_C0H3X9	afdbclusters_A0A229FNL2	pdb_2xj3	cath_af_Q57720_1_65_1.10.260.40
+ECDJJN_00326	412	Ascorbate-specific PTS system EIIC component	swissprot_Q31TC4	afdbclusters_Q99XZ3	pdb_4rp9	
+ECDJJN_00330	52	hypothetical protein				
+ECDJJN_00343	306	hypothetical protein	swissprot_P64430	afdbclusters_A0A0U2VHZ4		cath_af_P64429_1_283_3.40.390.10
+ECDJJN_00349	119	Anaerobic ribonucleoside-triphosphate reductase	swissprot_P43752	afdbclusters_V6Z5U1	pdb_5im3	cath_af_P9WH77_21_107_1.10.10.10
+ECDJJN_00371	78	Small ribosomal subunit protein bS20	swissprot_P66511	afdbclusters_A0A0G1X3Z2	pdb_7nhn	cath_af_Q2FXY6_1_83_1.20.58.110
+ECDJJN_00387	447	hypothetical protein	swissprot_P47394	afdbclusters_A0A1Y3XUY9		cath_af_Q59058_106_224_3.40.1350.10
+ECDJJN_00395	67	hypothetical protein				
+ECDJJN_00409	101	Umud Fragment, subunit A				cath_af_Q2FZT7_22_151_2.10.109.10
+ECDJJN_00418	76	hypothetical protein				
+ECDJJN_00419	83	Serine-type D-Ala-D-Ala carboxypeptidase domain protein		afdbclusters_F9P511		
+ECDJJN_00442	484	Regulatory protein MsrR	swissprot_Q99Q02	afdbclusters_A0A0E4H544	pdb_6uex	cath_af_Q7BHL7_76_327_3.40.630.190
+ECDJJN_00452	793	Internalin A	swissprot_G2K3G6	afdbclusters_A0AAW6XS56	pdb_5il7	cath_5il7A00
+ECDJJN_00532	407	Uncharacterized ABC transporter permease YknZ	swissprot_O31712	afdbclusters_A0A3D3WAQ3	pdb_5xu1	
+ECDJJN_00535	80	RNA-binding protein KhpA	swissprot_A0A0H2ZMB4	afdbclusters_A0A352N923		cath_af_P9WFM7_9_77_3.30.300.20
+ECDJJN_00577	49	2,3-butanediol dehydrogenase		afdbclusters_A0A2X3GI93		
+ECDJJN_00591	95	Chorismate mutase		afdbclusters_A0A9X9CJS9		cath_5j6fA01
+ECDJJN_00600	39	Large ribosomal subunit protein bL36	swissprot_P66303	afdbclusters_A0A426ZSB8	pdb_6o90	cath_af_Q99N90_65_102_2.20.28.120
+ECDJJN_00627	36	hypothetical protein				
+ECDJJN_00630	134	Phosphatidylinositol 4-phosphate 5-kinase 9	swissprot_Q8L850	afdbclusters_A0A943RU32	pdb_6t4d	cath_af_A4HWQ9_30_133_2.20.110.10
+ECDJJN_00633	32	hypothetical protein				
+ECDJJN_00647	356	hypothetical protein				
+ECDJJN_00651	195	hypothetical protein				
+ECDJJN_00655	911	Endonuclease/exonuclease/phosphatase family domain-containing protein 1	swissprot_Q3TGW2	afdbclusters_A0A6I1FGH3	pdb_6ca4	cath_af_Q54GG4_1_399_2.40.50.140,cath_af_Q5XI74_261_538_3.60.10.10
+ECDJJN_00691	57	hypothetical protein				
+ECDJJN_00714	192	putative DNA-directed RNA polymerase subunit delta	swissprot_A2RCL2	afdbclusters_A0A0F2D340	pdb_2krc	cath_2krcA01
+ECDJJN_00722	593	ATP-dependent helicase/deoxyribonuclease subunit B	swissprot_Q1J7E5	afdbclusters_A0A133XZI5	pdb_4cej	cath_4cehA06
+ECDJJN_00747	99	hypothetical protein				
+ECDJJN_00752	48	hypothetical protein				
+ECDJJN_00773	53	hypothetical protein				
+ECDJJN_00799	80	Uncharacterized HTH-type transcriptional regulator YdeP	swissprot_P96673	afdbclusters_A0ABC9ZQR0	pdb_4a5n	cath_1z7uB00
+ECDJJN_00805	49	hypothetical protein				
+ECDJJN_00808	37	hypothetical protein				
+ECDJJN_00809	102	UPF0473 protein SPy_2112/M5005_Spy1795	swissprot_Q99XP5	afdbclusters_K1LSQ4		
+ECDJJN_00850	399	Peptidoglycan hydrolase PcsB	swissprot_A0A0H2US70	afdbclusters_A0AA96VN81	pdb_4cgk	cath_4cgkA01,cath_4cgkB02
+ECDJJN_00866	101	hypothetical protein		afdbclusters_A0A5C5SDG7		
+ECDJJN_00870	59	hypothetical protein				
+ECDJJN_00891	55	hypothetical protein				
+ECDJJN_00948	48	hypothetical protein				
+ECDJJN_00971	750	Streptococcal hemoprotein receptor	swissprot_Q99YA0	afdbclusters_A0A8B6GDA7	pdb_4u06	cath_4u06A00
+ECDJJN_00973	57	Phage protein		afdbclusters_A0A0H2UVU9		
+ECDJJN_00976	119	hypothetical protein				
+ECDJJN_00988	53	hypothetical protein				
+ECDJJN_01001	48	hypothetical protein				
+ECDJJN_01014	267	HTH-type transcriptional repressor PurR	swissprot_Q65TP0	afdbclusters_A0A1V5U187	pdb_1bdh	cath_2hsgA01
+ECDJJN_01026	34	hypothetical protein				
+ECDJJN_01032	70	hypothetical protein				
+ECDJJN_01053	61	Ribose operon repressor	swissprot_Q9CF41	afdbclusters_U3TVR3	pdb_2kei	cath_1jh9A01
+ECDJJN_01054	234	Ribose operon repressor	swissprot_Q9CF41	afdbclusters_A0A7W1S3Q3	pdb_3ctp	cath_4rkrC02
+ECDJJN_01055	207	Putative antitoxin YutD	swissprot_O32127	afdbclusters_T0TE34	pdb_2kl5	cath_af_Q2FZX3_1_98_3.50.4.20
+ECDJJN_01063	84	hypothetical protein				
+ECDJJN_01090	314	hypothetical protein				
+ECDJJN_01095	381	Prophage ps2 putative integrase	swissprot_Q9CI63	afdbclusters_A0AAE9XJC1	pdb_3nkh	cath_af_Q2FY83_185_400_1.10.443.10
+ECDJJN_01098	91	Helix-turn-helix domain protein		afdbclusters_A0A428ECC3		
+ECDJJN_01099	50	hypothetical protein				
+ECDJJN_01102	165	hypothetical protein				
+ECDJJN_01111	180	DNA-entry nuclease	swissprot_P0A3S3	afdbclusters_A0A0H2UTX9	pdb_3owv	cath_3owvA00
+ECDJJN_01122	76	Putative 4-diphosphocytidyl-2-C-methyl-D-erythritol kinase	swissprot_B4U041	afdbclusters_A0A937WKV8		cath_af_Q2G0S8_161_276_3.30.70.890
+ECDJJN_01159	228	Sortase A	swissprot_P0DPQ5	afdbclusters_A0A929YBD6	pdb_3g66	cath_4d7wA00
+ECDJJN_01160	222	Cell wall protein Lmo0880	swissprot_Q8Y8L7	afdbclusters_G5K0X8	pdb_5bob	cath_af_P05555_771_925_2.60.40.1510
+ECDJJN_01162	132	Uncharacterized HTH-type transcriptional regulator HI_0775	swissprot_P44876	afdbclusters_A0A921MKI6	pdb_2hxr	cath_3hfuC00
+ECDJJN_01163	140	Uncharacterized HTH-type transcriptional regulator HI_0775	swissprot_P44876	afdbclusters_A0A1M7Y4J9	pdb_6g4r	cath_af_Q2FVT4_1_85_1.10.10.10
+ECDJJN_01168	122	RutC family protein C23G10-2	swissprot_Q10121	afdbclusters_A0A925IQC1	pdb_1xrg	cath_2dyyG00
+ECDJJN_01261	296	Anthrax toxin expression trans-acting positive regulator	swissprot_Q44636	afdbclusters_A0AAW3HR42	pdb_5way	
+ECDJJN_01262	151	M protein trans-acting positive regulator (MGA) PRD domain protein		afdbclusters_G5KFG4		
+ECDJJN_01268	71	hypothetical protein				
+ECDJJN_01269	40	hypothetical protein				
+ECDJJN_01273	44	hypothetical protein				
+ECDJJN_01280	231	Methionine import system permease protein MetP	swissprot_O32168	afdbclusters_V8C769	pdb_3tuz	cath_af_Q2FZZ1_20_231_1.10.3720.10
+ECDJJN_01294	119	hypothetical protein				
+ECDJJN_01297	75	hypothetical protein				
+ECDJJN_01298	60	hypothetical protein				
+ECDJJN_01315	206	hypothetical protein				
+ECDJJN_01324	312	Putative dihydroorotate dehydrogenase A (fumarate)	swissprot_P0DD66	afdbclusters_Q6F4D1	pdb_3oix	cath_af_Q4D3W2_1_314_3.20.20.70
+ECDJJN_01347	136	hypothetical protein				
+ECDJJN_01352	52	hypothetical protein				
+ECDJJN_01353	301	Putative two-component membrane permease complex subunit SMU_747c	swissprot_Q8DUY3	afdbclusters_A0A929X358		
+ECDJJN_01360	517	Signal recognition particle receptor FtsY	swissprot_Q8CWX8	afdbclusters_A0A6G8AM80	pdb_6cy5	cath_af_P9WGD9_219_421_3.40.50.300,cath_af_Q2FZ48_83_178_1.20.120.140
+ECDJJN_01366	67	hypothetical protein				
+ECDJJN_01372	151	Protein BeeE	swissprot_P75980	afdbclusters_A0A2K9DZF9	pdb_8fql	
+ECDJJN_01379	243	hypothetical protein	swissprot_Q45598	afdbclusters_A0ABD7UT41		cath_af_Q54I56_148_348_3.40.50.300
+ECDJJN_01380	282	Structural maintenance of chromosomes protein 3	swissprot_B2FDA8	afdbclusters_A0A424Y2I5	pdb_6qj1	cath_af_Q9UTJ8_1023_1281_3.40.50.300
+ECDJJN_01383	186	UDP-glucose 6-dehydrogenase	swissprot_Q57346	afdbclusters_B9L6R6	pdb_1dli	cath_3plnA03
+ECDJJN_01384	114	ISAs1 family transposase		afdbclusters_A0AB39VDG1		
+ECDJJN_01386	374	Replication restart protein PriA	swissprot_P94461	afdbclusters_C9KIM0	pdb_8fak	cath_af_P17888_491_656_3.40.50.300,cath_af_Q2G266_703_798_2.40.50.140
+ECDJJN_01411	47	hypothetical protein				
+ECDJJN_01414	70	hypothetical protein				
+ECDJJN_01419	56	Phage protein		afdbclusters_A0A139R3Q7		
+ECDJJN_01423	69	hypothetical protein				
+ECDJJN_01427	62	hypothetical protein				
+ECDJJN_01432	89	hypothetical protein				
+ECDJJN_01448	93	Acylphosphatase	swissprot_Q9CHW2	afdbclusters_A0A8A3S7L0	pdb_3br8	cath_af_Q2FYM9_1_89_3.30.70.100
+ECDJJN_01455	201	hypothetical protein				
+ECDJJN_01468	94	putative transposase for insertion-like sequence element IS1161	swissprot_P37245	afdbclusters_A0ABD7UWP8		
+ECDJJN_01483	234	Hyaluronan synthase	swissprot_P0C0H0	afdbclusters_A0A1A9BSQ3	pdb_7sp7	cath_af_X1WCR3_86_406_3.90.550.10
+ECDJJN_01495	91	Protein Veg	swissprot_P37466	afdbclusters_A0A2K9P2A4	pdb_3fb9	cath_3fb9B00
+ECDJJN_01499	72	hypothetical protein				
+ECDJJN_01510	45	hypothetical protein				
+ECDJJN_01526	41	hypothetical protein				
+ECDJJN_01532	74	hypothetical protein				
+ECDJJN_01544	74	Nitroreductase family protein		afdbclusters_A0A1V5HAY7		
+ECDJJN_01559	126	Cytoskeleton protein RodZ	swissprot_Q8DMX7	afdbclusters_B4U0Q1		
+ECDJJN_01570	294	hypothetical protein				
+ECDJJN_01580	116	YkgJ family cysteine cluster protein		afdbclusters_A0A7X7I6F9		
+ECDJJN_01581	189	Putative acetyltransferase MW2476	swissprot_Q8NUR1	afdbclusters_A0A8T1VIJ9	pdb_4egg	cath_3fttA00
+ECDJJN_01591	123	hypothetical protein				
+ECDJJN_01592	108	Type II methyltransferase M-Bsp6I	swissprot_P43420	afdbclusters_A0A0L0WED1	pdb_2uyc	cath_af_Q57983_1_181_3.40.50.150
+ECDJJN_01593	70	Relaxase		afdbclusters_A0A0T8TLK9		
+ECDJJN_01598	206	Subtilin transport ATP-binding protein SpaT	swissprot_P33116	afdbclusters_Q99ZT5	pdb_4q4j	cath_af_A0A0P0VBQ7_902_1031_3.40.50.300
+ECDJJN_01667	440	Putative binding protein BAB2_0491	swissprot_Q2YKZ9	afdbclusters_A0AAF0K9U8	pdb_5f7v	cath_5f7vA00
+ECDJJN_01676	102	Sensor protein CitS	swissprot_Q9RC53	afdbclusters_A0ABD7IP03	pdb_6e52	cath_af_P0AEC8_402_541_3.30.565.10
+ECDJJN_01677	80	hypothetical protein				
+ECDJJN_01690	115	hypothetical protein	swissprot_Q5XAJ8	afdbclusters_A0A851ING7		cath_af_Q2G105_122_189_3.10.450.40
+ECDJJN_01704	30	hypothetical protein				
+ECDJJN_01706	88	Tagatose-6-phosphate kinase		afdbclusters_Q1JKI4		
+ECDJJN_01709	341	PTS system galactitol-specific EIIC component	swissprot_P69831	afdbclusters_A0A139RKW7		
+ECDJJN_01710	142	PTS system sugar-specific permease component domain protein		afdbclusters_F9P6V2		
+ECDJJN_01721	99	hypothetical protein	swissprot_P32728	afdbclusters_A0A845LV73	pdb_1g2r	cath_1g2rA00
+ECDJJN_01730	207	hypothetical protein				
+ECDJJN_01737	1461	Mu-like prophage FluMu protein gp42	swissprot_P44236	afdbclusters_S0KGK0		
+ECDJJN_01741	120	Phenylalanine--tRNA ligase alpha subunit	swissprot_Q8RHB4	afdbclusters_A0A1E5GZP4	pdb_2gjv	cath_af_Q2FX61_1_127_3.30.2000.30
+ECDJJN_01748	39	hypothetical protein				
+ECDJJN_01763	133	hypothetical protein		afdbclusters_A0ABD7UW89		
+ECDJJN_01764	385	CRISPR-associated exonuclease Cas4	swissprot_Q2RRV2	afdbclusters_A0A6I8MHI2	pdb_7sjr	cath_af_Q2FY99_43_221_3.90.320.10
+ECDJJN_01765	100	hypothetical protein				
+ECDJJN_01771	92	DNA-binding protein		afdbclusters_A0A5C5TT21		
+ECDJJN_01782	168	Protein EcsB	swissprot_P55340	afdbclusters_A0AB39LCQ2		

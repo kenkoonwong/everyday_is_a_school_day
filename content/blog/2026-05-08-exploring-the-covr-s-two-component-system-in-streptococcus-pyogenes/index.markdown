@@ -1,0 +1,660 @@
+---
+title: Exploring the CovR/S Two-Component System in Streptococcus pyogenes
+author: Ken Koon Wong
+date: '2026-05-16'
+slug: haddock
+categories: 
+- r
+- R
+- bio3d
+- streptococcus pyogenes
+- group A strep
+- two-component system
+- CovR/S
+- bakta
+- baktfold
+- alphafold
+- pLDDT
+- PAE
+- haddock3
+- protein docking
+- RMSD
+- hypothetical proteins
+tags: 
+- r
+- R
+- bio3d
+- streptococcus pyogenes
+- group A strep
+- two-component system
+- CovR/S
+- bakta
+- baktfold
+- alphafold
+- pLDDT
+- PAE
+- haddock3
+- protein docking
+- RMSD
+- hypothetical proteins
+excerpt: Exploring the CovR/S two-component system in Group A Strep 🧫 — from genome annotation with Bakta & BaktFold, to AlphaFold confidence metrics, and a first attempt at protein docking with Haddock3. Learning as we go! 🙌
+---
+
+> Exploring the CovR/S two-component system in Group A Strep 🧫 — from genome annotation with Bakta & BaktFold, to AlphaFold confidence metrics, and a first attempt at protein docking with Haddock3. Learning as we go! 🙌
+
+<p align="center">
+  <img src="strep.jpg" alt="image" width="50%" height="auto">
+</p>
+
+## Motivations
+Since the last [ampC adventure](https://www.kenkoonwong.com/blog/ampc/), I'm really curious about the mechanism of some of these bacterial virulence. Remember how chromosomal ampC organisms use ampG, ampD, and then ampR to repress class C beta lactamase gene? It's such an orchestrated endeavor. What about streptococcus pyogenes and its virulence? How can it be a colonizer on one end and then virulence on the other that caused a number of devastating infection? Let's learn a bit of the mechanism, and of course why not use this opportunity too to learn some other bioinformatic tools along the way? And see if we can use existing knowledge to make it more fun and educational! I'm looking forward to this! Join me in exploring the mechanism of the CovR/S two-component system in streptococcus pyogenes, aka Group A strep!
+
+
+## Objectives:
+- [What is CovR/S Two-component System?](#covrs)
+- [Let's Look A Where Does It Show in NCBI](#ncbi)
+- [What If We Have WGS? How to Annotate?](#annotate)
+- [What Are Hypothetical?](#hypothetical)
+  - [What Is An Acceptable AlphaFold Confidence?](#alphafoid)
+  - [A New Tool Called BaktFold](#baktfold)
+- [Do All Streptococcus Pyogenes Have CovR/S Two-component System?](#strep)
+- [Do Other Streptococcus species Have CovR/S Two-component System](#otherstrep)
+- [What Does CovR Look Like?](#covr)
+  - [What would a Phosphorylated CovR Look like?](#phos)
+- [Opportunities For Improvement](#opportunities)
+- [Lessons Learnt](#lessons)
+
+## What is CovR/S Two-component System? {#covrs}
+The CovR/S (Control of Virulence) system functions as a sophisticated environmental sensor that integrates multiple host-derived signals to orchestrate the transition from colonization to invasive disease. The evidence reveals three primary environmental triggers that modulate this master regulatory system. Simplistically, `CovS (Sensor)` senses first -> gets activated -> trigger `CovR (Regulator)` -> downstream repression. Breakage of such system will de-repress the virulence factors. 
+
+1. **Magnesium Levels**: The Baseline Sensor
+High extracellular magnesium concentrations (typical of healthy tissue) activate CovS kinase activity, leading to increased CovR phosphorylation and repression of virulence genes. This creates a colonization-friendly state where GAS maintains low virulence factor expression suitable for asymptomatic carriage. 
+
+2. **LL-37 Antimicrobial Peptide**: The Invasion Signal
+LL-37 cathelicidin peptide — released by neutrophils and epithelial cells during inflammation — directly binds to the extracellular domain of CovS and inhibits its kinase activity. This creates a paradoxical host-pathogen interaction where the host's antimicrobial defense actually triggers bacterial virulence. LL-37 binding to CovS reduces CovR phosphorylation, leading to derepression of multiple virulence factors including pyrogenic exotoxin A, DNase Sda1, streptolysin O, and hyaluronic acid capsule. Critically, LL-37 signaling converts GAS from a colonizing to an invasive phenotype, with marked increases in resistance to opsonophagocytic killing by human leukocytes. 
+
+3. **Acidic Stress**: The Tissue Environment Sensor
+Acidic conditions (pH < 7.0, typical of infected or inflamed tissue) enhance CovR/S-dependent gene repression through activation of the covR/S promoter itself. This creates a negative feedback loop where tissue acidosis increases CovR/S expression, which then more strongly represses virulence factors. 
+
+Below is an image referenced directly from source that depicts the mechanism of CovR/S system in streptococcus pyogenes.
+
+![](https://www.pnas.org/cms/10.1073/pnas.202353699/asset/49eaaa3c-e74d-44d4-af86-b97d7eba66ba/assets/graphic/pq2023536004.jpeg$0)
+
+## Let's Look A Where Does It Show in NCBI {#ncbi}
+Let's go to [here](https://www.ncbi.nlm.nih.gov/datasets/gene/GCF_900475035.1/?search=cov). I picked out streptococcus pyogenes reference genome annotation and search for `cov` and this popped up.
+
+<p align="center">
+  <img src="ncbi.png" alt="image" width="100%" height="auto">
+</p>
+
+There you go! CovS and CovR. Sometimes these system `can also be known as CsrR/CsrS (Capsule Synthesis Regulator)`. There may have been 2 different research groups discovered these identical gene and called it differently? 
+
+It's also so interesting that these 2 genes are so close to each other. 🤔
+
+## What If We Have WGS? How to Annotate? {#annotate}
+Alright, let's pick a random streptococcus pyogenes and see if we can use bakta to help us annotate. Let's look at this one.
+
+<p align="center">
+  <img src="random.png" alt="image" width="100%" height="auto">
+</p>
+
+[Install Bakta, see here](https://github.com/oschwengers/bakta)
+
+
+``` bash
+#make sure you use the environment name you created
+conda activate bakta_env 
+
+bakta \
+  --db /path/to/bakta_db \
+  --output rabdom_bakta_output \
+  --prefix random \
+  --threads 8 \
+  --skip-crispr \
+  --force \
+  random.fna
+```
+
+After it is done, when you look in the folder, you will see something like this
+
+<p align="center">
+  <img src="bakta.png" alt="image" width="40%" height="auto">
+</p>
+
+When we look at the annotated gff3 file, we can see that there are 2 features annotated as `two-component system response regulator` and `two-component system sensor histidine kinase`. These are likely to be CovR and CovS.
+
+
+``` r
+library(ape)
+library(tidyverse)
+
+readLines("random.gff3") |> str_detect("FASTA") |> which() #found fasta, apparently bakta has ###FASTA inserted and ape cannot handle
+```
+
+```
+## [1] 2025
+```
+
+``` r
+tmp <- tempfile()
+readLines("random.gff3")[1:2024] |> writeLines(tmp)
+gff <- read.gff(tmp, GFF3 = T)
+gff |>
+  filter(str_detect(attributes, "[Cc][Oo][Vv]"))
+```
+
+```
+##        seqid    source type  start    end score strand phase
+## 331 contig_1 Pyrodigal  CDS 303144 303830    NA      +     0
+## 332 contig_1 Pyrodigal  CDS 303836 305338    NA      +     0
+##                                                                                                                                                                                                                             attributes
+## 331           ID=EEBJGP_00327;Name=two-component system response regulator CovR;locus_tag=EEBJGP_00327;product=two-component system response regulator CovR;Dbxref=BlastRules:WP_002991052,SO:0001217,UniRef:UniRef50_Q49XM7;gene=covR
+## 332 ID=EEBJGP_00328;Name=two-component system sensor histidine kinase CovS;locus_tag=EEBJGP_00328;product=two-component system sensor histidine kinase CovS;Dbxref=BlastRules:WP_002991036,SO:0001217,UniRef:UniRef50_D3KVE8;gene=covS
+```
+
+There you go! We found them after annotation. Wait a minute... what are those `hypotheticals` on our folder? Why are they there? Are they important? Let's find out.
+
+## What Are Hypothetical? {#hypothetical}
+Hypotheticals are those proteins that we don't know what they do. They are annotated as "hypothetical protein" because they are predicted to be proteins based on the DNA sequence, but we have no experimental evidence of their function. They are often annotated as "hypothetical" because they have no known homologs in other organisms, or because they have no known domains or motifs that can be used to predict their function.
+
+When we take a peek at the `random.hypotheticals.tsv`, it looks like this:
+
+<p align="center">
+  <img src="hypothetical.png" alt="image" width="100%" height="auto">
+</p>
+
+Let's check how many hypotheticals we have here for this genome
+
+
+``` r
+tmp <- tempfile()
+readLines("random.hypotheticals.tsv")[3:194] |> writeLines(tmp)
+hypo <- read_tsv(tmp)
+nrow(hypo)
+```
+
+```
+## [1] 191
+```
+
+OK we have 191 of hypotheticals. Let's see if a new tool on the block will be able to add some annotation to these hypotheticals and see if we can find anything interesting. We could also use filter and see if we can see those hypotheticals
+
+
+``` r
+gff |>
+  filter(str_detect(attributes,"hypothetical protein")) |>
+  nrow()
+```
+
+```
+## [1] 192
+```
+
+Hmm.. they don't tally. But let's move on.
+
+## A New Tool Called BaktFold {#baktfold}
+[BaktFold](https://github.com/gbouras13/baktfold) is a new tool that uses AlphaFold to predict the structure of proteins and then uses that structure to predict the function of the protein. It is a very powerful tool that can be used to annotate hypothetical proteins. [Check out their paper](https://www.biorxiv.org/content/10.64898/2026.03.31.715528v1)
+
+
+``` bash
+baktfold run \
+  -i random.json \
+  -o random_baktfold_output \
+  -d /path/to/baktfold_db \
+  -t 8 \
+  -f 
+```
+
+
+``` r
+readLines("baktfold.gff3") |> str_detect("FASTA") |> which() #found fasta, apparently bakta has ###FASTA inserted and ape cannot handle
+```
+
+```
+## [1] 2025
+```
+
+``` r
+tmp <- tempfile()
+readLines("baktfold.gff3")[1:2024] |> writeLines(tmp)
+gff_baktfold <- read.gff(tmp, GFF3 = T)
+gff_baktfold |>
+  filter(str_detect(attributes,"hypothetical protein")) |>
+  nrow()
+```
+
+```
+## [1] 106
+```
+
+Wow, this is really cool! We can see that we have much less hypotheticals! About 86 less! Let's take a look what were previous hypotheticals and what they are annotated now and how?
+
+
+``` r
+gff_hypo <- gff |>
+  filter(str_detect(attributes,"hypothetical protein")) |>
+  pull(start)
+
+new_df <- tibble(start = gff_hypo, temp = NA)
+
+gff_baktfold_hypo <- gff_baktfold |>
+  right_join(new_df) |>
+  mutate(temp = case_when(
+    !str_detect(attributes,"hypothetical protein") ~ attributes,
+    TRUE ~ temp
+  ))
+```
+
+```
+## Joining with `by = join_by(start)`
+```
+
+<p align="center">
+  <img src="baktfold_hypo.png" alt="image" width="100%" height="auto">
+</p>
+
+Take a look at the image above, if you see temp column with NA, that would be hypotheticals from bakta. If you see it filled, it means baktfold was able to identify it across one or more databases. It's interesting how baktfold work, it conducts sequential protein structure-based searches against four complementary structure databases (SwissProt, Alphafold Cluster Database, PDB, CATH). Protein sequences are transformed into Foldseek 3Di tokens via the ProstT5 protein language model and subsequently searched against structure databases via Foldseek. Pretty cool! Also, interestingly, when comparing a few of the baktfold predicted functional proteins with NCBI's annotation, we sometimes do see some baktfold-annotated functions whereas NCBI labeled them as uncharacterized gene. This is not an exhaustive or thorough comparison by any means, but interesting to note. 
+
+Speaking of AlphaFold, we've always wanted to know a bit more about AlphaFold confidence. When we look at the predicted structure of a protein, how do we know if we can trust it? What is an acceptable AlphaFold confidence? Let's learn a bit more. 
+
+## What Is An Acceptable AlphaFold Confidence? {#alphafoid}
+**These are edited responses from back-and-forth Claude Sonnet 4.6 query, **
+
+AlphaFold reports per-residue confidence as per-residue confidence as **pLDDT** (predicted local distance difference test), scored 0–100:
+
+| pLDDT | Interpretation |
+|-------|---------------|
+| > 90  | High confidence — trust side-chain positions |
+| 70–90 | Good — backbone reliable, some side-chain uncertainty |
+| 50–70 | Low — treat as a rough scaffold only |
+| < 50  | Likely disordered or misfolded prediction |
+
+It tells you how well-placed AlphaFold thinks each amino acid is relative to nearby residues. Crucially, it is not a measure of experimental validation — it is the model's self-assessed confidence.
+
+For docking, pLDDT is essentially a proxy for how much you can trust the binding pocket geometry. Active site residues need pLDDT ≥ 90 ideally, with ≥ 70 as a minimum. Second-shell residues within ~8 Å should also clear 70, and any low-confidence loops capping the binding site entrance are a red flag even if the catalytic residues themselves look fine. Meaning, might be a good idea to visualize with B factor in ChimeraX to ensure the binding sites are acceptable.
+
+For MD, it seems to be a bit more forgiving. Regions scoring 70–90 will generally equilibrate fine — the force field redistributes strain and lets uncertain side chains settle. Regions in the 50–70 band need longer equilibration (100+ ns) and staged restraint release to avoid unphysical collapse (interesting area to explore). Below 50, MD often can't rescue the geometry — these regions should either be truncated if non-essential, cross-checked against other databases, or explored with enhanced sampling methods. 🤔 OK what about PAE on their website?
+
+PAE (predicted aligned error) is the second major confidence metric AlphaFold produces, and it tells you something fundamentally different from pLDDT. Where pLDDT is a per-residue score asking "how confident am I in this residue's local geometry," PAE is a pairwise score asking "how confident am I in the relative position and orientation of residue A with respect to residue B." It's an N×N matrix where every cell (i,j) contains the expected position error in Å for residue j when residue i is used as the alignment reference.
+
+Why it matters? pLDDT can look great across an entire protein — every residue scores above 80 — but if the PAE between two domains is high, that confident-looking structure is misleading. The two domains are individually well-folded, but AlphaFold is telling you it has no idea how they pack against each other. For docking, check the PAE within the domain containing your binding site — you want a dark block there, confirming the domain's internal geometry is reliable as a unit. For MD, high inter-domain PAE is a heads-up that you may need enhanced sampling to explore the conformational space between domains rather than assuming the AlphaFold pose is the dominant one.
+
+> Two metrics before trusting AlphaFold. pLDDT is local — want ≥ 70 at active site, ≥ 90 for catalytic residues. PAE is pairwise — dark green means confident relative positioning between any two residues. Single-chain: check diagonal at binding site. Multi-chain: off-diagonal blocks tell you if the predicted interface is real. Check both before docking or MD.
+
+
+## Do All Streptococcus Pyogenes Have CovR/S Two-component System? {#strep}
+Interestingly, after downloaded 2840 Streptococcus pyogenes refseq annotation feature (gff3), I found `99.96% (2839/2840) of these contain CovR/S genes`. Why not 100%? Turns out to be this `GCF_005472355.1` that doesn't have CovR/S listed in the annotation. I used Bakta to annotate it, and still no luck. Then used Baktfold to further annotate, couldn't find it either. Used `tblastn` to look for CovR/S protein, the best return was 42% identity. Wow, does this isolate really have absent gene for those 2? 🤔 
+
+> Note: Expand below to see the utility of using --dehydrate and then rehydrate for downloading and annotating large number of genomes.
+
+<details>
+<summary>code in terminal</summary>
+
+``` bash
+datasets download genome taxon "Streptococcus pyogenes" \
+  --annotated \
+  --assembly-source refseq \
+  --include gff3 \
+  --dehydrated \
+  --filename strep_pyogenes_refseq_gff3.zip
+
+datasets rehydrate --directory strep_pyogenes_refseq_gff3/ --max-workers 10
+```
+</details>
+
+## Do Other Streptococcus species Have CovR/S Two-component System? {#otherstrep}
+We've seen what other streptococcus can do clinically, I wonder if they have similar system when compared to streptococcus pyogenes. Let' download all reference gene of streptococcus genus and see if we can find it in their annotations. 
+
+<details>
+<summary>code</summary>
+#### Terminal
+
+``` bash
+datasets download genome taxon "Streptococcus" \
+  --reference \
+  --include gff3 \
+  --assembly-source RefSeq \
+  --dehydrated \
+  --filename strep_dehydrated.zip
+
+unzip strep_dehydrated.zip
+
+datasets rehydrate --directory strep_dehydrated
+```
+
+Downloaded the above gff3, then used claude code to find covS and covR in their annotation and output to a csv, since these are reference genes, it should be quite reliable.
+
+#### R
+
+``` r
+df_cov <- read_csv("covr_covs_annotation.csv")
+
+df_cov_single <- df_cov |>
+  filter(covR_present == "yes" & covS_present == "no") |> 
+  pull(organism) 
+
+df_cov |> head(10)
+```
+
+```
+## # A tibble: 10 × 8
+##    accession  organism covR_present covS_present covR_gene_names covS_gene_names
+##    <chr>      <chr>    <chr>        <chr>        <chr>           <chr>          
+##  1 GCF_00002… Strepto… no           no           <NA>            <NA>           
+##  2 GCF_00016… Strepto… no           no           <NA>            <NA>           
+##  3 GCF_00018… Strepto… no           no           <NA>            <NA>           
+##  4 GCF_00018… Strepto… no           no           <NA>            <NA>           
+##  5 GCF_00018… Strepto… yes          no           covR            <NA>           
+##  6 GCF_00018… Strepto… yes          no           covR            <NA>           
+##  7 GCF_00022… Strepto… no           no           <NA>            <NA>           
+##  8 GCF_00025… Strepto… no           no           <NA>            <NA>           
+##  9 GCF_00037… Strepto… no           no           <NA>            <NA>           
+## 10 GCF_00037… Strepto… no           no           <NA>            <NA>           
+## # ℹ 2 more variables: covR_annotation <chr>, covS_annotation <chr>
+```
+</details>
+
+Wow, amonng the streptococcus species (n=153) streptococcus pyogenes appears to be the ONLY species that contains both CovR/S two-component system? 
+
+Interestingly, there were 17 that have covR but not covS. 
+
+These are Streptococcus parauberis NCFD 2020, Streptococcus ictaluri 707-05, Streptococcus didelphis DSM 15616, Streptococcus castoreus DSM 17536, Streptococcus iniae, Streptococcus phocae, Streptococcus bovimastitidis, Streptococcus catagoni, Streptococcus equi subsp. zooepidemicus, Streptococcus dysgalactiae, Streptococcus halichoeri, Streptococcus penaeicida, Streptococcus hongkongensis, Streptococcus porcinus, Streptococcus uberis, Streptococcus canis, Streptococcus pseudoporcinus. How curious! 🧐
+
+## What Does CovR Look Like? {#covr}
+Let's take a look at [Alpha Fold Database](https://alphafold.com/entry/AF-D3KVK6-F1). Looking at [CovR active site](https://pubmed.ncbi.nlm.nih.gov/16788170/), mutation of D53A showed no dimerization of CoVR, which means that is a phosphylation site. Dimerization means that another phosphorylated CovR molecule is binding to another phosphorylated CovR, which is the active form of CovR. Which then binds to the DNA and represses the virulence genes. 
+
+<p align="center">
+  <img src="alphafold.png" alt="image" width="100%" height="auto">
+</p>
+
+The above shows both the PAE, plDDT and the predicted structure. The PAE is pretty good, the plDDT is also pretty good, with most of the residues above 70. The predicted structure also looks pretty reasonable, with the active site D53 highlighted in red.
+
+## What would a Phosphorylated CovR Look like? {#phos}
+Apparently for a [CovR with D53E mutation](https://pubmed.ncbi.nlm.nih.gov/28289082/) (so it mimics the phosphorylated state), the structure is quite different from the wild type. The D53E mutation causes a conformational change that allows CovR to dimerize and bind to DNA, even in the absence of phosphorylation. Let's visualize a D53E CovR predicted by AF3.
+
+<p align="center">
+  <img src="d53e.png" alt="image" width="100%" height="auto">
+</p>
+
+We can see that the highlighted portion is glutamine which is E. I'm not sure if I can tell the difference between wild-type and D53E. Let's plug it into R and see if we can see differences in RMSD
+
+
+``` r
+library(bio3d)
+
+covr_wt <- read.pdb("AF-D3KVK6-F1-model_v6.pdb")
+covr_d53e <- read.pdb("covr_d53e_chainA.pdb")
+covr_wt_idx <- atom.select(covr_wt, "calpha")
+covr_d53e_idx <- atom.select(covr_d53e, "calpha")
+fit <- fit.xyz(fixed = covr_wt$xyz, 
+               mobile = covr_d53e$xyz, 
+               fixed.inds  = covr_wt_idx$xyz,
+                mobile.inds = covr_d53e_idx$xyz)
+
+n_res <- length(covr_wt_idx$atom)
+n_res_seq <- seq(1,n_res*3,3)
+
+rmsd_vec <- vector(mode = "numeric", length=length(covr_wt_idx$atom))
+
+for (i in 1:n_res) {
+  idx <- c(n_res_seq[i]:(n_res_seq[i]+2))
+  rmsd_vec[i] <- rmsd(covr_wt$xyz[covr_wt_idx$xyz][idx], fit[covr_d53e_idx$xyz][idx])
+}
+
+df <- tibble(
+  residue = covr_wt$atom$resno[covr_wt_idx$atom],
+  aa = covr_wt$seqres,
+  rms = rmsd_vec
+)
+
+df |>
+  ggplot(aes(x=residue,y=rms)) +
+  geom_line() +
+  geom_label(aes(label=aa),size=2) +
+  theme_bw()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" alt="" width="672" />
+
+Alright, what this tells us is that certain residues actually didn't vary much, but if we start seeing higher rmsd such as residue 180s, those are really high rmsd. Later on after hoddock, we'll see if we can correlate these high RMSD residues to residues in protein-protein complex that interacted.
+
+Next we'll take a look at using [Haddock3](https://github.com/haddocking/haddock3) for the first time and we see what we get. Our assessment is to evaluate the haddock score and body surface area (BSA) to see if a dimerization of 2 of the same covr (D53 vs D53E) would be more favorable in comparison. Since we've never done this before, we had Claude Code set up for us. This is mainly for my notes purposes so in the future when I review back I can reference and modify accordingly. The steps are:
+
+1. Prepare the input files: Duplicate the CovR pdb but change the chain to A and B.
+2. Set up the haddock input files: Create a text file of active and passive residue, then use `haddodck3-restratins` to genereate `tbl` file. The text file will look something like this
+
+we can create the `actpass_A.txt` file with the following content:
+
+#### create actpass_A.txt
+
+``` bash
+87 88 89 90 91 98 99 100 101 106 107 108 109 110 111 112 113 114 115 116 117 118 120 121
+81 82 83 84 85 86 93 94 102 103 104 105 119 122 123 124 125 126
+```
+
+With the above of alpha4-beta5-alpha5 the first row are active residues - solve-exposed residues; the 2nd row is passive residues - surface-exposed neighbors surrounding the active patch. Then we use haddock-restraint
+
+#### Generate tbl file
+
+``` bash
+conda run --name haddock3 haddock3-restraints active_passive_to_ambig \
+      actpass_A.txt actpass_A.txt \
+      --segid-one A --segid-two B \
+      > ambig_covr_dimer.tbl
+
+```
+
+This basically tells haddock3 that residue 87 in chain A should interact with residue 87, 88, etc. in chain B with a distance of 2.0 Å and a weight of 1.0. which looks something like this
+
+
+``` bash
+assign (resi 87 and segid A)
+  (
+         (resi 87 and segid B)
+          or
+         (resi 88 and segid B)
+          or
+         ...
+  ) 2.0 2.0 0.0
+```
+
+
+3. Create a `covr_dimer_workflow.toml` file to specify the parameters for the docking run. 
+
+#### Create covr_dimer_workflow.toml
+
+``` bash
+  run_dir = "run_covr_dimer"
+  mode = "local"
+  ncores = 4
+  postprocess = true
+
+  molecules = [
+      "covr_d53e_chainA.pdb",
+      "covr_d53e_chainB.pdb",
+  ]
+
+  [topoaa]
+  autotoppar = false
+  delenph = true
+
+  [rigidbody]
+  ambig_fname = "ambig_covr_dimer.tbl"
+  sampling = 200
+  sym_on = true
+  nc2sym = 1
+  c2sym_sta1_1 = 1
+  c2sym_end1_1 = 228
+  c2sym_seg1_1 = "A"
+  c2sym_sta2_1 = 1
+  c2sym_end2_1 = 228
+  c2sym_seg2_1 = "B"
+
+  [seletop]
+  select = 100
+  
+  [flexref]
+  ambig_fname = "ambig_covr_dimer.tbl"
+  sym_on = true
+  nc2sym = 1
+  c2sym_sta1_1 = 1
+  c2sym_end1_1 = 228
+  c2sym_seg1_1 = "A"
+  c2sym_sta2_1 = 1
+  c2sym_end2_1 = 228
+  c2sym_seg2_1 = "B"
+
+  [emref]
+  ambig_fname = "ambig_covr_dimer.tbl"
+  sym_on = true
+  nc2sym = 1
+  c2sym_sta1_1 = 1
+  c2sym_end1_1 = 228
+  c2sym_seg1_1 = "A"
+  c2sym_sta2_1 = 1
+  c2sym_end2_1 = 228
+  c2sym_seg2_1 = "B"
+
+  [clustfcc]
+  plot_matrix = true
+
+  [seletopclusts]
+  top_models = 4
+
+  [emscoring]
+
+```
+
+The above you would have to change some of the settings and param including your `tbl`, `pdb` files. And change your ncore accordingly
+
+3. Run Haddock: Use the command line to run Haddock with your input files. For example:
+
+
+``` bash
+conda install - c bioconda -n haddock3 haddock3
+conda activate haddock3
+haddock3 -i it1.pdb -r it1.tbl -o haddock_output
+```
+
+What does [Haddock3](https://github.com/haddocking/haddock3) do? Haddock3 is a flexible docking software that allows you to model the interaction between two or more biomolecules (like proteins) based on experimental data or predicted interactions. It uses a combination of rigid-body docking, semi-flexible refinement, and scoring to predict the most likely binding modes between the molecules. The workflow of Haddock3 goes like this rigid pose -> flexible refinement -> scoring -> clustering. 
+
+4. Look at the analysis results
+
+``` r
+result_d53 <- read_tsv("capri_ss_d53.tsv") |> arrange(caprieval_rank) |> mutate(prot="d53") |> slice_head(n=5)
+result_d53e <- read_tsv("capri_ss_d53e.tsv") |> arrange(caprieval_rank) |> mutate(prot="d53e") |> slice_head(n=5)
+compare_result <- rbind(result_d53,result_d53e) |>
+  select(score,bsa,total,prot) |>
+  pivot_longer(cols = c(score:total), names_to = "param", values_to = "values") 
+
+compare_result |>
+  ggplot(aes(x=prot,y=values,fill=prot)) +
+  geom_boxplot(alpha=0.2,width=0.3) +
+  geom_violin(alpha=0.5) +
+  facet_wrap(.~param, scale="free_y") +
+  theme_bw()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" alt="" width="672" />
+
+Among the top 5 ranked docking models, the phosphomimetic D53E mutant demonstrated consistently superior HADDOCK3 scores (median −138.1 vs −117.4 kcal/mol) and substantially larger buried surface area (median 2,567 vs 2,161 Ų, +18.8%), supporting enhanced dimerization propensity. Energy decomposition revealed that D53E gains its advantage primarily through van der Waals interactions (median −86.3 vs −32.7 kcal/mol, ~2.6×), despite weaker electrostatic contributions (median −335.7 vs −514.1 kcal/mol). Not really sure what this means. 🤔 But let's visualize our rank 1 pdb! 
+
+<p align="center">
+  <img src="dimer.png" alt="image" width="100%" height="auto">
+</p>
+
+
+> Note to self: BSA is calculated by taking the sum of the solvent-accessible surface areas (SASA) of the two individual proteins and subtracting the SASA of the complex. A larger BSA indicates a more extensive interface between the two proteins, which often correlates with stronger binding affinity. In this case, the D53E mutant's larger BSA suggests it forms a more stable dimer compared to the wild-type D53, consistent with its role as a phosphomimetic that promotes dimerization and activation of CovR.
+
+Let's see which residues of these 2 chains interact!
+
+``` r
+haddock_d53e_d53e <- read.pdb("emscoring_1.pdb")
+
+chainA <- atom.select(haddock_d53e_d53e, chain = "A")
+chainB <- atom.select(haddock_d53e_d53e, chain = "B")
+dist_matrix <- dist.xyz(chainA$xyz, chainB$xyz)
+  
+get_interface <- function(pdb, cutoff = 5.0) {
+  
+  chainA <- atom.select(pdb, chain = "A")
+  chainB <- atom.select(pdb, chain = "B")
+  
+  # Get coordinates as matrices
+  coordA <- matrix(pdb$xyz[chainA$xyz], ncol = 3, byrow = TRUE)
+  coordB <- matrix(pdb$xyz[chainB$xyz], ncol = 3, byrow = TRUE)
+  
+  # Find contacting atom indices
+  contact_i <- c()
+  contact_j <- c()
+  
+  for (i in 1:nrow(coordA)) {
+    dists <- sqrt(rowSums(sweep(coordB, 2, coordA[i,])^2))
+    hits <- which(dists < cutoff)
+    if (length(hits) > 0) {
+      contact_i <- c(contact_i, rep(i, length(hits)))
+      contact_j <- c(contact_j, hits)
+    }
+  }
+  
+  # Map back to residues
+  resA <- pdb$atom[chainA$atom[unique(contact_i)], ] |>
+    as_tibble() |>
+    distinct(resno, resid) |>
+    mutate(chain = "A")
+  
+  resB <- pdb$atom[chainB$atom[unique(contact_j)], ] |>
+    as_tibble() |>
+    distinct(resno, resid) |>
+    mutate(chain = "B")
+  
+  bind_rows(resA, resB)
+}
+
+cont <- get_interface(haddock_d53e_d53e) |>
+  filter(chain == "A") |> 
+  select(residue=resno, aa=resid) |>
+  mutate(contact = 1)
+
+df |>
+  left_join(cont, by = c("residue","aa")) |>
+  mutate(contact = case_when(
+    is.na(contact) ~ 0,
+    TRUE ~ contact
+  )) |>
+  ggplot(aes(x=residue,y=rms)) +
+  geom_line() +
+  ggrepel::geom_label_repel(aes(label=aa,fill=as.factor(contact)),alpha=0.5,size=2) +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" alt="" width="672" />
+
+I couldn't easily find a function in bio3d to look for closer contact between the 2 chains, hence got Claude to produce a code to filter out anything less 5 Angstrom and map it back to our RMSD df. Wow, interesting! Not all high rmsd are close contact residues, and not all close contact residues are high in rmsd. 🤔 
+
+## Final Thoughts
+Wow, all of the above took a long time! But it was quite interesting to learn several things here. We learnt quite a few things here. It's our first time running a protein-protein docking! 🙌 Even though I don't deeply understand the method and the results, it's a good start! Let's keep at it and learn some more next time! If you notice something wrong here, please feel free to let me know! 
+  
+## Opportunities For Improvement {#opportunities}
+- Need to explore Prots5 and Foldseek in the future, the concept is quite interesting. Turning 3D coordinates into one dimention, very latent spacey. 
+- Need to understand haddock3 a bit more, the method and its output
+- Need to understand how alpha helices and beta sheets occur, the math behind it and see if we can reproduce that from scratch
+- Need to figure out how to reproduce a phosphorylated CovR structure instead of using a phosphomimetic
+- Need to learn pymol
+
+  
+## Lessons learnt {#lessons}
+- learnt CovR/S two-component system in streptococcus pyogenes
+- learnt what hypotheticals are, and what other methods we can use to further identify these hypotheticals
+- learnt strep pyogenes is the only strep species (reference gene only) that has CovR/S, some other strep species have CovR but no CovS.
+- learnt Baktfold
+- learnt the bare basics of haddock3
+- learnt RMSD, BSA, haddock score, angstrom unit (just eucleadian distance of xyz)
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://rstats.me/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
