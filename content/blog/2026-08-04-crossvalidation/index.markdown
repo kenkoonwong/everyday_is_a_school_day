@@ -152,7 +152,7 @@ To check whether the textbook claim (bias LOOCV < 10-fold < 5-fold; variance LOO
 ## Compare Candidate Models {#compare}
 
 ``` r
-set.seed(1)
+# set.seed(1)
 
 # k-fold CV RMSE for a given formula and dataset (k = n gives LOOCV)
 cv_rmse <- function(data, formula, k) {
@@ -401,7 +401,7 @@ There you have it! The RMSE on test set is quite similar to our average validati
 - learn about nested resampling that uses an additional layer of resampling that separates the tuning activities from the process used to estimate the efficacy of the model. [see here](https://www.tidymodels.org/learn/work/nested-resampling/)
 - learn to code grouped and stratified cv from scratch
 - learn a bit more on time-series CV
-- need to try n_sim of 10000 and see if the bias and variance order holds up for n=100, since the simulation is quite slow, I didn't run it to completion.
+- need to try n_sim of 10000 and see if the bias and variance order holds up for n=100, since the simulation is quite slow, I didn't run it to completion. Update: I did complete an n_sim of 10000 of n=100 and LOOCV still had the lowest variance.
   
 ## Lessons learnt {#lessons}
 - Learnt that we have to use `I` to indicate that we want to include polynomial terms in the formula, otherwise R will interpret them as interaction terms.
