@@ -655,7 +655,7 @@ print(auc_tbl)
 ## 2 xgboost  0.762
 ```
 
-Here our simulated data contains nonlinear relationships between the predictors and the outcome, so we expect XGBoost to outperform logistic regression. The AUC for logistic regression is 0.77, while the AUC for XGBoost is 0.91. This is a significant difference, and it shows that XGBoost is able to capture the nonlinear relationships in the data.
+Here our simulated data contains nonlinear relationships between the predictors and the outcome, so we expect XGBoost to outperform logistic regression. The AUC for logistic regression is 0.71, while the AUC for XGBoost is 0.762. This is a significant difference, and it shows that XGBoost is able to capture the nonlinear relationships in the data.
 
 ### Brier Score {#brier}
 
