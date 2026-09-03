@@ -686,7 +686,7 @@ My interpretation is that XGBoost consistently has a higher net benefit compared
 
 [This article by Vickers et al](https://link.springer.com/article/10.1186/s41512-019-0064-7) is really helpful in turning the `threshold` verbage to `preference`. Making the threshold as "If I screen/intervene x amount of samples, I get y amount of true positive" and making it how concerned I am to miss something vs how concerned I am that it's more harmful getting more screened/intervened on. Another great reference is [this](https://www.fharrell.com/post/addmarkerdca/). 
 
-A note for myself, while reading all these I was a bit confused on the term "treat all" and "treat none". But essentially treat all is to set sensitivity to 100% and specificity to 0%, and treat none would be to set both sensitivity and specificity to 0%. And with the formula `net benefit = tp /n - fp * exchange_rate / n` which is also `net benefit = sensitivity . prevalence - (1 - specificity) . (1-prevalence) . exchange_rate`. 
+A note for myself, while reading all these I was a bit confused on the term "treat all" and "treat none". But essentially treat all is to set sensitivity to 100% and specificity to 0%, and treat none would be to set sensitivity 0% and specificity to 100%. And with the formula `net benefit = tp /n - fp * exchange_rate / n` which is also `net benefit = sensitivity . prevalence - (1 - specificity) . (1-prevalence) . exchange_rate`. 
 
 ## Opportunities For Improvement {#opportunities}
 - Apply DCA next time when we have a model that is well calibrated and has good AUC, but we want to see if it's worth using the model to make a decision.
