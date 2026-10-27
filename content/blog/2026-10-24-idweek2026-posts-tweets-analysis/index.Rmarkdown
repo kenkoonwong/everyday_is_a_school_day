@@ -1,0 +1,745 @@
+---
+title: '#IDWeek2026 Posts/Tweets Analysis'
+author: Ken Koon Wong
+date: '2026-10-27'
+slug: idweek26
+categories: 
+- idweek2026
+- idweek26
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- idsa
+- idweek
+tags: 
+- idweek2026
+- idweek26
+- tweets
+- posts
+- twitter
+- x
+- learning
+- gganimate
+- idsa
+- idweek
+excerpt: "860 posts 📉 a new low for #IDWeek2026 on social media! But the learning didn’t stop 🧠 Waning measles antibodies in infants, oral care to cut NV-HAP 🪥, MedGemma for TB 🫁, and more! Thank you all who have contributed!" 
+---
+
+> 860 posts 📉 a new low for #IDWeek2026 on social media! But the learning didn’t stop 🧠 Waning measles antibodies in infants, oral care to cut NV-HAP 🪥, MedGemma for TB 🫁, and more! Thank you all who have contributed! 
+
+
+```{r,eval=F,echo=F}
+### posts
+library(tidyverse)
+library(wordcloud)
+library(wordcloud2)
+library(tidytext)
+
+load("idweek26_merge.rda")
+
+wc <- 
+  merge_clean %>% 
+  select(text) %>%
+  pivot_longer(cols = "text", names_to = "title", values_to = "word") %>%
+  unnest_tokens(word, word) %>%
+  filter(!str_detect(word, "^id$|idtwitter|idweek2026|idsky|idweek26|http|t\\.co|amp|^[[:digit:]]+|idweek|^2026$|booth")) %>%
+  anti_join(stop_words) %>%
+  count(word) |>
+  filter(n > 5) 
+
+# wc_full <- wordcloud(words = wc$word, freq = wc$n, random.order = FALSE, colors = brewer.pal(8,"Dark2"))
+
+wc_full <- wordcloud2(wc, size=1.6, color='random-dark')
+wc_full
+
+```
+
+<p align="center">
+  <img src="wc.png" alt="image" width="100%" height="auto">
+</p>
+
+Wordcloud of all the `IDweek2026`, `idweek26`  and `idweek` tweets/posts.    
+
+If you want to look at the specific tweets, I have created a shiny app that helps me to glance through essential topics. Here is the [link](https://kenkoonwong.shinyapps.io/idweek26/)
+
+# Thought Process:
+- [Post counts by days](#count) 
+- [Top 50 Users Post Counts](#top50)
+- [Posts frequency separated by dates](#animate)
+- [Top 10 Liked Posts Seperated by Dates ](#like)
+- [Top 20 Bookmarked Posts](#bookmark)
+- [Bluesky vs X](#platform)
+- [Limitations](#limit)
+- [Acknowledgement](#ack)
+- [Lessons learnt](#lesson)
+
+This year will be interesting! As previous year, we saw that with the same post in both platforms, [Bluesky had higher engagement compared to X](https://www.kenkoonwong.com/blog/idweek25/). But, will this year be the same as last? Did X catch back up? We'll find out! As usual, we will list the top 50 users contributed to #IDweek posts, top liked posts, top bookmarked posts. Our goal here is to learn ID related information and also observe our ID SoMe community and their interaction! ❤️
+
+*Disclaimers: All these were obtained from Bluesky and X API. Pictures shown here are directly linked to the source or a screen shot of the contributing author(s) and their posts*
+
+## Post counts (Bluesky and X combined) by days {#count}
+Let's journey back and look at 2022, 2023, 2024, and 2025 post counts by days distribution.
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
+  <figure style="margin:0;"><img src="https://www.kenkoonwong.com/blog/idweek2022/index_files/figure-html/unnamed-chunk-3-1.png" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2022"><figcaption style="text-align:center;">IDWeek 2022</figcaption></figure>
+  <figure style="margin:0;"><img src="https://www.kenkoonwong.com/blog/idweek2023/posts_days.png" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2023"><figcaption style="text-align:center;">IDWeek 2023</figcaption></figure>
+  <figure style="margin:0;"><img src="https://www.kenkoonwong.com/blog/2024-10-20-idweek2024-posts-tweets-analysis/posts_days.png" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2024"><figcaption style="text-align:center;">IDWeek 2024</figcaption></figure>
+  <figure style="margin:0;"><img src="https://www.kenkoonwong.com/blog/idweek25/index_files/figure-html/unnamed-chunk-2-1.png" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2025"><figcaption style="text-align:center;">IDWeek 2025</figcaption></figure>
+</div>
+
+Now let's lookat this years!
+
+```{r,eval=T, echo=F, warning=F,message=F}
+library(tidyverse)
+library(lubridate)
+
+load("idweek26_merge.rda")
+  
+merge_clean %>%
+  # mutate(created_at = with_tz(created_at, tz = "America/New_york")) %>% 
+  # filter(created_at >= mdy("10/13/24")) %>%
+  mutate(date = created_at - hours(4),
+         date = date(date) %>% as.factor()) %>% 
+  ggplot(.,aes(x=created_at, fill=date)) +
+  geom_histogram(color="black",alpha=0.5,bins = 70) +
+  scale_x_datetime(date_breaks = "3 hours", date_labels = "%m/%d  %H %M") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position =  "none",
+        axis.text.y = element_text(size = 10)) +
+  ggtitle("IDWeek2026 Post counts by 3 hour interval", subtitle = "Days separated in different color")
+  
+```
+
+Looks pretty consistent when comapred to lasat year! Wow, this and last year distribution looked quite similar, except this year is kinda appear less, doesn't it? Let's get to the total counts.
+
+Very interesting. When compared to IDweek [2022](https://www.kenkoonwong.com/blog/idweek2022/) `~2188` posts and [2023](https://www.kenkoonwong.com/blog/idweek2023/) `2627` posts, [2024](https://www.kenkoonwong.com/blog/2024-10-20-idweek2024-posts-tweets-analysis/) `1674` posts and [2025](https://www.kenkoonwong.com/blog/idweek25/) `1272` posts, this year we have `r nrow(merge_clean)` total posts. 🤔 Too many numbers let's put this in a plot.
+
+```{r,message=F,echo=F}
+tibble(year=c(2022,2023,2024,2025,2026),count=c(2188,2627,1674,1272,nrow(merge_clean))) |>
+  ggplot(aes(x=year,y=count)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  ylim(0,3000)
+```
+
+If we looked at our last year's blog, we did say that last year was the least engagement compared to the rest, but now we have a new record. 😢 OK, like my previous boss would always say, `let's focus on the positive`! 💪 Let's put some spotlight on to those high posters! Thanks again for all your contribution!
+
+<br>
+
+## Top 50 Users (Both Bluesky and X) Post Counts {#top50}
+```{r,echo=F,eval=T}
+# tweet count
+(top50 <- merge_clean |> 
+  # filter(created_at >= mdy("10/13/24")) %>%
+  group_by(username) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  head(50) |>
+  ggplot(aes(x=reorder(username,n),y=n)) +
+  geom_col(fill = "blue",alpha=0.5, col="black") +
+  geom_text(aes(x=username,y=n+5,label=n)) +
+  coord_flip() +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.y = element_text(size = 8)) +
+  xlab("Username")) 
+
+```
+
+
+```{r,echo=F,eval=F}
+merge_clean |> 
+  group_by(username) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  head(50) |>
+  pull(username) %>%
+  paste0("`", ., "`") |>  
+  paste(collapse = ", ") |> clipr::write_clip()
+```
+
+Thanks to all who have contributed `LordAlirezaF`, `josephmarcusid.medsky.social`, `IDWeekmtg`, `idweek.bsky.social`, `Contagion_Live`, `sairabt.bsky.social`, `websedgemedicine.bsky.social`, `WebsEdge_Med`, `CUP_med_health`, `cinarervanur`, `cinarervanur.bsky.social`, `healioid.bsky.social`, `jschaenman`, `patrickching.bsky.social`, `ABsteward`, `InfectDisNews`, `InfectDiseaseAd`, `infectiousdisease.bsky.social`, `lizszabo.bsky.social`, `dimitridrekonja.bsky.social`, `janicete.bsky.social`, `mgb-id.bsky.social`, `jonathanrydermd.bsky.social`, `patrickching`, `AmeshAA`, `CarlosdelRio7`, `IDSAInfo`, `IDinChildren`, `TakaMatsuo_ID`, `contagionlive.bsky.social`, `germhuntermd.bsky.social`, `idsainfo.bsky.social`, `iuidfellowship.bsky.social`, `medpagetoday.com`, `uofutahidfellows.bsky.social`, `IDSE_Online`, `NicholasRebold`, `SIDPharm`, `ccf_idfellows`, `gerardgallagher.bsky.social`, `medpagetoday`, `AMMICanada`, `DelveBio`, `DrCindyHou`, `HIVMA`, `HarrysTorres01`, `IDstewardship`, `JillHolds`, `hivma.bsky.social`, `sbudeptofmed` leading the top 50 posts combined. Can you find your handle here? We definitely see familiar authors. Thank you for your contribution!
+
+*For those with same numbers of posts, the mention and plot have been sorted differently based on reverse alphabetical order on the plot and alphabetical order on the mention. That order has no inherent meaning*
+
+The top 50 accounts belonged to 43 unique users last year and 42 this year. Last year’s list was split evenly, with 25 X and 25 Bluesky accounts; this year it shifted to 29 X and 21 Bluesky. An easy way to know whether it's Bluesky or X is that Bluesky username usually has a domain such as `bsky.social` or `medsky.social` etc. 
+
+<br>
+
+## Posts frequency separated by dates {#animate}
+```{r,eval=F,echo=F}
+library(gganimate)
+### gganimate
+df_anim <- 
+merge_clean |>
+  mutate(date = date(created_at)) %>% 
+  group_by(username, date) |>
+  summarize(n = n()) 
+
+
+df_anim  %>%
+  mutate(n = map_dbl(.x = n, .f=~ .x + rnorm(n = 1, mean = -0.005, sd = 0.001)))
+
+p <- df_anim  %>%
+  mutate(n = map_dbl(.x = n, .f=~ .x + rnorm(n = 1, mean = -0.005, sd = 0.001))) |>
+  # build rank, labels and relative values
+  group_by(date) %>%
+  mutate(Rank = rank(-n),
+         # value_test = n[Rank==1],
+         Value_rel = n/n[Rank==1],
+         Value_lbl = n)  %>% 
+  group_by(username) %>%
+  # keep top 10
+  filter(Rank <= 20) %>%
+  # plot
+  ggplot(aes(-Rank,Value_rel,fill=username)) +
+  geom_col(width = 0.8, position="dodge2",alpha=0.6) +
+  coord_flip() + 
+  geom_text(aes(-Rank,y=0,label = username,hjust=0)) +       #country label
+  geom_text(aes(-Rank,y=Value_rel,label = round(Value_lbl), hjust=0)) + # value label
+  theme_minimal() +
+  theme(legend.position = "none",axis.title = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        panel.grid = element_blank()) +
+  # animate along Year
+  transition_time(date) +
+  ease_aes('cubic-in-out') +
+  enter_fade() +
+  exit_fade() +
+  labs(title = "Top 20 #IDWeek2026 Posts on {frame_time}")
+
+animate(p, 100, fps = 10, duration = 20, width = 800, height = 600, end_pause = 30)
+
+```
+
+
+<p align="center">
+  <img src="idweek26.gif" alt="image" width="100%" height="auto">
+</p>
+
+
+## Top 10 Liked Posts Seperated by Dates {#like}
+#### 10-20-26 Day 0
+```{r, echo=F, message=F,warning=F}
+library(tidyverse)
+library(DT)
+library(lubridate)
+library(kableExtra)
+
+n <- 10
+
+kable_df <- 
+merge_clean |>
+  mutate(date = date(created_at)) %>% 
+  group_by(date) 
+
+kable_df |>
+  filter(date == mdy("10/20/26")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(n) |>
+  kbl()
+
+```
+
+This is the pre-meeting day. Looks like everyone is super excited for the conference! 
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HVFACnqXEAAreLy?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 1"></figure>
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HVGa2wKXQAAf1Zv?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 2"></figure>
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HVGutBQWQAAdLJU?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 3"></figure>
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HU4aemOW4AAxfVW?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 4"></figure>
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HVHTT1-W4AA9zV2?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 5"></figure>
+  <figure style="margin:0;"><img src="https://pbs.twimg.com/media/HVHTNTsW8AA1dVo?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2026 image 6"></figure>
+  <figure style="margin:0; grid-column:1 / -1; justify-self:center; width:calc(50% - 8px);"><img src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:hb5332bxcba5qjzprtaxdl6o/bafkreicdcgub4i3vrtoff4ssa47v33fo3szmuibv55asdlo4e5xyl4psoe" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Team Oxacillin, Team Cefazolin, and Team Nafcillin buttons"></figure>
+</div>
+
+Thanks all for sharing the enthusiasm regardless of platform! 
+
+#### 10-21-26 Day 1
+```{r,echo=F,message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10/21/26")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(n) |>
+  kbl()
+
+```
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
+  <figure style="margin:0;"><img src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:5tnswm3s5wkl5rvrszqll5jl/bafkreigg4dvta6jvscljmnad2m6byoibdojjbekaihwiyx45lra4grj4oi" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 1"></figure>
+  <figure style="margin:0;"><img src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:mj25u4hocfmg6a7t2rxwbycg/bafkreidjbpmtg6axn4p5encmjkqai6ytkvhn3glqmnyjverapncon35avi" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 2"></figure>
+  <figure style="margin:0;"><img src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:ifpfb7ltxahkp3g66s57jdqn/bafkreidlwb4gyo5ibo56psxkddoun6ra56bi7jsy4yod45q6clp5vq5oea" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 3"></figure>
+  <figure style="margin:0;"><img src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:yjb2nsyihm4v4r324fpc25du/bafkreieemsxzowskdhxqee2buuisqe65urkv35aiisaf22pqbvxubyhjwu" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 4"></figure>
+  <figure style="margin:0; grid-column:1 / -1; justify-self:center; width:calc(50% - 8px);"><img src="https://pbs.twimg.com/media/HVKB6PTWYAAAWso?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 5"></figure>
+</div>
+
+Wow what a day! Atul Gawande's talk was a hit with multiple mentions! Supporters of people with HIV/AIDS rallied. A picture of Washington Monument captured by `germhuntermd.bsky.social` and wishing for no new pathogens or renaming of old ones 🤣. Interesting monoclonal antibody candidate VMS063 by Invivyd for treatment and prevention of Measles with highly potent in vitro antiviral activity against contemporary measles fusion protein variants. Selfie of `jonathanrydermd.bsky.social` that once again gained ID SoMe community likings, second year in a row! More posts on stop zombie tests asking ourselves 3 questions every test must ask (does it meaningfully change disease probability? does it add info beyong history, physical exam, imaging, and microbiology? does acting on it improve pateint-important outcome?). New study showing 58% children under 5 were potentially exposed to hepatitis B by a household member (not the birth mother). Mention of great transplant ID sessions. A FOMO moment missing IDweek because of attending wife's great achievement at KidneyWeek, woohoo! Lastly, networking and connecting is the heart of IDweek! 
+
+#### 10-22-26 Day 2
+```{r,echo=F,message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10/22/26")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(n) |>
+  kbl()
+
+```
+
+
+<p align="center">
+  <img src="https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:yjpx63hz6neymowjvmozdx2r/bafkreifuisfgwqrwxkyxn7kz345s5nb3ahou3cnuexayqxqesqshzwbgbq" alt="image" width="60%" height="auto">
+</p>
+
+Wow, passive measles antibodies appear to wane by 6 months. Also intersting to see the antibody at delivery seem to have slightly higher than mother's antibody concentration. 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVPlkL2WIAAakP4?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+The 5 D's of feedback stewardship (Diagnosis-culture before you treat, Drug-narrow spectrum, Dose-avoid toxicity, Duration-timely and short, De-escalate and reassess-follow up cultures)
+
+There is also a popular post on both platforms regarding The Bluesky Experiment for ID community has officially failed according to the author. Lots of sharing of the diverse sentiment, all coming from the same intent is to bring back ID SoMe community! A well-said post by an X user `@nigeltwitt`. 
+
+<p align="center">
+  <img src="nigel.png" alt="image" width="60%" height="auto">
+</p>
+
+That said, ID SoMe community does appear to be divided. Lots of thoughts and ideas churning behind all these smart folks in trying different things to bring back the #IDTwitter it used to be! 🙌 
+
+Next, does Staphylococcus BSI early dual therapy improve outcomes (SABEDTIO)? Depends what outcome... 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVPoCkSbYAArkA_?format=jpg&name=4096x4096" alt="image" width="60%" height="auto">
+</p>
+
+Who actually needs antibiotic prophylaxis for urologic procedures? 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVQO_PUaoAAEB_d?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+Are we overtreating abdominal infections?
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVQXqudbYAApKPl?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+
+
+#### 10-23-26 Day 3
+```{r,echo=F,message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10/23/26")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(n) |>
+  kbl()
+
+```
+
+Very popular post with 200+ likes. Dogs in IDweek!
+
+<p align="center">
+  <img src="https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:5tnswm3s5wkl5rvrszqll5jl/bafkreie6sxondwk7gvw4thwdmy2mkjkkwyntl5oftjom4qputi6uwh6cm4" alt="image" width="60%" height="auto">
+</p>
+
+Followed by Google Research showcasing how MedGemma are bringing AI to the front lines of TB screening. MedGemma reads chest X-rays together with a patient’s clinical history to flag possible TB, runs offline on local devices, and can be fine-tuned on regional data, as Indonesia is doing for national screening.
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVVnkPGbYAAizg0?format=jpg&name=small" alt="image" width="60%" height="auto">
+</p>
+
+Debbie Goff's post on her talk of bacterial practice-changing studies and mentioned the [HAPPEN study - oral care study in Lancet reducing non-ventilator hospital acquired pneumonia](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(26)00235-5/fulltext). This multicentre randomised controlled trial demonstrates that improving oral care reduces NV-HAP incidence among hospitalised patients, compared with usual care. There's more than just oral care, but the oral care here is defined as moisturising lips and cleaning of teeth or dentures and tongue with a suitable toothbrush and toothpaste containing sodium bicarbonate and fluoride.
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVV6mfnXMAAoAPy?format=jpg&name=small" alt="image" width="60%" height="auto">
+</p>
+
+Followed by a restrospective case-controlled study from Bagota, Columbia, on carbapenemase-producing enterobacterales (CPE) infections identified SOT, prior abx use, and cirrhosis as primary drivers of CPE infections. 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVVe6QiWIAAjRHh?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+Remember the post the day before about failed Bluesky ID experiment? Sebastien has something to add to that.❤️
+
+<p align="center">
+  <img src="sebpoule.png" alt="image" width="60%" height="auto">
+</p>
+
+#### 10-24-26 Day 4
+```{r,echo=F,message=F,warning=F}
+kable_df |>
+  filter(date == mdy("10/24/26")) |>
+  arrange(desc(like_count)) |>
+  select(date, username, text, like_count) |>
+  head(n) |>
+  kbl()
+
+```
+
+This is super interesting! Who developed non-hiv pjp? hematologic malignancy, solid tumor + chemo, autoimmune + immunosuppression, and ?cirrhosis. Major factor: corticosteroids. Do we need daily corticosteroids? No, 43% patients were not on daily steroids !? And apparently total lymphocyte counts <0.7x10^9/L combined with corticosteroids do correlate with increased risk of PJP. 
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVapFNLa0AA7LZe?format=jpg&name=small" alt="image" width="60%" height="auto">
+</p>
+
+Congratulations to University of Utah Infectious Disease Fellowship for winning the ID Bug Bowl!
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVbrmKJWAAEKWhH?format=jpg&name=large" alt="image" width="60%" height="auto">
+</p>
+
+Look at the evolution of HIV PrEP!
+
+<p align="center">
+  <img src="https://pbs.twimg.com/media/HVcLESlawAAoOGT?format=jpg&name=small" alt="image" width="60%" height="auto">
+</p>
+
+To close, Jonathan Ryder sharing his knowledge about stewarding NGS
+
+<p align="center">
+  <img src="https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:vcmyw2jthzh5tcbviee25zda/bafkreicr6nfapljbhlt3z7xlflizoh4kimg4tz6pebyjmgvsptuwbdqeqq" alt="image" width="60%" height="auto">
+</p>
+
+### Top 20 Bookmarked Posts {#bookmark}
+```{r, echo=F}
+kable_df |>
+  filter(username != "AlexLevels_") |>
+  arrange(desc(bookmark_count)) |>
+  select(date, username, text, bookmark_count) |>
+  head(20) |>
+  kbl()
+```
+
+
+
+### Bluesky vs X? {#platform}
+Let's look at last year's
+
+<p align="center">
+  <img src="https://www.kenkoonwong.com/blog/idweek25/index_files/figure-html/unnamed-chunk-12-1.png" alt="image" width="60%" height="auto">
+</p>
+
+And now this year's
+
+```{r, echo=F,message=F,warning=F}
+merge_clean |>
+  mutate(date = date(created_at)) |>
+  group_by(date, platform) |>
+  summarize(n = n()) |>
+  ggplot(aes(x=date,y=n,fill=platform)) +
+  geom_col(alpha=0.5,color="black", position="dodge2") +
+  theme_bw() +
+  scale_fill_manual(values = c("bluesky"="blue","x"="black")) +
+  ggtitle("Bluesky vs X #IDweek2026 Posts Frequency")
+```
+
+We definitely see the difference. Even though day 1 bluesky had slightly more posts than X, but the rest of the days, X surpassed Bluesky, at least per visualization. Now, what if we perform the same statistical wizardry (for those who are interest: negative binomial regression to compare social media (bluesky vs X) engagement metrics between platforms across five dates, applying Benjamini-Hochberg correction for multiple testing with alpha 0.05) as last year and see if we notice any out of the norm difference between the engagements (e.g., likes, bookmarks, repost etc) and see if there is a difference between Bluesky and X.
+
+```{r,echo=F,message=F,warning=F,eval=F}
+
+## using wilcoxon, not correct tehcnique
+merge_clean |>
+  mutate(date = date(created_at)) |>
+  group_by(date, platform) |>
+  pivot_longer(cols = c("quote_count":"bookmark_count"), names_to = "metric", values_to = "value") |>
+  ggplot(aes(x=as.factor(date),y=value,fill=platform)) +
+  # geom_boxplot(alpha=0.2) +
+  # geom_point(alpha=0.2) +
+  geom_violin(alpha=0.5) +
+  ggpubr::stat_compare_means( aes(label = ifelse(..p.. < 0.002, paste0("p = ", ..p.format..), "ns")),
+  size = 1.5, 
+  method = "wilcox.test") +
+  facet_wrap(.~metric, scales = "free_y") +
+  theme_bw() +
+  xlab("date") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) 
+
+```
+
+
+```{r,eval=T,echo=F, warning=F, message=F}
+library(MASS)
+
+load("idweek26_merge_hash.rda")
+
+nbr_model_result <- tibble(date=as.Date(character()),metric=as.character(),coef=as.numeric(),pval=as.numeric())
+dates <- c("10-20-26","10-21-26","10-22-26","10-23-26","10-24-26")
+metric <- c("quote_count", "like_count", "reply_count", "repost_count", "bookmark_count")
+# dates <- c("10-22-26")
+
+### Test all rows
+# for (i in dates) {
+# 
+# nbr_df <- merge_clean |>
+#   mutate(date = date(created_at)) |>
+#   filter(date == mdy(i))
+# 
+# for (j in metric) {
+# # model
+# model <- glm.nb(as.formula(paste(j, "~ platform")), data = nbr_df)
+# pval <- summary(model)$coefficients[2,4]
+# coef <- summary(model)$coefficients[2,1]
+# 
+# nbr_model_result <- nbr_model_result |>
+#   bind_rows(tibble(date=mdy(i),metric=j,coef=coef,pval=pval))
+# }
+# }
+
+
+## test only those posts posted same post in both platform
+rep <- merge_clean |>
+  group_by(post_hash) |>
+  distinct(post_hash, text, .keep_all = T) |>
+  mutate(row = row_number()) |>
+  filter(row == 2) |>
+  pull(post_hash)
+
+# data_both <- merge_clean |>
+#   filter(post_hash %in% rep)  
+
+data_both <- merge_clean
+
+for (i in dates) {
+
+nbr_df <- data_both |>
+  mutate(date = date(created_at)) |>
+  filter(date == mdy(i))
+
+for (j in metric) {
+# model
+if (sum(nbr_df[[j]])==0) { next }
+model <- glm.nb(as.formula(paste(j, "~ platform")), data = nbr_df)
+pval <- summary(model)$coefficients[2,4]
+coef <- summary(model)$coefficients[2,1]
+
+nbr_model_result <- nbr_model_result |>
+  bind_rows(tibble(date=mdy(i),metric=j,coef=coef,pval=pval))
+}
+}
+
+
+
+
+nbr_model_result <- nbr_model_result %>%
+    mutate(pval_adj = p.adjust(pval, method = "BH"))
+
+# First, prepare your plotting data
+plot_data <- merge_clean %>%
+  mutate(date = date(created_at)) %>%
+  pivot_longer(cols = c("quote_count":"bookmark_count"), 
+               names_to = "metric", 
+               values_to = "value")
+
+# Prepare annotation data from your NBR results
+annotation_data <- nbr_model_result %>%
+  # slice(1:25) |>
+  mutate(
+    label = case_when(
+      pval_adj < 0.05 ~ paste0("p = ", round(pval_adj,5)),
+      TRUE ~ "ns"
+    ),
+    date_factor = as.factor(date)
+  ) %>%
+  dplyr::select(date_factor, metric, coef, label, pval_adj)
+
+# Create the plot
+plot_data %>%
+  ggplot(aes(x = as.factor(date), y = value, fill = platform)) +
+  geom_violin(alpha = 0.5) +
+  geom_text(data = annotation_data,
+            aes(x = date_factor, y = Inf, label = label),
+            inherit.aes = FALSE,
+            vjust = 1.2,
+            size = 1.5) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  theme_bw() +
+  xlab("date") +
+  scale_fill_manual(values = c("bluesky"="blue","x"="red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+# plot_data |> filter(date == mdy("10/22/26")) |> view()
+
+```
+
+
+
+
+
+```{r,echo=F, eval=T}
+annotation_data2 <- annotation_data |>
+  mutate(significant_BH = case_when(
+    pval_adj < 0.05 ~ T,
+    TRUE ~ F
+  )) 
+
+annotation_data2 |>   
+  dplyr::select(-significant_BH,-label) |>
+  kbl() %>%
+  row_spec(which(annotation_data2$significant_BH), 
+           background = "#90EE9050", bold = TRUE)
+```
+
+Wow, OK! X definitely has more bookmarks compared to Bluesky on Day 1 and 3 after FDR adjustment! I bet you this is probably highly influenced from `LordAlizeF`'s contribution! Unlike last year where Bluesky was a clear winner, this year other than more bookmarks on X, there is no "winner"? 
+
+Again, same as last year, the above people may say we're not being fair at comparing the engagement of some different contents (some posted on specific platform but not the other), why don't we only compare posts from authors who posted on both platform with similar technique as last year. 
+
+Our result showed there were 133 duplicate posts. If we were to remove these duplicate posts and revisualize the counts on Bluesky and X.
+
+```{r,echo=F,warning=F,message=F, eval=T}
+data_both <- merge_clean |>
+  filter(post_hash %in% rep)
+
+merge_clean |>
+  filter(!post_hash %in% rep) |>
+  mutate(date = date(created_at)) |>
+  group_by(date,platform) |>
+  summarize(n = n()) |>
+  ggplot(aes(x=date,y=n,fill=platform)) +
+  geom_col(position="dodge2", alpha=0.5, color = "black") +
+  scale_fill_manual(values = c("bluesky"="blue","x"="black")) +
+  theme_bw()
+```
+
+Alright, it looks quite similar to previous! So the duplicate didn't really make a whole lot of difference! 
+
+Let's take a look whether there is a difference in engagement if we were to compare the SAME post in both platforms?
+
+```{r, echo=F, eval=T, message=F, warning=F}
+# First, prepare your plotting data
+
+nbr_model_result <- tibble(date=as.Date(character()),metric=as.character(),coef=as.numeric(),pval=as.numeric())
+dates <- c("10-20-26","10-21-26","10-22-26","10-23-26","10-24-26")
+metric <- c("quote_count", "like_count", "reply_count", "repost_count", "bookmark_count")
+# dates <- c("10-22-26")
+
+### Test all rows
+# for (i in dates) {
+# 
+# nbr_df <- merge_clean |>
+#   mutate(date = date(created_at)) |>
+#   filter(date == mdy(i))
+# 
+# for (j in metric) {
+# # model
+# model <- glm.nb(as.formula(paste(j, "~ platform")), data = nbr_df)
+# pval <- summary(model)$coefficients[2,4]
+# coef <- summary(model)$coefficients[2,1]
+# 
+# nbr_model_result <- nbr_model_result |>
+#   bind_rows(tibble(date=mdy(i),metric=j,coef=coef,pval=pval))
+# }
+# }
+
+
+## test only those posts posted same post in both platform
+rep <- merge_clean |>
+  group_by(post_hash) |>
+  distinct(post_hash, text, .keep_all = T) |>
+  mutate(row = row_number()) |> 
+  filter(row == 2) |>
+  pull(post_hash)
+
+data_both <- merge_clean |>
+  filter(post_hash %in% rep)
+
+
+for (i in dates) {
+
+nbr_df <- data_both |>
+  mutate(date = date(created_at)) |>
+  filter(date == mdy(i))
+
+for (j in metric) {
+# model
+if (sum(nbr_df[[j]])==0) { next }
+model <- glm.nb(as.formula(paste(j, "~ platform")), data = nbr_df)
+pval <- summary(model)$coefficients[2,4]
+coef <- summary(model)$coefficients[2,1]
+
+nbr_model_result <- nbr_model_result |>
+  bind_rows(tibble(date=mdy(i),metric=j,coef=coef,pval=pval))
+}
+}
+
+
+
+
+nbr_model_result <- nbr_model_result %>%
+    mutate(pval_adj = p.adjust(pval, method = "BH"))
+
+plot_data <- data_both %>%
+  mutate(date = date(created_at)) %>%
+  pivot_longer(cols = c("quote_count":"bookmark_count"), 
+               names_to = "metric", 
+               values_to = "value")
+
+# Prepare annotation data from your NBR results
+annotation_data <- nbr_model_result %>%
+  # slice(26:45) |>
+  mutate(
+    label = case_when(
+      pval_adj < 0.05 ~ paste0("p = ", round(pval_adj,5)),
+      TRUE ~ "ns"
+    ),
+    date_factor = as.factor(date)
+  ) %>%
+  dplyr::select(date_factor, metric, coef, label, pval_adj)
+
+# Create the plot
+plot_data %>%
+  ggplot(aes(x = as.factor(date), y = value, fill = platform)) +
+  geom_violin(alpha = 0.5) +
+  geom_text(data = annotation_data,
+            aes(x = date_factor, y = Inf, label = label),
+            inherit.aes = FALSE,
+            vjust = 1.2,
+            size = 1.5) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  theme_bw() +
+  xlab("date") +
+  scale_fill_manual(values = c("bluesky"="blue","x"="red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+  
+```
+
+Wow, this is interesting. With 133 posts in both platform, we observed that the like counts on the day0 and day 4, were significantly more on X than on Bluesky! Should we be seeing more engagement on X if Bluesky is dead? 🤷‍♂️ Are Bluesky users the same as X users? Do they both behave the same in posting behavior? So many questions, so little data. But, one thing for sure, globally the post counts was the lowest since 2022. And for next year, it is a REALLY good idea to monitor both platforms because the good stuff is not all in one platform! Now if only I can get access to Roon's api... 🤔
+
+<br>
+
+
+## Limitations {#limit}
+- Only looked at `idweek`, `idweek26`, `idweek2026` posts. Could very well miss those influential posts by reputable sources that do not include these tags.
+- word cloud will miss pictures' texts. Some of the things I learnt were actually from snapshot of slides! Definitely a limitation
+- we did not include mastodon
+
+
+## Acknowledgement {#ack}
+Thank you for those who have contributed! I learnt a lot from you guys! It's these type of engagement that keep us all connected even for those who can't attend the meeting! If you see your username above, thank you! If you don't see it and have contributed, thank you! Sorry if I have left any usernames out. Please feel free to use the shiny app link above to look at all the posts queried to catch up, or just search on bluesky and X platform! 
+
+I especially want to thank [Jonathan Ryder](https://orcid.org/0000-0003-4566-1905) and [Joseph Marcus](https://orcid.org/0000-0002-1789-603X) for their consistent support and discussion. Thank you! 
+
+## Lessons Learnt
+- Learnt about cirrhosis + non-hiv pjp
+- Learnt about waning measles antibody in babies by 6 months
+- Appreciate the candid back-and-forth of Bluesky is dead debate
+- dual therapy for SAB, decrease prolonged bacteremia, nothing else
+- MedGemma and CXR?
+- oral care + NV-HAP reduction
+
+
+
+If you like this article:
+- please feel free to send me a [comment or visit my other blogs](https://www.kenkoonwong.com/blog/)
+- please feel free to follow me on [BlueSky](https://bsky.app/profile/kenkoonwong.bsky.social), [twitter](https://twitter.com/kenkoonwong/), [GitHub](https://github.com/kenkoonwong/) or [Mastodon](https://rstats.me/@kenkoonwong)
+- if you would like collaborate please feel free to [contact me](https://www.kenkoonwong.com/contact/)
