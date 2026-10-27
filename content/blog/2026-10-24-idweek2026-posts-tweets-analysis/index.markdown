@@ -59,7 +59,7 @@ If you want to look at the specific tweets, I have created a shiny app that help
 - [Post counts by days](#count) 
 - [Top 50 Users Post Counts](#top50)
 - [Posts frequency separated by dates](#animate)
-- [Top 10 Liked Posts Seperated by Dates ](#like)
+- [Top 10 Liked Posts Separated by Dates ](#like)
 - [Top 20 Bookmarked Posts](#bookmark)
 - [Bluesky vs X](#platform)
 - [Limitations](#limit)
@@ -80,11 +80,11 @@ Let's journey back and look at 2022, 2023, 2024, and 2025 post counts by days di
   <figure style="margin:0;"><img src="https://www.kenkoonwong.com/blog/idweek25/index_files/figure-html/unnamed-chunk-2-1.png" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="IDWeek 2025"><figcaption style="text-align:center;">IDWeek 2025</figcaption></figure>
 </div>
 
-Now let's lookat this years!
+Now let's look at this years!
 
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" alt="" width="672" />
 
-Looks pretty consistent when comapred to lasat year! Wow, this and last year distribution looked quite similar, except this year is kinda appear less, doesn't it? Let's get to the total counts.
+Looks pretty consistent when compared to last year! Wow, this and last year distribution looked quite similar, except this year is kinda appear less, doesn't it? Let's get to the total counts.
 
 Very interesting. When compared to IDweek [2022](https://www.kenkoonwong.com/blog/idweek2022/) `~2188` posts and [2023](https://www.kenkoonwong.com/blog/idweek2023/) `2627` posts, [2024](https://www.kenkoonwong.com/blog/2024-10-20-idweek2024-posts-tweets-analysis/) `1674` posts and [2025](https://www.kenkoonwong.com/blog/idweek25/) `1272` posts, this year we have 860 total posts. 🤔 Too many numbers let's put this in a plot.
 
@@ -117,7 +117,7 @@ The top 50 accounts belonged to 43 unique users last year and 42 this year. Last
 </p>
 
 
-## Top 10 Liked Posts Seperated by Dates {#like}
+## Top 10 Liked Posts Separated by Dates {#like}
 #### 10-20-26 Day 0
 <table>
  <thead>
@@ -319,7 +319,7 @@ She says we need to stop to zombie tests! https://t.co/sm8kdcVcgn </td>
   <figure style="margin:0; grid-column:1 / -1; justify-self:center; width:calc(50% - 8px);"><img src="https://pbs.twimg.com/media/HVKB6PTWYAAAWso?format=jpg&name=medium" style="width:100%; height:340px; object-fit:contain; background:#fff;" alt="Image 5"></figure>
 </div>
 
-Wow what a day! Atul Gawande's talk was a hit with multiple mentions! Supporters of people with HIV/AIDS rallied. A picture of Washington Monument captured by `germhuntermd.bsky.social` and wishing for no new pathogens or renaming of old ones 🤣. Interesting monoclonal antibody candidate VMS063 by Invivyd for treatment and prevention of Measles with highly potent in vitro antiviral activity against contemporary measles fusion protein variants. Selfie of `jonathanrydermd.bsky.social` that once again gained ID SoMe community likings, second year in a row! More posts on stop zombie tests asking ourselves 3 questions every test must ask (does it meaningfully change disease probability? does it add info beyong history, physical exam, imaging, and microbiology? does acting on it improve pateint-important outcome?). New study showing 58% children under 5 were potentially exposed to hepatitis B by a household member (not the birth mother). Mention of great transplant ID sessions. A FOMO moment missing IDweek because of attending wife's great achievement at KidneyWeek, woohoo! Lastly, networking and connecting is the heart of IDweek! 
+Wow what a day! Atul Gawande's talk was a hit with multiple mentions! Supporters of people with HIV/AIDS rallied. A picture of Washington Monument captured by `germhuntermd.bsky.social` and wishing for no new pathogens or renaming of old ones 🤣. Interesting monoclonal antibody candidate VMS063 by Invivyd for treatment and prevention of Measles with highly potent in vitro antiviral activity against contemporary measles fusion protein variants. Selfie of `jonathanrydermd.bsky.social` that once again gained ID SoMe community likings, second year in a row! More posts on stop zombie tests asking ourselves 3 questions every test must ask (does it meaningfully change disease probability? does it add info beyond history, physical exam, imaging, and microbiology? does acting on it improve patient-important outcome?). New study showing 58% children under 5 were potentially exposed to hepatitis B by a household member (not the birth mother). Mention of great transplant ID sessions. A FOMO moment missing IDweek because of attending wife's great achievement at KidneyWeek, woohoo! Lastly, networking and connecting is the heart of IDweek! 
 
 #### 10-22-26 Day 2
 <table>
@@ -426,7 +426,7 @@ Key takeaways 👇 </td>
   <img src="https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:yjpx63hz6neymowjvmozdx2r/bafkreifuisfgwqrwxkyxn7kz345s5nb3ahou3cnuexayqxqesqshzwbgbq" alt="image" width="60%" height="auto">
 </p>
 
-Wow, passive measles antibodies appear to wane by 6 months. Also intersting to see the antibody at delivery seem to have slightly higher than mother's antibody concentration. 
+Wow, passive measles antibodies appear to wane by 6 months. Also interesting to see the antibody at delivery seem to have slightly higher than mother's antibody concentration. 
 
 <p align="center">
   <img src="https://pbs.twimg.com/media/HVPlkL2WIAAakP4?format=jpg&name=large" alt="image" width="60%" height="auto">
@@ -560,7 +560,7 @@ Debbie Goff's post on her talk of bacterial practice-changing studies and mentio
   <img src="https://pbs.twimg.com/media/HVV6mfnXMAAoAPy?format=jpg&name=small" alt="image" width="60%" height="auto">
 </p>
 
-Followed by a restrospective case-controlled study from Bagota, Columbia, on carbapenemase-producing enterobacterales (CPE) infections identified SOT, prior abx use, and cirrhosis as primary drivers of CPE infections. 
+Followed by a retrospective case-control study from Bogotá, Columbia, on carbapenemase-producing enterobacterales (CPE) infections identified SOT, prior abx use, and cirrhosis as primary drivers of CPE infections. 
 
 <p align="center">
   <img src="https://pbs.twimg.com/media/HVVe6QiWIAAjRHh?format=jpg&name=large" alt="image" width="60%" height="auto">
@@ -1071,7 +1071,7 @@ We definitely see the difference. Even though day 1 bluesky had slightly more po
 </tbody>
 </table>
 
-Wow, OK! X definitely has more bookmarks compared to Bluesky on Day 1 and 3 after FDR adjustment! I bet you this is probably highly influenced from `LordAlizeF`'s contribution! Unlike last year where Bluesky was a clear winner, this year other than more bookmarks on X, there is no "winner"? 
+Wow, OK! X definitely has more bookmarks compared to Bluesky on Day 1 and 2 after FDR adjustment! I bet you this is probably highly influenced from `LordAlirezaF`'s contribution! Unlike last year where Bluesky was a clear winner, this year other than more bookmarks on X, there is no "winner"? 
 
 Again, same as last year, the above people may say we're not being fair at comparing the engagement of some different contents (some posted on specific platform but not the other), why don't we only compare posts from authors who posted on both platform with similar technique as last year. 
 
@@ -1101,7 +1101,7 @@ Thank you for those who have contributed! I learnt a lot from you guys! It's the
 
 I especially want to thank [Jonathan Ryder](https://orcid.org/0000-0003-4566-1905) and [Joseph Marcus](https://orcid.org/0000-0002-1789-603X) for their consistent support and discussion. Thank you! 
 
-## Lessons Learnt
+## Lessons Learnt {#lesson}
 - Learnt about cirrhosis + non-hiv pjp
 - Learnt about waning measles antibody in babies by 6 months
 - Appreciate the candid back-and-forth of Bluesky is dead debate
